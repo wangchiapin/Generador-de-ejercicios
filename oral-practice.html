@@ -616,7 +616,7 @@ B2：
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const LS = { form: 'gwm.oral.form.v1', hist: 'gwm.oral.history.v1', errors: 'gwm.errors.v1', proj: 'gwm.project.v1' };
+const LS = { form: 'gwm.oral.form.v1', hist: 'gwm.oral.history.v1', errors: 'gwm.errors.v1', proj: 'gwm.project.v1', hand: 'gwm.handoff.v1' };
 function lsGet(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }
 function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } }
 
@@ -784,7 +784,7 @@ function renderHist() {
   $('#histList').innerHTML = list.length ? list.map(h => `
     <div class="hist" data-id="${h.id}">
       <div class="hh"><div><b>${esc(h.title)}</b><small>${esc(fmt(h.ts))}${h.form && h.form.level ? '　' + esc(h.form.level) : ''}</small></div>
-        <div class="row" style="margin:0"><button class="tiny" data-a="open">展開</button><button class="tiny" data-a="load">載入設定</button><button class="tiny" data-a="del">刪除</button></div></div>
+        <div class="row" style="margin:0"><button class="tiny" data-a="open">展開</button><button class="tiny" data-a="load">載入設定</button><button class="tiny" data-a="ws">帶到練習單</button><button class="tiny" data-a="del">刪除</button></div></div>
       <div class="hb">
         ${h.note ? `<p class="hint" style="margin-top:0">備註：${esc(h.note)}</p>` : ''}
         <textarea rows="10" data-ta="${h.id}">${esc(h.analysis || '')}</textarea>
@@ -809,6 +809,13 @@ $('#histList').addEventListener('click', async e => {
   const a = b.dataset.a;
   if (a === 'open') { box.classList.toggle('open'); b.textContent = box.classList.contains('open') ? '收合' : '展開'; }
   else if (a === 'load') { F = Object.assign(blank(), JSON.parse(JSON.stringify(h.form || {}))); if (!F.points || !F.points.length) F.points = ['']; fillForm(); toast('已載入當時的設定'); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+  else if (a === 'ws') {
+    const p = ((h.form && h.form.points) || []).map(x => String(x || '').trim()).filter(Boolean);
+    if (!p.length) { toast('這筆紀錄沒有語法點'); return; }
+    if (p.length > 3 && !confirm('練習單最多 3 個語法點，只會帶前 3 個：' + p.slice(0, 3).join('、') + '。繼續嗎？')) return;
+    if (!lsSet(LS.hand, { points: p.slice(0, 3), theme: (h.form && h.form.topic) || '' })) { toast('無法傳到練習單'); return; }
+    location.href = 'index.html';
+  }
   else if (a === 'del') { if (!confirm('刪除「' + h.title + '」這筆紀錄？')) return; H = H.filter(x => x !== h); saveHist(); renderHist(); }
   else if (a === 'update') { const old = h.analysis; h.analysis = $('textarea', box).value; if (!saveHist()) { h.analysis = old; toast('空間不夠，沒有存成功'); } else toast('已儲存修改'); renderMeter(); }
   else if (a === 'copy') toast((await copyText($('textarea', box).value)) ? '已複製分析' : '複製失敗');

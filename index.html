@@ -1483,8 +1483,21 @@ function loadState(s) {
     state.grammarBox = Object.assign({ points: [], warning: '' }, saved.grammarBox || {});
     state.sections = (saved.sections || []).map(sec => Object.assign(blankSection(sec.type), sec, { items: (sec.items || []).map(it => Object.assign(blankItem(sec.type), it)) }));
   }
+  /* 從「課堂口說練習設計」帶過來的語法點 */
+  const hand = lsGet('gwm.handoff.v1', null);
+  let handed = false;
+  if (hand) {
+    try { localStorage.removeItem('gwm.handoff.v1'); } catch (e) {}
+    const hp = (Array.isArray(hand.points) ? hand.points : []).map(x => String(x || '').trim()).filter(Boolean).slice(0, 3);
+    if (hp.length && (!state.sections.length || confirm('目前練習單裡已有題目。換掉語法點可能讓題目的語法標記對不上，建議先儲存專案。\n\n確定要換成「' + hp.join('、') + '」嗎？'))) {
+      state.meta.points = hp.concat(['', '', '']).slice(0, 3);
+      if (hand.theme) state.meta.theme = String(hand.theme).trim();
+      fixMeta(state.meta); syncGrammar(); save(); handed = true;
+    }
+  }
   renderStep1();
-  if (state.sections.length) goStep(2);
+  if (handed) { goStep(1); toast('已從口說練習帶入 ' + pointsList().length + ' 個語法點'); }
+  else if (state.sections.length) goStep(2);
 })();
 </script>
 </body>
