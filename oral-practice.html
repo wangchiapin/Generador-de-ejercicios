@@ -1,0 +1,842 @@
+<!doctype html>
+<html lang="zh-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>課堂口說練習設計小幫手</title>
+<style>
+:root{
+  --bg:#ffffff; --paper:#f7f6f3; --ink:#333333; --sub:#6f6c66; --line:#dedbd5; --line2:#ece9e4;
+  --accent:#5f5a53; --warn:#8a5a3c; --warnbg:#f6f1ea;
+}
+*{box-sizing:border-box}
+html{font-size:17px}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:"Noto Sans TC","PingFang TC","Hiragino Sans TC","Microsoft JhengHei",system-ui,sans-serif;
+  letter-spacing:.02em;line-height:1.7;-webkit-font-smoothing:antialiased}
+header.bar{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;
+  max-width:900px;margin:0 auto;padding:36px 24px 14px;border-bottom:1px solid var(--line)}
+header.bar h1{margin:0;font-size:1.35rem;font-weight:500;letter-spacing:.08em}
+header.bar .sub{color:var(--sub);font-size:.8rem;margin-top:2px}
+header.bar a{color:var(--accent);font-size:.86rem}
+main{max-width:900px;margin:0 auto;padding:8px 24px 80px}
+h2{font-size:1.05rem;font-weight:500;letter-spacing:.06em;margin:32px 0 6px}
+p.hint{color:var(--sub);font-size:.86rem;margin:2px 0 14px}
+hr{border:0;border-top:1px solid var(--line);margin:34px 0 6px}
+button,.filebtn{font:inherit;font-size:.88rem;letter-spacing:.05em;color:var(--ink);background:transparent;
+  border:1px solid var(--ink);border-radius:0;padding:5px 14px;cursor:pointer;display:inline-block}
+button:hover,.filebtn:hover{background:#efede8}
+button.primary{background:var(--ink);color:#fff}
+button.primary:hover{background:#4a4a4a}
+button.quiet{border-color:var(--line);color:var(--accent)}
+button.tiny{padding:1px 9px;font-size:.78rem;border-color:var(--line);color:var(--accent)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:12px 0}
+input[type=text],input:not([type]),input[type=number],select,textarea{
+  font:inherit;font-size:1rem;color:var(--ink);background:#fff;border:1px solid #c9c5bd;border-radius:0;
+  padding:8px 11px;width:100%;letter-spacing:.02em}
+textarea{resize:vertical;line-height:1.6}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--ink)}
+input[type=checkbox]{accent-color:#333;width:auto}
+.fld{margin:8px 0}
+.fld>label{display:block;font-size:.84rem;color:var(--sub);margin-bottom:3px;letter-spacing:.06em}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:640px){.grid2{grid-template-columns:1fr}}
+.ptrow{display:flex;gap:8px;margin:0 0 8px}
+.ptrow button{flex:none}
+.chk{display:flex;gap:8px;align-items:baseline;cursor:pointer;font-size:.92rem;margin:4px 0}
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:2px 20px;margin:6px 0}
+@media(max-width:640px){.modes{grid-template-columns:1fr}}
+.box{border:1px solid var(--line);padding:12px 16px;margin:14px 0;background:var(--paper)}
+.box h3{margin:0 0 4px;font-size:.92rem;font-weight:500;letter-spacing:.06em}
+.chips{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}
+.chips .inl{display:inline-flex;gap:6px;align-items:center;font-size:.88rem;color:var(--accent)}
+.chips .inl input,.chips .inl select{width:auto;padding:3px 8px;font-size:.88rem}
+.chips .inl input[type=number]{width:60px}
+.hist{border:1px solid var(--line);margin:10px 0;background:#fff}
+.hist .hh{display:flex;gap:10px;justify-content:space-between;align-items:center;flex-wrap:wrap;padding:8px 14px;background:var(--paper)}
+.hist .hh b{font-weight:500}
+.hist .hh small{color:var(--sub);margin-left:8px}
+.hist .hb{padding:10px 14px;display:none}
+.hist.open .hb{display:block}
+.meter{color:var(--sub);font-size:.8rem}
+.meter.bad{color:var(--warn)}
+#promptView{font-size:.82rem;line-height:1.55}
+#toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:8px 18px;
+  font-size:.86rem;letter-spacing:.05em;opacity:0;pointer-events:none;transition:opacity .2s;z-index:50;max-width:90vw}
+#toast.on{opacity:.95}
+details{margin:6px 0}
+summary{cursor:pointer;color:var(--accent);font-size:.86rem}
+</style>
+</head>
+<body>
+<header class="bar">
+  <div>
+    <h1>課堂口說練習設計小幫手</h1>
+    <div class="sub">填好語法點，複製提示詞，貼給任何 AI（Claude、ChatGPT、Gemini 都可以）</div>
+  </div>
+  <a href="index.html">→ 語法練習單產生器（紙本練習單）</a>
+</header>
+<main>
+
+  <h2>1　要練什麼</h2>
+  <div class="fld"><label>語法點（可按「＋」新增，最多 6 個；填 2 個以上會多要一份「組合練習方案」）</label>
+    <div id="ptInputs"></div>
+    <div class="row" style="margin:4px 0">
+      <button class="quiet" id="btnAddPt">＋ 新增語法點</button>
+      <button class="quiet" id="btnFromWs" title="從「語法練習單產生器」目前的專案帶入語法點">從練習單帶入語法點</button>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="fld"><label>學生程度</label>
+      <select id="fLevel"><option value="">不指定</option><option>A1</option><option>A2</option><option>B1</option><option>B2</option></select></div>
+    <div class="fld"><label>課堂時間</label><input id="fTime" placeholder="例如：20 分鐘"></div>
+  </div>
+  <div class="fld"><label>主題</label><input id="fTopic" placeholder="例如：旅行、租房、餐廳"></div>
+  <div class="fld"><label>已學過的詞彙</label><textarea id="fVocab" rows="2" placeholder="貼上學生已經學過的詞彙"></textarea></div>
+  <div class="fld"><label>教材內容</label><textarea id="fMaterial" rows="2" placeholder="貼上課本或簡報裡的相關內容"></textarea></div>
+  <div class="fld"><label>例句</label><textarea id="fExamples" rows="2" placeholder="貼上你想用的例句"></textarea></div>
+
+  <details class="fld" id="errDet"><summary>學生常犯的錯（選填；跟「語法練習單產生器」共用，那邊寫過的這裡會自動帶出來）<span id="errCount"></span></summary>
+    <div id="errBox" style="margin-top:8px"></div></details>
+
+  <h2>2　翻譯與練習模式</h2>
+  <div class="row" style="margin:4px 0">
+    <label class="chk"><input type="checkbox" id="fEs"> 附上西班牙文翻譯</label>
+    <label class="chk"><input type="checkbox" id="fEn"> 附上英文翻譯</label>
+  </div>
+  <p class="hint">兩個可以分開勾選，都不勾就不附翻譯。</p>
+
+  <div class="fld"><label>練習模式（不勾＝讓 AI 自己挑最適合的 4～7 種；有勾＝只從勾的裡面選）</label>
+    <div class="modes" id="modes"></div></div>
+
+  <div class="fld"><label>我想要的</label>
+    <select id="fScope">
+      <option value="">先分析語法，選出練習模式（預設）</option>
+      <option value="full">直接產生完整教材（所有推薦的練習一次產生）</option>
+    </select></div>
+
+  <div class="row">
+    <button class="primary" id="btnCopy">複製提示詞</button>
+    <button class="quiet" id="btnClear">清空</button>
+  </div>
+  <details><summary>看提示詞內容</summary><textarea id="promptView" readonly rows="16"></textarea></details>
+
+  <hr>
+  <h2>3　後續指令</h2>
+  <p class="hint">AI 回覆之後，在<b>同一個對話</b>裡繼續。按一下就複製那句指令，貼過去即可。</p>
+  <div class="chips" id="follow"></div>
+
+  <hr>
+  <h2>4　歷史紀錄</h2>
+  <p class="hint">把 AI 回的分析貼在下面，連同目前填的設定一起存起來。存在這台裝置的瀏覽器裡，不會上傳到任何地方。</p>
+  <div class="fld"><label>AI 的分析（貼上）</label><textarea id="hAnalysis" rows="6" placeholder="把 AI 回覆的分析貼在這裡"></textarea></div>
+  <div class="fld"><label>備註（選填）</label><input id="hNote" placeholder="例如：上課時第二個活動效果很好"></div>
+  <div class="row"><button class="primary" id="btnSave">存到歷史紀錄</button></div>
+
+  <div class="row" style="justify-content:space-between;margin-top:22px">
+    <input id="hFilter" placeholder="搜尋歷史紀錄（語法點、備註、分析內容）" style="max-width:360px">
+    <div class="row" style="margin:0">
+      <button class="quiet" id="btnExport">匯出備份</button>
+      <label class="filebtn quiet" style="border-color:var(--line);color:var(--accent)">匯入備份<input type="file" id="fImport" accept=".json,application/json" hidden></label>
+    </div>
+  </div>
+  <div class="meter" id="meter"></div>
+  <div id="histList"></div>
+</main>
+<div id="toast"></div>
+
+<script type="text/plain" id="base">你是一位專業的「中文作為第二語言（TCFL）」教材設計老師。
+
+你的任務是：當我提供一個中文語法點時，分析這個語法的實際功能、使用條件與常見錯誤，然後設計一套可以讓學生「大量練習並逐漸做到自然使用」的練習。
+
+## 一、核心原則
+
+不要把所有語法都使用相同的練習方式。
+
+你必須先判斷：
+
+1. 這個語法的核心功能是什麼？
+2. 這個語法通常在什麼情境下使用？
+3. 學生最容易犯什麼錯？
+4. 這個語法比較適合「看圖」、「問答」、「情境」、「個人經驗」、「任務」還是其他方式？
+5. 如何讓學生從「知道怎麼用」逐漸進步到「可以自然使用」？
+
+如果某一種練習方式不適合這個語法，請直接省略，不要為了湊數量而硬加入。
+
+---
+
+# 二、可以使用的9種練習模式
+
+你可以從以下9種模式中選擇適合的：
+
+### 1. 句型替換
+
+固定基本句型，只替換其中的關鍵詞或資訊。
+
+目的：
+讓學生在低認知負擔的情況下，大量重複目標語法。
+
+例如：
+
+目標：越……越……
+
+基本句：
+「工作越多，我越累。」
+
+替換：
+工作越多 → 錢越多 → 年紀越大 → 中文說得越多……
+
+要求學生每次都說完整句子。
+
+---
+
+### 2. 問答連發
+
+老師連續提出問題，學生必須使用目標語法回答。
+
+要求：
+
+* 問題要有連續性
+* 從簡單 → 複雜
+* 從具體 → 個人化
+* 不要只是問語法本身
+
+例如：
+
+目標：如果……就……
+
+「如果明天下雨，你會怎麼辦？」
+「如果你沒有手機呢？」
+「如果你突然有一個月的假呢？」
+
+---
+
+### 3. 圖片／情境描述
+
+提供圖片或具體情境，讓學生使用目標語法描述。
+
+特別適合：
+
+* 狀態
+* 動作
+* 空間
+* 人物
+* 事件
+* 比較
+* 具體情境
+
+例如：
+
+目標：V著
+
+圖片中有人：
+「他拿著手機。」
+「他穿著黑色衣服。」
+「門開著。」
+
+---
+
+### 4. 找錯誤
+
+老師提供包含常見錯誤的句子，學生必須：
+
+1. 判斷是否正確
+2. 找出錯誤
+3. 改正
+4. 說出正確句子
+
+錯誤必須是學生實際可能犯的錯誤，不要製造不自然或不可能出現的錯誤。
+
+---
+
+### 5. 二選一／做選擇
+
+提供兩個或多個選項，學生必須使用目標語法表達選擇、比較或理由。
+
+不能只讓學生回答「A」或「B」。
+
+必須要求完整輸出。
+
+例如：
+
+目標：雖然……但是……
+
+「工作很多但薪水高」vs.「工作少但薪水低」
+
+學生：
+「雖然工作很多，但是薪水很高，所以我選第一個。」
+
+---
+
+### 6. 個人化問題
+
+把語法放進學生自己的生活。
+
+可以詢問：
+
+* 日常生活
+* 工作
+* 學習
+* 興趣
+* 家庭
+* 旅行
+* 經驗
+* 未來計畫
+* 個人意見
+
+目標是讓學生真的「有東西可以說」，而不是為了使用文法而造句。
+
+---
+
+### 7. 資訊差
+
+老師與學生擁有不同資訊。
+
+學生必須使用目標語法來：
+
+* 提問
+* 確認
+* 描述
+* 找資訊
+* 完成任務
+
+最後學生只有透過語言互動才能取得完整資訊。
+
+---
+
+### 8. 故事接龍
+
+老師先開始一個故事，學生繼續。
+
+要求學生反覆使用目標語法。
+
+故事可以加入：
+
+* 意外
+* 問題
+* 新資訊
+* 選擇
+* 轉折
+
+讓學生不是單獨造句，而是在故事中使用語法。
+
+---
+
+### 9. 任務／問題解決
+
+設計一個學生必須完成的任務。
+
+例如：
+
+* 規劃旅行
+* 解決問題
+* 做決定
+* 安排活動
+* 找出最佳方案
+* 處理生活中的問題
+
+學生必須使用目標語法才能完成任務。
+
+重點不是「造句」，而是「使用中文完成事情」。
+
+---
+
+# 三、練習難度必須逐漸增加
+
+設計練習時，盡可能按照以下路線：
+
+控制式
+↓
+半控制式
+↓
+情境式
+↓
+個人化
+↓
+任務式
+↓
+自由輸出
+
+也就是：
+
+「替換」
+→「問答」
+→「情境」
+→「個人經驗」
+→「任務」
+→「自由對話」
+
+不要一開始就要求學生自由對話。
+
+---
+
+# 四、每個語法點的輸出格式
+
+當我提供語法點後，請按照以下格式回答：
+
+## ① 語法分析
+
+**語法：**
+XXX
+
+**核心功能：**
+簡單說明學生學會這個語法後，可以拿來表達什麼。
+
+**適合使用的情境：**
+列出3～5個自然情境。
+
+**常見錯誤：**
+列出學生最可能犯的3～5個錯誤。
+
+---
+
+## ② 最適合的練習模式
+
+從9種模式中選擇最適合的4～7種。
+
+不要強迫使用全部9種。
+
+請說明：
+
+**推薦：**
+
+1. XXX
+2. XXX
+3. XXX
+
+**不推薦或較不適合：**
+XXX
+
+並簡單說明原因。
+
+---
+
+## ③ 實際練習
+
+針對每一種推薦的練習，提供可以直接拿去上課的內容。
+
+每種練習至少提供5題。
+
+格式：
+
+### 1. 句型替換
+
+**老師操作：**
+……
+
+**題目：**
+
+1. ……
+2. ……
+3. ……
+4. ……
+5. ……
+
+**參考答案：**
+……
+
+---
+
+### 2. 問答連發
+
+**老師操作：**
+……
+
+**問題：**
+
+1. ……
+2. ……
+3. ……
+4. ……
+5. ……
+
+**參考答案／可能回答：**
+……
+
+---
+
+依此類推。
+
+---
+
+# 五、非常重要的教學要求
+
+### 1. 不要讓所有題目都變成翻譯
+
+翻譯只能作為其中一種輔助練習。
+
+主要目標是「中文輸出」。
+
+---
+
+### 2. 不要為了使用語法而製造奇怪句子
+
+所有例句與問題都必須符合自然中文。
+
+如果某個語法在某個情境下不自然，請換情境。
+
+---
+
+### 3. 注意語法真正的功能
+
+例如「V著」不能只解釋成「正在」。
+
+必須根據實際用法區分：
+
+* 狀態
+* 動作伴隨
+* 持續狀態
+* 描述人物／物品
+
+練習也要反映這些差異。
+
+---
+
+### 4. 讓學生大量重複，但不要讓學生覺得自己在重複
+
+同一個語法可以重複很多次，但必須改變：
+
+* 人物
+* 地點
+* 情境
+* 詞彙
+* 問題
+* 任務
+* 個人經驗
+
+---
+
+### 5. 優先使用真實生活情境
+
+盡量使用：
+
+吃飯、工作、上課、旅行、購物、朋友、家庭、交通、租房、餐廳、天氣、手機、社群媒體等真實生活內容。
+
+避免大量使用：
+
+「小明昨天去了公園……」
+
+這種沒有實際溝通目的的教材句型。
+
+---
+
+### 6. 如果語法具有多種功能，要分開練習
+
+例如一個語法有兩種或三種常見用法，不要混在一起。
+
+應該：
+
+功能A → 練習
+功能B → 練習
+功能C → 練習
+
+最後才做綜合練習。
+
+---
+
+### 7. 根據學生程度調整
+
+A1：
+
+* 句子短
+* 詞彙簡單
+* 提示多
+
+A2：
+
+* 簡單生活情境
+* 開始加入個人經驗
+
+B1：
+
+* 複雜情境
+* 理由
+* 故事
+* 任務
+
+B2：
+
+* 抽象話題
+* 辯論
+* 真實問題
+* 自由表達
+
+---
+
+# 六、最後加入「老師使用建議」
+
+最後請告訴我：
+
+**這個語法最推薦怎麼教？**
+
+用非常簡短的方式告訴我：
+
+1. 先做什麼
+2. 接著做什麼
+3. 最後做什麼
+
+例如：
+
+> 看圖 → 問答 → 個人化 → 任務 → 自由對話
+
+並告訴我：
+
+**這個語法大約需要讓學生輸出幾次，才算有足夠的初步練習。**
+
+不要保證學生練習幾次就一定能學會，只提供合理的教學建議。
+
+---
+
+# 七、我的輸入
+
+當我輸入：
+
+「語法：XXX」
+
+你就直接按照以上規則開始設計。
+
+如果我另外提供：
+
+* 學生程度
+* 主題
+* 課堂時間
+* 已學過的詞彙
+* 教材內容
+* 例句
+
+也要一起納入設計。
+
+不要重新解釋這套規則。
+直接開始分析語法並產生練習。
+除非我要求完整教材，否則不要一次產生所有練習。先分析語法，選出最適合的練習模式，再開始生成。</script>
+
+<script>
+'use strict';
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const LS = { form: 'gwm.oral.form.v1', hist: 'gwm.oral.history.v1', errors: 'gwm.errors.v1', proj: 'gwm.project.v1' };
+function lsGet(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }
+function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } }
+
+let tt;
+function toast(m) { const t = $('#toast'); t.textContent = m; t.classList.add('on'); clearTimeout(tt); tt = setTimeout(() => t.classList.remove('on'), 2600); }
+async function copyText(text) {
+  try { await navigator.clipboard.writeText(text); return true; } catch (e) {}
+  try { const ta = document.createElement('textarea'); ta.value = text; ta.style.cssText = 'position:fixed;opacity:0'; document.body.appendChild(ta); ta.select(); const ok = document.execCommand('copy'); ta.remove(); return !!ok; } catch (e) { return false; }
+}
+function download(name, text) {
+  try { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'application/json;charset=utf-8' })); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500); }
+  catch (e) { toast('這個瀏覽器無法下載檔案'); }
+}
+
+const MODES = ['句型替換', '問答連發', '圖片／情境描述', '找錯誤', '二選一／做選擇', '個人化問題', '資訊差', '故事接龍', '任務／問題解決'];
+const MAXPT = 6;
+const BASE = $('#base').textContent.trim();
+
+const blank = () => ({ points: [''], level: '', time: '', topic: '', vocab: '', material: '', examples: '', es: false, en: false, modes: [], scope: '' });
+let F = Object.assign(blank(), lsGet(LS.form, {}));
+if (!Array.isArray(F.points) || !F.points.length) F.points = [''];
+if (!Array.isArray(F.modes)) F.modes = [];
+function saveForm() { lsSet(LS.form, F); }
+const pts = () => F.points.map(x => String(x || '').trim()).filter(Boolean);
+
+/* ---------- 常犯的錯（與練習單產生器共用） ---------- */
+const errorsFor = g => (lsGet(LS.errors, {})[g]) || '';
+function setErrorsFor(g, v) { const m = lsGet(LS.errors, {}); if (String(v).trim()) m[g] = v; else delete m[g]; lsSet(LS.errors, m); }
+
+/* ---------- 組提示詞 ---------- */
+const MULTI = `# 八、同時有多個語法點時的額外要求
+
+這次我會提供多個語法點，請這樣處理：
+
+1. ① 語法分析：每個語法點各自分析一次（語法、核心功能、情境、常見錯誤），每個保持簡短。
+2. 在 ② 之後，多加一個「組合練習方案」，內容包含：
+   * 這幾個語法點的關係：相近、互補，還是容易混淆？差別在哪裡？（用簡短對照說明）
+   * 建議的教學順序
+   * 哪些練習模式適合把幾個語法點放在一起練，哪些要分開練，並說明理由
+   * 一個可以把全部語法點串起來的綜合任務
+   * 如果這幾個語法點不適合放在同一堂課或同一組練習，請直接說「建議分開教」並說明原因，不要硬湊
+3. 之後產生實際練習時，每一題都標示用到哪個語法點。混合題要同一句同時用到 2 個以上語法點，但必須自然，不要為了湊語法點而硬塞。
+4. 難度順序仍照第三章：先各自用控制式練習，再逐漸混合。`;
+
+function buildPrompt() {
+  const P = pts(), multi = P.length >= 2;
+  let out = BASE;
+  if (multi) out += '\n\n---\n\n' + MULTI;
+
+  const extra = [];
+  const tr = [];
+  if (F.es) tr.push('西班牙文');
+  if (F.en) tr.push('英文');
+  if (tr.length) extra.push(`所有題目、問題、例句與參考答案，都要附上${tr.join('和')}翻譯（翻譯只是輔助，學生的輸出仍以中文為主）。`);
+  if (F.modes.length) extra.push(`練習模式限定：只能從這幾種裡面選：${F.modes.join('、')}。不需要硬湊滿 4～7 種，不適合的就省略並簡單說明原因。`);
+  const errLines = P.map(p => { const e = String(errorsFor(p)).trim(); return e ? (multi ? `〔${p}〕\n${e}` : e) : ''; }).filter(Boolean);
+  if (errLines.length) extra.push('學生（西班牙語母語者）常犯的錯，設計「找錯誤」與練習時請優先使用：\n' + errLines.join('\n'));
+  if (extra.length) out += '\n\n---\n\n# 補充條件\n\n' + extra.map(x => '* ' + x).join('\n');
+
+  const L = [];
+  if (multi) P.forEach((p, i) => L.push(`語法點 ${i + 1}：${p}`)); else L.push('語法：' + (P[0] || 'XXX'));
+  const add = (k, v) => { v = String(v || '').trim(); if (v) L.push(k + '：' + v); };
+  add('學生程度', F.level); add('主題', F.topic); add('課堂時間', F.time);
+  add('已學過的詞彙', F.vocab); add('教材內容', F.material); add('例句', F.examples);
+  if (F.scope === 'full') L.push('請直接產生完整教材（所有推薦的練習一次產生）。');
+  return out + '\n\n---\n\n' + L.join('\n');
+}
+function refresh() { $('#promptView').value = buildPrompt(); saveForm(); }
+
+/* ---------- 語法點欄位 ---------- */
+function renderPts() {
+  $('#ptInputs').innerHTML = F.points.map((p, i) =>
+    `<div class="ptrow"><input data-pt="${i}" value="${esc(p)}" placeholder="${i === 0 ? '語法點 1，例如：越……越……' : '語法點 ' + (i + 1)}">` +
+    (F.points.length > 1 ? `<button class="quiet" data-del="${i}" title="刪除這一個">×</button>` : '') + `</div>`).join('');
+  $('#btnAddPt').disabled = F.points.length >= MAXPT;
+  $('#btnAddPt').style.opacity = F.points.length >= MAXPT ? .4 : 1;
+}
+$('#ptInputs').addEventListener('input', e => { const i = e.target.dataset.pt; if (i === undefined) return; F.points[+i] = e.target.value; refresh(); });
+$('#ptInputs').addEventListener('change', () => renderErrs());
+$('#ptInputs').addEventListener('click', e => {
+  const d = e.target.dataset.del; if (d === undefined) return;
+  F.points.splice(+d, 1); if (!F.points.length) F.points = ['']; renderPts(); renderErrs(); refresh();
+});
+$('#btnAddPt').onclick = () => { if (F.points.length >= MAXPT) return; F.points.push(''); renderPts(); refresh(); const ins = $$('#ptInputs input'); ins[ins.length - 1].focus(); };
+$('#btnFromWs').onclick = () => {
+  const p = ((lsGet(LS.proj, {}).meta || {}).points || []).map(x => String(x || '').trim()).filter(Boolean);
+  if (!p.length) { toast('練習單產生器裡目前沒有語法點'); return; }
+  F.points = p.slice(0, MAXPT); renderPts(); renderErrs(); refresh(); toast('已帶入 ' + F.points.length + ' 個語法點');
+};
+
+function renderErrs() {
+  const P = pts();
+  const n = P.filter(p => String(errorsFor(p)).trim()).length;
+  $('#errCount').textContent = n ? '　已填 ' + n + ' 個' : '';
+  if (!$('#errDet').open) return;
+  if (!P.length) { $('#errBox').innerHTML = '<p class="hint">先填語法點，這裡就會出現對應的欄位。</p>'; return; }
+  $('#errBox').innerHTML = P.map(p => `<div class="fld">${P.length > 1 ? `<label style="color:var(--accent)">${esc(p)}</label>` : ''}<textarea rows="3" data-ep="${esc(p)}" placeholder="例如：\n「比」後面加「很」：他比我很高">${esc(errorsFor(p))}</textarea></div>`).join('');
+}
+$('#errDet').addEventListener('toggle', () => renderErrs());
+$('#errBox').addEventListener('input', e => { if (e.target.dataset.ep === undefined) return; setErrorsFor(e.target.dataset.ep, e.target.value); refresh(); });
+
+/* ---------- 其他欄位 ---------- */
+const FIELDS = { fLevel: 'level', fTime: 'time', fTopic: 'topic', fVocab: 'vocab', fMaterial: 'material', fExamples: 'examples', fScope: 'scope' };
+Object.entries(FIELDS).forEach(([id, k]) => $('#' + id).addEventListener('input', e => { F[k] = e.target.value; refresh(); }));
+$('#fEs').onchange = e => { F.es = e.target.checked; refresh(); };
+$('#fEn').onchange = e => { F.en = e.target.checked; refresh(); };
+$('#modes').innerHTML = MODES.map((m, i) => `<label class="chk"><input type="checkbox" data-mode="${esc(m)}"> ${i + 1}. ${esc(m)}</label>`).join('');
+$('#modes').addEventListener('change', e => {
+  if (e.target.dataset.mode === undefined) return;
+  F.modes = $$('#modes input:checked').map(x => x.dataset.mode); refresh();
+});
+function fillForm() {
+  Object.entries(FIELDS).forEach(([id, k]) => { $('#' + id).value = F[k] || ''; });
+  $('#fEs').checked = !!F.es; $('#fEn').checked = !!F.en;
+  $$('#modes input').forEach(x => { x.checked = F.modes.includes(x.dataset.mode); });
+  renderPts(); renderErrs(); refresh();
+}
+$('#btnCopy').onclick = async () => {
+  if (!pts().length) { toast('先填語法點'); const i = $('#ptInputs input'); if (i) i.focus(); return; }
+  toast((await copyText(buildPrompt())) ? '已複製，貼給 AI 就可以了' : '無法自動複製，請從「看提示詞內容」手動複製');
+};
+$('#btnClear').onclick = () => { if (!confirm('清空目前填的內容？（歷史紀錄不會被清掉）')) return; F = blank(); fillForm(); };
+
+/* ---------- 後續指令 ---------- */
+const FOLLOW = [
+  { t: '產生下一種練習', c: '請接著產生下一種推薦的練習。' },
+  { t: '產生全部推薦的練習', c: '請一次產生所有推薦的練習（含老師操作、題目、參考答案與老師使用建議）。' },
+  { t: '再多 10 題', c: '請同一種練習再多給 10 題，情境與詞彙不要跟前面重複。' },
+  { t: '換成更生活化的情境', c: '請把剛才的題目換成更貼近真實生活的情境，避免教科書式的句子。' },
+  { t: '轉成簡體字', c: '請把剛才的內容轉成簡體字版本。' },
+  { t: '附上西班牙文翻譯', c: '請在剛才的題目與參考答案後面附上西班牙文翻譯。' },
+  { t: '附上英文翻譯', c: '請在剛才的題目與參考答案後面附上英文翻譯。' },
+  { t: '整理成教案', c: '請把剛才的內容整理成一份可以直接上課用的教案：每個活動的順序、時間分配、老師要說的話。' },
+  { t: '只留最適合的 3 種', c: '請只留下最適合的 3 種練習，其他刪掉，並重新排好上課順序。' }
+];
+function renderFollow() {
+  $('#follow').innerHTML = FOLLOW.map((f, i) => `<button class="quiet" data-f="${i}">${esc(f.t)}</button>`).join('') +
+    `<span class="inl">第 <input type="number" id="fnN" min="1" max="9" value="2"> 種練習 <button class="quiet" id="fnGo">複製</button></span>` +
+    `<span class="inl">改成 <select id="fnLv"><option>A1</option><option selected>A2</option><option>B1</option><option>B2</option></select> 程度 <button class="quiet" id="fnLvGo">複製</button></span>`;
+}
+$('#follow').addEventListener('click', async e => {
+  const b = e.target.closest('button'); if (!b) return;
+  let text = '';
+  if (b.dataset.f !== undefined) text = FOLLOW[+b.dataset.f].c;
+  else if (b.id === 'fnGo') text = `請產生第 ${parseInt($('#fnN').value, 10) || 1} 種推薦的練習。`;
+  else if (b.id === 'fnLvGo') text = `請把剛才的練習改成 ${$('#fnLv').value} 程度（詞彙、句子長度與提示量都要跟著調整）。`;
+  if (text) toast((await copyText(text)) ? '已複製：' + text.slice(0, 20) + (text.length > 20 ? '…' : '') : '複製失敗');
+});
+
+/* ---------- 歷史紀錄 ---------- */
+let H = lsGet(LS.hist, []); if (!Array.isArray(H)) H = [];
+const QUOTA = 5 * 1024 * 1024;
+function saveHist() { return lsSet(LS.hist, H); }
+function fmt(ts) { const d = new Date(ts), p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`; }
+function renderMeter() {
+  const bytes = JSON.stringify(H).length * 2; // 粗估
+  const pct = Math.round(bytes / QUOTA * 100);
+  const m = $('#meter');
+  m.className = 'meter' + (pct >= 70 ? ' bad' : '');
+  m.textContent = `共 ${H.length} 筆，約佔瀏覽器可用空間的 ${pct}%` + (pct >= 70 ? '（快滿了，建議先匯出備份再刪掉舊的）' : '');
+}
+function renderHist() {
+  const q = $('#hFilter').value.trim().toLowerCase();
+  const list = H.filter(h => !q || (h.title + ' ' + (h.note || '') + ' ' + (h.analysis || '')).toLowerCase().includes(q));
+  $('#histList').innerHTML = list.length ? list.map(h => `
+    <div class="hist" data-id="${h.id}">
+      <div class="hh"><div><b>${esc(h.title)}</b><small>${esc(fmt(h.ts))}${h.form && h.form.level ? '　' + esc(h.form.level) : ''}</small></div>
+        <div class="row" style="margin:0"><button class="tiny" data-a="open">展開</button><button class="tiny" data-a="load">載入設定</button><button class="tiny" data-a="del">刪除</button></div></div>
+      <div class="hb">
+        ${h.note ? `<p class="hint" style="margin-top:0">備註：${esc(h.note)}</p>` : ''}
+        <textarea rows="10" data-ta="${h.id}">${esc(h.analysis || '')}</textarea>
+        <div class="row"><button class="tiny" data-a="update">儲存修改</button><button class="tiny" data-a="copy">複製分析</button></div>
+      </div>
+    </div>`).join('') : `<p class="hint">${H.length ? '沒有符合的紀錄。' : '還沒有紀錄。'}</p>`;
+  renderMeter();
+}
+$('#hFilter').addEventListener('input', renderHist);
+$('#btnSave').onclick = () => {
+  const analysis = $('#hAnalysis').value.trim();
+  if (!pts().length) { toast('先填語法點'); return; }
+  if (!analysis) { toast('先把 AI 的分析貼上來'); $('#hAnalysis').focus(); return; }
+  H.unshift({ id: 'h' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), ts: Date.now(), title: pts().join('、'),
+    form: JSON.parse(JSON.stringify(F)), analysis, note: $('#hNote').value.trim() });
+  if (!saveHist()) { H.shift(); toast('瀏覽器空間不夠了，請先匯出備份，再刪掉一些舊紀錄'); return; }
+  $('#hAnalysis').value = ''; $('#hNote').value = ''; renderHist(); toast('已存到歷史紀錄');
+};
+$('#histList').addEventListener('click', async e => {
+  const b = e.target.closest('button'); if (!b || !b.dataset.a) return;
+  const box = b.closest('.hist'), h = H.find(x => x.id === box.dataset.id); if (!h) return;
+  const a = b.dataset.a;
+  if (a === 'open') { box.classList.toggle('open'); b.textContent = box.classList.contains('open') ? '收合' : '展開'; }
+  else if (a === 'load') { F = Object.assign(blank(), JSON.parse(JSON.stringify(h.form || {}))); if (!F.points || !F.points.length) F.points = ['']; fillForm(); toast('已載入當時的設定'); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+  else if (a === 'del') { if (!confirm('刪除「' + h.title + '」這筆紀錄？')) return; H = H.filter(x => x !== h); saveHist(); renderHist(); }
+  else if (a === 'update') { const old = h.analysis; h.analysis = $('textarea', box).value; if (!saveHist()) { h.analysis = old; toast('空間不夠，沒有存成功'); } else toast('已儲存修改'); renderMeter(); }
+  else if (a === 'copy') toast((await copyText($('textarea', box).value)) ? '已複製分析' : '複製失敗');
+});
+$('#btnExport').onclick = () => {
+  if (!H.length) { toast('目前沒有紀錄可以匯出'); return; }
+  download('口說練習歷史_' + new Date().toISOString().slice(0, 10) + '.json', JSON.stringify({ app: 'oral-practice', version: 1, history: H }, null, 1));
+};
+$('#fImport').addEventListener('change', e => {
+  const f = e.target.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try {
+      const j = JSON.parse(r.result), arr = Array.isArray(j) ? j : j.history;
+      if (!Array.isArray(arr)) throw 0;
+      const have = new Set(H.map(x => x.id)); let n = 0;
+      arr.forEach(x => { if (x && x.id && x.analysis !== undefined && !have.has(x.id)) { H.push(x); n++; } });
+      H.sort((a, b) => b.ts - a.ts);
+      if (!saveHist()) { toast('空間不夠，匯入失敗'); H = lsGet(LS.hist, []); }
+      else toast('匯入 ' + n + ' 筆（重複的已略過）');
+      renderHist();
+    } catch (err) { toast('這個檔案讀不了，請選用本頁匯出的備份檔'); }
+    e.target.value = '';
+  };
+  r.readAsText(f);
+});
+
+renderFollow(); fillForm(); renderHist();
+</script>
+</body>
+</html>
