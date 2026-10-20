@@ -58,6 +58,7 @@ input[type=checkbox]{accent-color:#333;width:auto}
 .hist .hh small{color:var(--sub);margin-left:8px}
 .hist .hb{padding:10px 14px;display:none}
 .hist.open .hb{display:block}
+.tag{display:inline-block;border:1px solid var(--line);color:var(--sub);font-size:.72rem;padding:0 6px;margin-left:8px}
 .meter{color:var(--sub);font-size:.8rem}
 .meter.bad{color:var(--warn)}
 #promptView{font-size:.82rem;line-height:1.55}
@@ -130,6 +131,14 @@ summary{cursor:pointer;color:var(--accent);font-size:.86rem}
   <hr>
   <h2>4　歷史紀錄</h2>
   <p class="hint">把 AI 回的分析貼在下面，連同目前填的設定一起存起來。存在這台裝置的瀏覽器裡，不會上傳到任何地方。</p>
+  <div class="box" id="cloudBox">
+    <div class="hint" id="cloudMsg" style="margin:0 0 8px"></div>
+    <div class="row" style="margin:0">
+      <button class="quiet" id="btnLogin">用 Google 登入同步</button>
+      <button class="quiet" id="btnPull" hidden>從雲端更新</button>
+      <button class="quiet" id="btnLogout" hidden>登出</button>
+    </div>
+  </div>
   <div class="fld"><label>AI 的分析（貼上）</label><textarea id="hAnalysis" rows="6" placeholder="把 AI 回覆的分析貼在這裡"></textarea></div>
   <div class="fld"><label>備註（選填）</label><input id="hNote" placeholder="例如：上課時第二個活動效果很好"></div>
   <div class="row"><button class="primary" id="btnSave">存到歷史紀錄</button></div>
@@ -783,7 +792,7 @@ function renderHist() {
   const list = H.filter(h => !q || (h.title + ' ' + (h.note || '') + ' ' + (h.analysis || '')).toLowerCase().includes(q));
   $('#histList').innerHTML = list.length ? list.map(h => `
     <div class="hist" data-id="${h.id}">
-      <div class="hh"><div><b>${esc(h.title)}</b><small>${esc(fmt(h.ts))}${h.form && h.form.level ? '　' + esc(h.form.level) : ''}</small></div>
+      <div class="hh"><div><b>${esc(h.title)}</b><small>${esc(fmt(h.ts))}${h.form && h.form.level ? '　' + esc(h.form.level) : ''}</small>${cloud.user && !synced.has(h.id) ? '<span class="tag">僅本機</span>' : ''}</div>
         <div class="row" style="margin:0"><button class="tiny" data-a="open">展開</button><button class="tiny" data-a="load">載入設定</button><button class="tiny" data-a="ws">帶到練習單</button><button class="tiny" data-a="del">刪除</button></div></div>
       <div class="hb">
         ${h.note ? `<p class="hint" style="margin-top:0">備註：${esc(h.note)}</p>` : ''}
@@ -798,10 +807,13 @@ $('#btnSave').onclick = () => {
   const analysis = $('#hAnalysis').value.trim();
   if (!pts().length) { toast('先填語法點'); return; }
   if (!analysis) { toast('先把 AI 的分析貼上來'); $('#hAnalysis').focus(); return; }
-  H.unshift({ id: 'h' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), ts: Date.now(), title: pts().join('、'),
-    form: JSON.parse(JSON.stringify(F)), analysis, note: $('#hNote').value.trim() });
+  const now = Date.now();
+  const entry = { id: 'h' + now.toString(36) + Math.random().toString(36).slice(2, 5), ts: now, upd: now, title: pts().join('、'),
+    form: JSON.parse(JSON.stringify(F)), analysis, note: $('#hNote').value.trim() };
+  H.unshift(entry);
   if (!saveHist()) { H.shift(); toast('瀏覽器空間不夠了，請先匯出備份，再刪掉一些舊紀錄'); return; }
   $('#hAnalysis').value = ''; $('#hNote').value = ''; renderHist(); toast('已存到歷史紀錄');
+  cloudPut(entry);
 };
 $('#histList').addEventListener('click', async e => {
   const b = e.target.closest('button'); if (!b || !b.dataset.a) return;
@@ -816,8 +828,8 @@ $('#histList').addEventListener('click', async e => {
     if (!lsSet(LS.hand, { points: p.slice(0, 3), theme: (h.form && h.form.topic) || '' })) { toast('無法傳到練習單'); return; }
     location.href = 'index.html';
   }
-  else if (a === 'del') { if (!confirm('刪除「' + h.title + '」這筆紀錄？')) return; H = H.filter(x => x !== h); saveHist(); renderHist(); }
-  else if (a === 'update') { const old = h.analysis; h.analysis = $('textarea', box).value; if (!saveHist()) { h.analysis = old; toast('空間不夠，沒有存成功'); } else toast('已儲存修改'); renderMeter(); }
+  else if (a === 'del') { if (!confirm('刪除「' + h.title + '」這筆紀錄？')) return; H = H.filter(x => x !== h); saveHist(); renderHist(); cloudDel(h.id); }
+  else if (a === 'update') { const old = h.analysis; h.analysis = $('textarea', box).value; if (!saveHist()) { h.analysis = old; toast('空間不夠，沒有存成功'); } else { h.upd = Date.now(); saveHist(); toast('已儲存修改'); cloudPut(h); } renderMeter(); }
   else if (a === 'copy') toast((await copyText($('textarea', box).value)) ? '已複製分析' : '複製失敗');
 });
 $('#btnExport').onclick = () => {
@@ -835,13 +847,119 @@ $('#fImport').addEventListener('change', e => {
       arr.forEach(x => { if (x && x.id && x.analysis !== undefined && !have.has(x.id)) { H.push(x); n++; } });
       H.sort((a, b) => b.ts - a.ts);
       if (!saveHist()) { toast('空間不夠，匯入失敗'); H = lsGet(LS.hist, []); }
-      else toast('匯入 ' + n + ' 筆（重複的已略過）');
+      else { toast('匯入 ' + n + ' 筆（重複的已略過）'); H.filter(x => !synced.has(x.id)).forEach(cloudPut); }
       renderHist();
     } catch (err) { toast('這個檔案讀不了，請選用本頁匯出的備份檔'); }
     e.target.value = '';
   };
   r.readAsText(f);
 });
+
+/* ---------- 雲端同步（選用）：Google 登入 + Firestore ----------
+   沒登入時完全不載入 Firebase，頁面照常只存在瀏覽器裡。
+   雲端路徑：users/{uid}/oralHistory/{紀錄 id}（規則要允許本人讀寫，見 README） */
+const FB = 'https://www.gstatic.com/firebasejs/10.14.1/';
+const FB_CONFIG = { apiKey: 'AIzaSyDB6zYAHvi0oTkObv-qDnP6nn0UUnscby0', authDomain: 'moneybook-50481.firebaseapp.com', projectId: 'moneybook-50481',
+  storageBucket: 'moneybook-50481.firebasestorage.app', messagingSenderId: '549256761796', appId: '1:549256761796:web:254332f109e7b8ad871491' };
+const SYNCED_KEY = 'gwm.oral.synced.v1', FLAG_KEY = 'gwm.oral.cloud.v1';
+let synced = new Set(lsGet(SYNCED_KEY, []));
+const cloud = { user: null, started: false, state: 'off' }; // off | connecting | in
+function saveSynced() { lsSet(SYNCED_KEY, Array.from(synced)); }
+
+function firebaseAdapter() {
+  let M;
+  async function load() {
+    if (M) return M;
+    const [app, auth, fs] = await Promise.all([import(FB + 'firebase-app.js'), import(FB + 'firebase-auth.js'), import(FB + 'firebase-firestore.js')]);
+    const a = app.initializeApp(FB_CONFIG, 'oral-practice');
+    M = { auth, fs, au: auth.getAuth(a), db: fs.getFirestore(a) };
+    return M;
+  }
+  const col = m => m.fs.collection(m.db, 'users', m.au.currentUser.uid, 'oralHistory');
+  return {
+    async init(cb) { const m = await load(); m.auth.onAuthStateChanged(m.au, u => cb(u ? { uid: u.uid, email: u.email } : null)); },
+    async login() { const m = await load(); await m.auth.signInWithPopup(m.au, new m.auth.GoogleAuthProvider()); },
+    async logout() { const m = await load(); await m.auth.signOut(m.au); },
+    async list() { const m = await load(); const s = await m.fs.getDocs(col(m)); return s.docs.map(d => d.data()); },
+    async put(e) { const m = await load(); await m.fs.setDoc(m.fs.doc(col(m), e.id), e); },
+    async remove(id) { const m = await load(); await m.fs.deleteDoc(m.fs.doc(col(m), id)); }
+  };
+}
+const adapter = window.__cloudAdapter || firebaseAdapter();
+
+function cloudErr(e) {
+  const c = String((e && e.code) || '');
+  if (c.includes('permission')) return '雲端沒有權限：請先到 Firebase 加上 oralHistory 的規則';
+  if (c.includes('popup')) return '登入視窗被擋住了，請允許彈出視窗後再試一次';
+  if (c.includes('cancelled') || c.includes('closed')) return '登入已取消';
+  return '雲端連線失敗：' + ((e && e.message) || e);
+}
+function renderCloud() {
+  const msg = $('#cloudMsg');
+  $('#btnLogin').hidden = cloud.state !== 'off';
+  $('#btnPull').hidden = $('#btnLogout').hidden = cloud.state !== 'in';
+  msg.textContent = cloud.state === 'in' ? `已登入 ${cloud.user.email || ''}。新存的紀錄會同步到雲端，換手機或電腦登入同一個帳號就看得到。`
+    : cloud.state === 'connecting' ? '連線中…'
+    : '目前只存在這台裝置。登入 Google 後，紀錄會同步到雲端（只有你自己看得到）。不登入也可以照常使用。';
+}
+async function cloudPut(e) {
+  if (!cloud.user) return;
+  try { await adapter.put(e); synced.add(e.id); saveSynced(); renderHist(); }
+  catch (err) { toast(cloudErr(err) + '（已先存在本機）'); }
+}
+async function cloudDel(id) {
+  if (!cloud.user || !synced.has(id)) return;
+  try { await adapter.remove(id); synced.delete(id); saveSynced(); }
+  catch (err) { toast(cloudErr(err) + '（雲端沒有刪掉，下次更新時會再出現）'); }
+}
+async function cloudPull() {
+  if (!cloud.user) return;
+  let remote;
+  try { remote = await adapter.list(); } catch (err) { toast(cloudErr(err)); return; }
+  const rmap = new Map(remote.map(r => [r.id, r]));
+  const lastOf = x => x.upd || x.ts || 0;
+  // 雲端 → 本機（新的、或比本機更新的）
+  remote.forEach(r => {
+    const l = H.find(x => x.id === r.id);
+    if (!l) H.push(r); else if (lastOf(r) > lastOf(l)) Object.assign(l, r);
+    synced.add(r.id);
+  });
+  // 其他裝置已經刪掉的（以前同步過、現在雲端沒有了）
+  const gone = H.filter(l => synced.has(l.id) && !rmap.has(l.id));
+  if (gone.length) { H = H.filter(l => !gone.includes(l)); gone.forEach(g => synced.delete(g.id)); }
+  // 本機比雲端新的、或只在本機的 → 上傳
+  const newer = H.filter(l => rmap.has(l.id) && lastOf(l) > lastOf(rmap.get(l.id)));
+  const only = H.filter(l => !rmap.has(l.id));
+  let up = newer.slice();
+  if (only.length && confirm('這台裝置有 ' + only.length + ' 筆紀錄還沒上傳到雲端，要上傳嗎？')) up = up.concat(only);
+  let fail = 0;
+  for (const e of up) { try { await adapter.put(e); synced.add(e.id); } catch (err) { fail++; if (fail === 1) toast(cloudErr(err)); } }
+  H.sort((a, b) => b.ts - a.ts);
+  saveHist(); saveSynced(); renderHist();
+  if (!fail) toast('雲端已更新（共 ' + H.length + ' 筆）');
+}
+async function startCloud() {
+  if (cloud.started) return;
+  cloud.started = true; cloud.state = 'connecting'; renderCloud();
+  try {
+    await adapter.init(async u => {
+      cloud.user = u; cloud.state = u ? 'in' : 'off'; renderCloud(); renderHist();
+      if (u) await cloudPull();
+    });
+  } catch (err) { cloud.started = false; cloud.state = 'off'; renderCloud(); toast('無法載入雲端功能，請確認網路連線'); }
+}
+$('#btnLogin').onclick = async () => {
+  try { lsSet(FLAG_KEY, 1); await startCloud(); cloud.state = cloud.user ? 'in' : 'connecting'; renderCloud(); await adapter.login(); }
+  catch (err) { cloud.state = cloud.user ? 'in' : 'off'; renderCloud(); toast(cloudErr(err)); }
+};
+$('#btnPull').onclick = () => cloudPull();
+$('#btnLogout').onclick = async () => {
+  try { await adapter.logout(); } catch (err) {}
+  try { localStorage.removeItem(FLAG_KEY); } catch (e) {}
+  cloud.user = null; cloud.state = 'off'; renderCloud(); renderHist(); toast('已登出（這台裝置上的紀錄還在）');
+};
+renderCloud();
+if (lsGet(FLAG_KEY, 0)) startCloud();
 
 renderFollow(); fillForm(); renderHist();
 </script>
