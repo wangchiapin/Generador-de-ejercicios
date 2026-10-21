@@ -171,6 +171,14 @@ summary{cursor:pointer;color:var(--accent);font-size:.86rem}
   .s-answer.pg::before{display:none}
   body.print-sheet #toast{display:none}
 }
+.pjpanel{border:1px solid var(--line);background:var(--paper);padding:6px 18px 16px;margin:18px 0 6px}
+.pjpanel h2{margin-top:14px}
+.pjbox{border:1px solid var(--line);background:#fff;padding:10px 14px;margin:10px 0}
+.pjitem{border:1px solid var(--line);background:#fff;margin:8px 0;padding:8px 14px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center}
+.pjitem b{font-weight:500}
+.pjitem small{color:var(--sub);margin-left:8px}
+.pjtag{display:inline-block;border:1px solid var(--line);color:var(--sub);font-size:.72rem;padding:0 6px;margin-left:8px}
+.pjmeter{color:var(--sub);font-size:.8rem}
 </style>
 <style id="pageStyle"></style>
 </head>
@@ -181,6 +189,7 @@ summary{cursor:pointer;color:var(--accent);font-size:.86rem}
     <div class="sub">給西語學生的華語語法練習單：出題、檢查、輸出</div>
   </div>
   <div class="proj">
+    <button class="quiet" id="btnProjList">我的練習單</button>
     <a class="filebtn quiet" href="oral-practice.html" style="border-color:var(--line);color:var(--accent);text-decoration:none">課堂口說練習設計 →</a>
     <button class="quiet" id="btnNew">新專案</button>
     <button class="quiet" id="btnSaveProj">儲存專案</button>
@@ -193,6 +202,22 @@ summary{cursor:pointer;color:var(--accent);font-size:.86rem}
   <button data-step="3">3　輸出</button>
 </nav>
 <main>
+  <section id="projPanel" class="pjpanel noprint" hidden>
+    <h2>我的練習單</h2>
+    <p class="hint">把目前這份存進清單，之後可以隨時打開。預設存在這台裝置的瀏覽器裡；登入 Google 後會同步到雲端，換手機或電腦也看得到。</p>
+    <div class="pjbox">
+      <div class="hint" id="pjCloudMsg" style="margin:0 0 8px"></div>
+      <div class="row" style="margin:0">
+        <button class="quiet" id="pjLogin">用 Google 登入同步</button>
+        <button class="quiet" id="pjPull" hidden>從雲端更新</button>
+        <button class="quiet" id="pjLogout" hidden>登出</button>
+      </div>
+    </div>
+    <div class="row"><input id="pjName" placeholder="這份的名稱（不填就用語法點）" style="max-width:420px"><button class="primary" id="pjSave">存入清單</button></div>
+    <input id="pjFilter" placeholder="搜尋清單" style="max-width:420px">
+    <div id="pjList"></div>
+    <div class="pjmeter" id="pjMeter"></div>
+  </section>
   <!-- ============ 1 出題 ============ -->
   <section id="step1" class="step on noprint">
     <h2>出題指令</h2>
@@ -1468,6 +1493,165 @@ function loadState(s) {
   state.sections = (s.sections || []).map(sec => Object.assign(blankSection(sec.type), sec, { items: (sec.items || []).map(it => Object.assign(blankItem(sec.type), it)) }));
   save(); renderStep1(); goStep(state.sections.length ? 2 : 1);
 }
+
+/* =====================================================================
+   我的練習單（專案清單）：存在瀏覽器，登入 Google 後可同步到 Firebase
+   雲端路徑：users/{uid}/worksheetProjects/{id}（規則要允許本人讀寫，見 README）
+   ===================================================================== */
+const PJ = { list: 'gwm.projects.v1', synced: 'gwm.projects.synced.v1', flag: 'gwm.projects.cloud.v1' };
+function lsSetOk(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } }
+let PL = lsGet(PJ.list, []); if (!Array.isArray(PL)) PL = [];
+let pjSynced = new Set(lsGet(PJ.synced, []));
+let currentPid = null;
+const pjCloud = { user: null, started: false, state: 'off' };
+const PJ_FB = 'https://www.gstatic.com/firebasejs/10.14.1/';
+const PJ_CONFIG = { apiKey: 'AIzaSyDB6zYAHvi0oTkObv-qDnP6nn0UUnscby0', authDomain: 'moneybook-50481.firebaseapp.com', projectId: 'moneybook-50481',
+  storageBucket: 'moneybook-50481.firebasestorage.app', messagingSenderId: '549256761796', appId: '1:549256761796:web:254332f109e7b8ad871491' };
+function pjFmt(ts) { const d = new Date(ts), p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`; }
+function pjSaveSynced() { lsSetOk(PJ.synced, Array.from(pjSynced)); }
+function pjCount(s) { return (s.sections || []).filter(x => x.enabled).reduce((n, x) => n + countPoints(x), 0); }
+// 本機格式 ↔ 雲端格式（雲端把整份專案存成一段文字，避免 Firestore 對巢狀陣列的限制）
+const toRemote = e => ({ id: e.id, ts: e.ts, upd: e.upd, name: e.name, grammar: e.grammar, count: e.count, data: JSON.stringify(e.state) });
+const fromRemote = r => { let s = null; try { s = JSON.parse(r.data); } catch (e) {} return s ? { id: r.id, ts: r.ts, upd: r.upd, name: r.name, grammar: r.grammar, count: r.count, state: s } : null; };
+
+function pjAdapterFirebase() {
+  let M;
+  async function load() {
+    if (M) return M;
+    const [app, auth, fs] = await Promise.all([import(PJ_FB + 'firebase-app.js'), import(PJ_FB + 'firebase-auth.js'), import(PJ_FB + 'firebase-firestore.js')]);
+    const a = app.initializeApp(PJ_CONFIG, 'gwm');
+    M = { auth, fs, au: auth.getAuth(a), db: fs.getFirestore(a) };
+    return M;
+  }
+  const col = m => m.fs.collection(m.db, 'users', m.au.currentUser.uid, 'worksheetProjects');
+  return {
+    async init(cb) { const m = await load(); m.auth.onAuthStateChanged(m.au, u => cb(u ? { uid: u.uid, email: u.email } : null)); },
+    async login() { const m = await load(); await m.auth.signInWithPopup(m.au, new m.auth.GoogleAuthProvider()); },
+    async logout() { const m = await load(); await m.auth.signOut(m.au); },
+    async list() { const m = await load(); const s = await m.fs.getDocs(col(m)); return s.docs.map(d => d.data()); },
+    async put(r) { const m = await load(); await m.fs.setDoc(m.fs.doc(col(m), r.id), r); },
+    async remove(id) { const m = await load(); await m.fs.deleteDoc(m.fs.doc(col(m), id)); }
+  };
+}
+const pjAdapter = window.__pjAdapter || pjAdapterFirebase();
+
+function pjErr(e) {
+  const c = String((e && e.code) || '');
+  if (c.includes('permission')) return '雲端沒有權限：請先到 Firebase 加上 worksheetProjects 的規則';
+  if (c.includes('popup')) return '登入視窗被擋住了，請允許彈出視窗後再試一次';
+  if (c.includes('cancelled') || c.includes('closed')) return '登入已取消';
+  return '雲端連線失敗：' + ((e && e.message) || e);
+}
+function renderPjCloud() {
+  $('#pjLogin').hidden = pjCloud.state !== 'off';
+  $('#pjPull').hidden = $('#pjLogout').hidden = pjCloud.state !== 'in';
+  $('#pjCloudMsg').textContent = pjCloud.state === 'in' ? `已登入 ${pjCloud.user.email || ''}。存入清單的練習單會同步到雲端。`
+    : pjCloud.state === 'connecting' ? '連線中…'
+    : '目前只存在這台裝置。登入 Google 後會同步到雲端（只有你自己看得到），不登入也可以照常使用。';
+}
+function renderPj() {
+  const q = $('#pjFilter').value.trim().toLowerCase();
+  const list = PL.filter(e => !q || (e.name + ' ' + e.grammar).toLowerCase().includes(q)).sort((a, b) => (b.upd || b.ts) - (a.upd || a.ts));
+  $('#pjList').innerHTML = list.length ? list.map(e => `
+    <div class="pjitem" data-id="${esc(e.id)}">
+      <div><b>${esc(e.name)}</b><small>${esc(pjFmt(e.upd || e.ts))}　${e.count || 0} 分</small>${pjCloud.user && !pjSynced.has(e.id) ? '<span class="pjtag">僅本機</span>' : ''}${e.id === currentPid ? '<span class="pjtag">目前開啟</span>' : ''}</div>
+      <div class="row" style="margin:0"><button class="tiny" data-a="open">開啟</button><button class="tiny" data-a="over">用目前這份覆蓋</button><button class="tiny" data-a="del">刪除</button></div>
+    </div>`).join('') : `<p class="hint">${PL.length ? '沒有符合的練習單。' : '清單還是空的。'}</p>`;
+  const pct = Math.round(JSON.stringify(PL).length * 2 / (5 * 1024 * 1024) * 100);
+  $('#pjMeter').textContent = `共 ${PL.length} 份，約佔瀏覽器可用空間的 ${pct}%` + (pct >= 70 ? '（快滿了，建議登入同步或刪掉不用的）' : '');
+}
+async function pjPut(e) {
+  if (!pjCloud.user) return;
+  try { await pjAdapter.put(toRemote(e)); pjSynced.add(e.id); pjSaveSynced(); renderPj(); }
+  catch (err) { toast(pjErr(err) + '（已先存在本機）'); }
+}
+async function pjDel(id) {
+  if (!pjCloud.user || !pjSynced.has(id)) return;
+  try { await pjAdapter.remove(id); pjSynced.delete(id); pjSaveSynced(); }
+  catch (err) { toast(pjErr(err) + '（雲端沒有刪掉，下次更新時會再出現）'); }
+}
+async function pjPull() {
+  if (!pjCloud.user) return;
+  let remote;
+  try { remote = (await pjAdapter.list()).map(r => fromRemote(r)).filter(Boolean); } catch (err) { toast(pjErr(err)); return; }
+  const rmap = new Map(remote.map(r => [r.id, r]));
+  const last = x => x.upd || x.ts || 0;
+  remote.forEach(r => {
+    const l = PL.find(x => x.id === r.id);
+    if (!l) PL.push(r); else if (last(r) > last(l)) Object.assign(l, r);
+    pjSynced.add(r.id);
+  });
+  const gone = PL.filter(l => pjSynced.has(l.id) && !rmap.has(l.id));
+  if (gone.length) { PL = PL.filter(l => !gone.includes(l)); gone.forEach(g => pjSynced.delete(g.id)); if (gone.some(g => g.id === currentPid)) currentPid = null; }
+  const newer = PL.filter(l => rmap.has(l.id) && last(l) > last(rmap.get(l.id)));
+  const only = PL.filter(l => !rmap.has(l.id));
+  let up = newer.slice();
+  if (only.length && confirm('這台裝置有 ' + only.length + ' 份練習單還沒上傳到雲端，要上傳嗎？')) up = up.concat(only);
+  let fail = 0;
+  for (const e of up) { try { await pjAdapter.put(toRemote(e)); pjSynced.add(e.id); } catch (err) { fail++; if (fail === 1) toast(pjErr(err)); } }
+  if (!lsSetOk(PJ.list, PL)) toast('瀏覽器空間不夠，部分雲端內容沒存到這台裝置');
+  pjSaveSynced(); renderPj();
+  if (!fail) toast('雲端已更新（共 ' + PL.length + ' 份）');
+}
+async function startPjCloud() {
+  if (pjCloud.started) return;
+  pjCloud.started = true; pjCloud.state = 'connecting'; renderPjCloud();
+  try {
+    await pjAdapter.init(async u => {
+      pjCloud.user = u; pjCloud.state = u ? 'in' : 'off'; renderPjCloud(); renderPj();
+      if (u) await pjPull();
+    });
+  } catch (err) { pjCloud.started = false; pjCloud.state = 'off'; renderPjCloud(); toast('無法載入雲端功能，請確認網路連線'); }
+}
+$('#btnProjList').addEventListener('click', () => {
+  const p = $('#projPanel'); p.hidden = !p.hidden;
+  if (!p.hidden) { if (!$('#pjName').value) $('#pjName').value = ''; renderPj(); p.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+});
+$('#pjFilter').addEventListener('input', renderPj);
+$('#pjSave').addEventListener('click', () => {
+  if (!state.sections.length) { toast('目前還沒有題目可以存'); return; }
+  const now = Date.now();
+  const e = { id: 'p' + now.toString(36) + Math.random().toString(36).slice(2, 5), ts: now, upd: now,
+    name: $('#pjName').value.trim() || state.meta.grammar || '未命名練習單', grammar: state.meta.grammar || '',
+    count: pjCount(state), state: JSON.parse(JSON.stringify(state)) };
+  PL.unshift(e);
+  if (!lsSetOk(PJ.list, PL)) { PL.shift(); toast('瀏覽器空間不夠了，請先刪掉不用的，或登入同步後再刪'); return; }
+  currentPid = e.id; $('#pjName').value = ''; renderPj(); toast('已存入清單'); pjPut(e);
+});
+$('#pjList').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b || !b.dataset.a) return;
+  const id = b.closest('.pjitem').dataset.id, item = PL.find(x => x.id === id); if (!item) return;
+  const a = b.dataset.a;
+  if (a === 'open') {
+    const cur = PL.find(x => x.id === currentPid);
+    const saved = cur && JSON.stringify(cur.state) === JSON.stringify(state);
+    if (state.sections.length && !saved && !confirm('目前這份還沒存進清單，打開別份會把它換掉。\n（頁面只會自動記住最後一份）\n\n確定要打開「' + item.name + '」嗎？')) return;
+    loadState(JSON.parse(JSON.stringify(item.state))); currentPid = item.id; $('#projPanel').hidden = true; toast('已打開「' + item.name + '」');
+  } else if (a === 'over') {
+    if (!state.sections.length) { toast('目前還沒有題目'); return; }
+    if (!confirm('用目前這份覆蓋「' + item.name + '」？原本的內容會被取代。')) return;
+    const old = { state: item.state, upd: item.upd, grammar: item.grammar, count: item.count };
+    item.state = JSON.parse(JSON.stringify(state)); item.upd = Date.now(); item.grammar = state.meta.grammar || ''; item.count = pjCount(state);
+    if (!lsSetOk(PJ.list, PL)) { Object.assign(item, old); toast('瀏覽器空間不夠，沒有存成功'); return; }
+    currentPid = item.id; renderPj(); toast('已覆蓋'); pjPut(item);
+  } else if (a === 'del') {
+    if (!confirm('刪除「' + item.name + '」？')) return;
+    PL = PL.filter(x => x !== item); if (currentPid === id) currentPid = null;
+    lsSetOk(PJ.list, PL); renderPj(); pjDel(id);
+  }
+});
+$('#pjLogin').addEventListener('click', async () => {
+  try { lsSetOk(PJ.flag, 1); await startPjCloud(); pjCloud.state = pjCloud.user ? 'in' : 'connecting'; renderPjCloud(); await pjAdapter.login(); }
+  catch (err) { pjCloud.state = pjCloud.user ? 'in' : 'off'; renderPjCloud(); toast(pjErr(err)); }
+});
+$('#pjPull').addEventListener('click', () => pjPull());
+$('#pjLogout').addEventListener('click', async () => {
+  try { await pjAdapter.logout(); } catch (err) {}
+  try { localStorage.removeItem(PJ.flag); } catch (e) {}
+  pjCloud.user = null; pjCloud.state = 'off'; renderPjCloud(); renderPj(); toast('已登出（這台裝置上的清單還在）');
+});
+renderPjCloud();
+if (lsGet(PJ.flag, 0)) startPjCloud();
 
 /* =====================================================================
    啟動

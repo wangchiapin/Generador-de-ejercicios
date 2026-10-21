@@ -23,15 +23,20 @@
 - 「後續指令」按鈕：一鍵複製常用的追問，貼回同一個 AI 對話繼續用。
 - 歷史紀錄：貼上 AI 的分析，連同當時的設定一起存起來，可搜尋、載入設定、修改、刪除，也能匯出／匯入備份。預設**只存在這台裝置的瀏覽器裡**，換裝置或清除瀏覽器資料就看不到，重要的請定期匯出備份。
 - 雲端同步（選用）：按「用 Google 登入同步」，紀錄會存到 Firebase 專案 `moneybook-50481`（路徑 `users/{uid}/oralHistory`），換手機或電腦登入同一個 Google 帳號就看得到。不登入照常使用。
-  - **使用前要在 Firebase 的 Firestore 規則加上這一段**（放在 `match /databases/{database}/documents {` 裡面）。規則整個專案只有一份，要在現有規則上**加一段**，不要整份換掉：
+  - **使用前要在 Firebase 的 Firestore 規則加上這兩段**（放在 `match /databases/{database}/documents {` 裡面）。規則整個專案只有一份，要在現有規則上**加**，不要整份換掉（口說歷史用第一段，練習單清單用第二段）：
     ```
     match /users/{uid}/oralHistory/{id} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+    match /users/{uid}/worksheetProjects/{id} {
       allow read, write: if request.auth != null && request.auth.uid == uid;
     }
     ```
   - 登入時才會同步刪除；沒登入時刪掉的紀錄，下次登入更新時可能會從雲端再出現。
 
 ## 練習單產生器能做什麼
+
+> **我的練習單**：頁面右上角的「我的練習單」可以把目前這份存進清單，之後隨時開啟、用目前這份覆蓋、刪除、搜尋。預設存在瀏覽器；登入 Google 後同步到 Firebase（`users/{uid}/worksheetProjects`），跟口說頁共用同一個登入。原本的「儲存專案」（下載成檔案）仍然可以用。
 
 1. **出題**：填語法點（1～3 個）、程度、題數，工具產生一段「出題指令」，複製後貼給任何 AI（Claude、ChatGPT、Gemini 都可以）。
 2. **貼回**：把 AI 的回覆整段貼回來。前後有說明文字、程式碼框、多餘逗號都沒關係，格式錯了會用中文告訴你錯在哪裡。
