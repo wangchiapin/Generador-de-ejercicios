@@ -6,235 +6,87 @@
 <title>對話教材 Prompt 產生器</title>
 <style>
   :root{
-    --brick:#a63d2f;
-    --brick-dark:#82301f;
-    --jade:#3f7a5f;
-    --jade-dark:#2e5c46;
-    --gold:#c9a24b;
-    --cream:#f6f0e2;
-    --cream-dark:#ece2c9;
-    --ink:#2b2620;
+    --bg:#ffffff; --paper:#f7f6f3; --ink:#333333; --sub:#6f6c66; --line:#dedbd5; --accent:#5f5a53;
   }
   *{box-sizing:border-box;}
+  [hidden]{display:none!important;}
+  html{font-size:17px;}
   body{
     margin:0;
-    font-family:"PingFang TC","Microsoft JhengHei","Noto Sans TC",sans-serif;
-    background:var(--cream);
+    font-family:"Noto Sans TC","PingFang TC","Hiragino Sans TC","Microsoft JhengHei",system-ui,sans-serif;
+    background:var(--bg);
     color:var(--ink);
-    line-height:1.6;
-  }
-  .wrap{
-    max-width:760px;
-    margin:0 auto;
-    padding:32px 20px 60px;
-  }
-  header{
-    display:flex;
-    align-items:center;
-    gap:16px;
-    margin-bottom:28px;
-    border-bottom:3px double var(--brick);
-    padding-bottom:16px;
-  }
-  .stamp{
-    width:56px;
-    height:56px;
-    flex-shrink:0;
-    border:3px solid var(--brick);
-    border-radius:6px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    color:var(--brick);
-    font-size:26px;
-    font-weight:700;
-    transform:rotate(-4deg);
-    background:rgba(166,61,47,0.06);
-  }
-  h1{
-    font-size:20px;
-    margin:0;
-    color:var(--brick-dark);
-    letter-spacing:1px;
-  }
-  h1 span{
-    display:block;
-    font-size:12px;
-    font-weight:400;
-    color:var(--ink);
-    opacity:0.65;
-    margin-top:4px;
-    letter-spacing:0.5px;
-  }
-  .card{
-    background:#fff;
-    border:1px solid var(--cream-dark);
-    border-radius:10px;
-    padding:24px;
-    margin-bottom:20px;
-    box-shadow:0 1px 3px rgba(0,0,0,0.05);
-  }
-  .field{margin-bottom:18px;}
-  .field:last-child{margin-bottom:0;}
-  label{
-    display:block;
-    font-size:13px;
-    font-weight:700;
-    color:var(--jade-dark);
-    margin-bottom:6px;
-  }
-  .hint{
-    font-size:12px;
-    color:var(--ink);
-    opacity:0.55;
-    margin-top:4px;
-  }
-  select, input[type=text], input[type=number], textarea{
-    width:100%;
-    padding:10px 12px;
-    border:1.5px solid var(--cream-dark);
-    border-radius:6px;
-    font-size:14px;
-    font-family:inherit;
-    color:var(--ink);
-    background:var(--cream);
-    transition:border-color .15s;
-  }
-  select:focus, input:focus, textarea:focus{
-    outline:none;
-    border-color:var(--jade);
-  }
-  textarea{resize:vertical;}
-  .row2{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:16px;
-  }
-  @media (max-width:520px){
-    .row2{grid-template-columns:1fr;}
-  }
-  button{
-    cursor:pointer;
-    border:none;
-    border-radius:6px;
-    font-family:inherit;
-    font-weight:700;
-    font-size:14px;
-  }
-  .btn-generate{
-    width:100%;
-    padding:14px;
-    background:var(--brick);
-    color:#fff;
-    letter-spacing:2px;
-    margin-top:6px;
-  }
-  .btn-generate:hover{background:var(--brick-dark);}
-  .btn-copy{
-    padding:8px 16px;
-    background:var(--jade);
-    color:#fff;
-    font-size:13px;
-  }
-  .btn-copy:hover{background:var(--jade-dark);}
-  .btn-copy.copied{background:var(--gold);}
-  .output-head{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-bottom:10px;
-  }
-  .output-head label{margin:0;}
-  #output{
-    width:100%;
-    min-height:360px;
-    font-size:13px;
     line-height:1.7;
-    white-space:pre-wrap;
-    font-family:"Courier New",monospace;
+    letter-spacing:.02em;
+    -webkit-font-smoothing:antialiased;
   }
+  .wrap{max-width:900px;margin:0 auto;padding:36px 24px 80px;}
+  header{
+    display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;
+    margin-bottom:28px;border-bottom:1px solid var(--line);padding-bottom:14px;
+  }
+  h1{font-size:1.35rem;font-weight:500;letter-spacing:.08em;margin:0;color:var(--ink);}
+  h1 span{display:block;font-size:.8rem;font-weight:400;color:var(--sub);margin-top:2px;letter-spacing:.02em;}
+  .card{background:#fff;border:0;padding:0;margin-bottom:34px;}
+  .card + .card{border-top:1px solid var(--line);padding-top:30px;}
+  .field{margin-bottom:16px;}
+  .field:last-child{margin-bottom:0;}
+  label{display:block;font-size:.84rem;font-weight:400;color:var(--sub);margin-bottom:3px;letter-spacing:.06em;}
+  .hint{font-size:.8rem;color:var(--sub);margin-top:4px;}
+  select, input[type=text], input[type=number], textarea{
+    width:100%;padding:8px 11px;border:1px solid #c9c5bd;border-radius:0;
+    font-size:1rem;font-family:inherit;color:var(--ink);background:#fff;letter-spacing:.02em;
+  }
+  select:focus, input:focus, textarea:focus{outline:none;border-color:var(--ink);}
+  textarea{resize:vertical;line-height:1.6;}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  @media (max-width:640px){.row2{grid-template-columns:1fr;}}
+  button{
+    cursor:pointer;font-family:inherit;font-size:.88rem;letter-spacing:.05em;
+    color:var(--ink);background:transparent;border:1px solid var(--ink);border-radius:0;padding:5px 14px;
+  }
+  button:hover{background:#efede8;}
+  .btn-generate{background:var(--ink);color:#fff;padding:9px 18px;margin-top:6px;}
+  .btn-generate:hover{background:#4a4a4a;}
+  .btn-copy{padding:5px 14px;}
+  .btn-copy.copied{background:#efede8;border-color:var(--line);color:var(--accent);}
+  .btn-quiet{border-color:var(--line);color:var(--accent);}
+  .output-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:10px;}
+  .output-head label{margin:0;}
+  #output,#output2{
+    width:100%;min-height:340px;font-size:.82rem;line-height:1.65;white-space:pre-wrap;
+    font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;background:var(--paper);
+  }
+  #output2{min-height:220px;}
   .result-card{display:none;}
-  .steps{
-    font-size:12px;
-    color:var(--ink);
-    opacity:0.6;
-    margin-top:14px;
-    padding-top:14px;
-    border-top:1px dashed var(--cream-dark);
-  }
-  .steps ol{margin:6px 0 0; padding-left:18px;}
-  .steps li{margin-bottom:4px;}
-  #lineEditor{display:none; margin-top:16px; padding-top:16px; border-top:1px dashed var(--cream-dark);}
-  .line-editor-head{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-bottom:12px;
-  }
-  .line-card{
-    border:1px solid var(--cream-dark);
-    border-radius:8px;
-    padding:12px 14px;
-    margin-bottom:12px;
-    background:var(--cream);
-  }
-  .line-card-head{
-    display:flex;
-    align-items:center;
-    gap:8px;
-    margin-bottom:8px;
-    flex-wrap:wrap;
-  }
-  .line-num{
-    font-size:12px;
-    font-weight:700;
-    color:var(--brick-dark);
-  }
-  .line-card select{
-    width:auto;
-    padding:4px 8px;
-    font-size:12px;
-  }
-  .mini-label{
-    font-size:11px;
-    font-weight:700;
-    color:var(--jade-dark);
-    opacity:0.8;
-    margin:6px 0 2px;
-  }
-  .line-card textarea{
-    font-size:13px;
-    padding:6px 8px;
-    margin-bottom:2px;
-    background:#fff;
-  }
-  .btn-split{
-    padding:4px 10px;
-    background:var(--gold);
-    color:#fff;
-    font-size:12px;
-    border-radius:5px;
-  }
-  .btn-split:hover{background:#b38f3d;}
-  .btn-del{
-    padding:4px 10px;
-    background:transparent;
-    color:var(--brick);
-    border:1px solid var(--brick);
-    font-size:12px;
-    border-radius:5px;
-  }
-  .btn-del:hover{background:rgba(166,61,47,0.08);}
+  .steps{font-size:.84rem;color:var(--sub);margin-top:14px;padding-top:12px;border-top:1px solid var(--line);}
+  .steps ol{margin:6px 0 0;padding-left:20px;}
+  .steps li{margin-bottom:3px;}
+  #lineEditor{display:none;margin-top:16px;padding-top:16px;border-top:1px solid var(--line);}
+  .line-editor-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+  .line-card{border:1px solid var(--line);padding:10px 14px;margin-bottom:10px;background:var(--paper);}
+  .line-card-head{display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap;}
+  .line-num{font-size:.84rem;color:var(--ink);}
+  .line-card select{width:auto;padding:2px 8px;font-size:.84rem;}
+  .mini-label{font-size:.76rem;font-weight:400;color:var(--sub);margin:6px 0 2px;}
+  .line-card textarea{font-size:.92rem;padding:6px 8px;margin-bottom:2px;background:#fff;}
+  .btn-split,.btn-del{padding:1px 9px;font-size:.78rem;border-color:var(--line);color:var(--accent);}
+  .topbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+  .topbar a{font-size:.86rem;color:var(--accent);}
 </style>
 </head>
 <body>
 <div class="wrap">
 
   <header>
-    <div class="stamp">語</div>
     <h1>對話教材 Prompt 產生器
       <span>輸入條件 → 產生可貼給 ChatGPT / Gemini 的指令</span>
     </h1>
+    <div class="topbar">
+      <a href="index.html">語法練習單產生器</a>
+      <a href="oral-practice.html">課堂口說練習設計</a>
+      <button type="button" class="btn-quiet" id="btnResetAll" title="清掉所有填寫的內容">全部清空</button>
+    </div>
   </header>
 
   <div class="card">
@@ -313,7 +165,7 @@
       <label for="dialogueContent">STEP 2：貼上剛剛 AI 產生的對話內容</label>
       <textarea id="dialogueContent" rows="8" oninput="onDialogueTyped()" placeholder="把 ChatGPT / Gemini 回覆的對話內容整段貼在這裡（含中英西翻譯即可，不用整理格式）"></textarea>
       <div class="hint">貼上原始內容即可。想確認或分開句子，按下面的按鈕；下方的圖片 Prompt 也會用這裡的內容。</div>
-      <button type="button" class="btn-copy" style="margin-top:10px; width:100%;" onclick="parseDialogueLines()">拆解成可編輯清單（確認要不要分句）</button>
+      <button type="button" class="btn-copy" style="margin-top:10px;" onclick="parseDialogueLines()">拆解成可編輯清單（確認要不要分句）</button>
       <div class="hint" id="parseStatus"></div>
 
       <div id="lineEditor">
@@ -322,7 +174,7 @@
         </div>
         <div class="hint" style="margin-top:-6px; margin-bottom:12px;">想自己決定切在哪裡：在中文、EN、ES 的文字框裡點一下游標，再按「分開這句」，就會切在游標的位置。沒點過游標的語言，會自動找標點符號來切。你在這裡改的內容，會即時同步到上方文字框。</div>
         <div id="lineEditorList"></div>
-        <button type="button" class="btn-copy" id="copyDialogueBtn" style="width:100%;" onclick="copyDialogueContent(this)">複製分開後的對話</button>
+        <button type="button" class="btn-copy" id="copyDialogueBtn" onclick="copyDialogueContent(this)">複製分開後的對話</button>
       </div>
     </div>
 
@@ -532,6 +384,7 @@ function buildDialogueText(){
 
 function syncToTextarea(){
   document.getElementById('dialogueContent').value = buildDialogueText();
+  saveFields();
 }
 
 function onLineInput(i, key, value){
@@ -750,6 +603,38 @@ function copyOutput2(){
 function copyOutput(){
   copyText(document.getElementById('output').value, document.getElementById('copyBtn'));
 }
+
+/* ---------- 自動記住填寫的內容（重新整理、關掉再開都還在，只存在這台裝置的瀏覽器） ---------- */
+const SAVE_IDS = ['hsk','lines','topic','genderA','genderB','notes','dialogueContent','imgPlatform','imgStyle','styleExtra'];
+const SAVE_KEY = 'gwm.dialogue.v1';
+function saveFields(){
+  try{
+    const o = {};
+    SAVE_IDS.forEach(id => { o[id] = document.getElementById(id).value; });
+    localStorage.setItem(SAVE_KEY, JSON.stringify(o));
+  }catch(e){}
+}
+function restoreFields(){
+  try{
+    const o = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null');
+    if(!o) return;
+    SAVE_IDS.forEach(id => {
+      const el = document.getElementById(id);
+      if(el && o[id] !== undefined) el.value = o[id];
+    });
+  }catch(e){}
+}
+SAVE_IDS.forEach(id => {
+  const el = document.getElementById(id);
+  el.addEventListener('input', saveFields);
+  el.addEventListener('change', saveFields);
+});
+restoreFields();
+document.getElementById('btnResetAll').addEventListener('click', () => {
+  if(!confirm('清掉所有填寫的內容（包含貼上的對話）？')) return;
+  try{ localStorage.removeItem(SAVE_KEY); }catch(e){}
+  location.reload();
+});
 </script>
 </body>
 </html>
