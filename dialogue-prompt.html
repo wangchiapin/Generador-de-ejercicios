@@ -73,9 +73,15 @@
   .btn-split,.btn-del{padding:1px 9px;font-size:.78rem;border-color:var(--line);color:var(--accent);}
   .topbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
   .topbar a{font-size:.86rem;color:var(--accent);}
+  .sitebar{max-width:900px;margin:0 auto;padding:14px 24px 0;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .sitetabs{display:flex;gap:22px;flex-wrap:wrap}
+  .sitetabs a{color:var(--sub);text-decoration:none;font-size:.9rem;letter-spacing:.06em;padding:4px 0;border-bottom:2px solid transparent}
+  .sitetabs a.on{color:var(--ink);border-bottom-color:var(--ink)}
+  @media(max-width:640px){.sitebar{padding:12px 16px 0}.sitetabs{gap:16px}}
 </style>
 </head>
 <body>
+<div class="sitebar"><nav class="sitetabs"><a href="index.html">練習單</a><a href="oral-practice.html">口說練習</a><a href="dialogue-prompt.html" class="on">對話教材</a></nav></div>
 <div class="wrap">
 
   <header>
@@ -83,8 +89,6 @@
       <span>輸入條件 → 產生可貼給 ChatGPT / Gemini 的指令</span>
     </h1>
     <div class="topbar">
-      <a href="index.html">語法練習單產生器</a>
-      <a href="oral-practice.html">課堂口說練習設計</a>
       <button type="button" class="btn-quiet" id="btnResetAll" title="清掉所有填寫的內容">全部清空</button>
     </div>
   </header>

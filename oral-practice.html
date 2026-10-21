@@ -22,7 +22,7 @@ header.bar .sub{color:var(--sub);font-size:.8rem;margin-top:2px}
 header.bar a{color:var(--accent);font-size:.86rem}
 main{max-width:900px;margin:0 auto;padding:8px 24px 80px}
 h2{font-size:1.05rem;font-weight:500;letter-spacing:.06em;margin:32px 0 6px}
-p.hint{color:var(--sub);font-size:.86rem;margin:2px 0 14px}
+p.hint,div.hint{color:var(--sub);font-size:.86rem;margin:2px 0 14px}
 hr{border:0;border-top:1px solid var(--line);margin:34px 0 6px}
 button,.filebtn{font:inherit;font-size:.88rem;letter-spacing:.05em;color:var(--ink);background:transparent;
   border:1px solid var(--ink);border-radius:0;padding:5px 14px;cursor:pointer;display:inline-block}
@@ -45,8 +45,6 @@ input[type=checkbox]{accent-color:#333;width:auto}
 .ptrow{display:flex;gap:8px;margin:0 0 8px}
 .ptrow button{flex:none}
 .chk{display:flex;gap:8px;align-items:baseline;cursor:pointer;font-size:.92rem;margin:4px 0}
-.modes{display:grid;grid-template-columns:1fr 1fr;gap:2px 20px;margin:6px 0}
-@media(max-width:640px){.modes{grid-template-columns:1fr}}
 .box{border:1px solid var(--line);padding:12px 16px;margin:14px 0;background:var(--paper)}
 .box h3{margin:0 0 4px;font-size:.92rem;font-weight:500;letter-spacing:.06em}
 .chips{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}
@@ -68,19 +66,40 @@ input[type=checkbox]{accent-color:#333;width:auto}
 #toast.on{opacity:.95}
 details{margin:6px 0}
 summary{cursor:pointer;color:var(--accent);font-size:.86rem}
+
+.sitebar{max-width:900px;margin:0 auto;padding:14px 24px 0;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.sitetabs{display:flex;gap:22px;flex-wrap:wrap}
+.sitetabs a{color:var(--sub);text-decoration:none;font-size:.9rem;letter-spacing:.06em;padding:4px 0;border-bottom:2px solid transparent}
+.sitetabs a.on{color:var(--ink);border-bottom-color:var(--ink)}
+.siteauth{display:flex;align-items:center;gap:8px;font-size:.8rem;color:var(--sub)}
+@media(max-width:640px){.sitebar{padding:12px 16px 0}.sitetabs{gap:16px}header.bar{padding:22px 16px 10px}main{padding:8px 16px 80px}}
+.tabs{display:flex;gap:26px;max-width:900px;margin:0 auto;padding:0 24px;border-bottom:1px solid var(--line)}
+.tabs button{border:0;border-bottom:2px solid transparent;padding:10px 0;color:var(--sub);background:none;font-size:.95rem}
+.tabs button:hover{background:none}
+.tabs button.on{color:var(--ink);border-bottom-color:var(--ink)}
+.modes{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.modes label{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);padding:4px 12px;cursor:pointer;font-size:.88rem;margin:0}
+.modes label:has(input:checked){border-color:var(--ink);background:var(--paper)}
+.modes input{position:absolute;opacity:0;width:0;height:0}
+.stickybar{position:sticky;bottom:0;background:#fff;border-top:1px solid var(--line);padding:10px 0;margin-top:22px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;z-index:5}
+h2 .no{display:inline-block;min-width:1.6em;color:var(--sub);font-weight:400}
 </style>
 </head>
 <body>
+<div class="sitebar">
+  <nav class="sitetabs"><a href="index.html">練習單</a><a href="oral-practice.html" class="on">口說練習</a><a href="dialogue-prompt.html">對話教材</a></nav>
+  <div class="siteauth"><button class="quiet" id="btnLogin">登入同步</button><button class="tiny" id="btnLogout" hidden>登出</button></div>
+</div>
 <header class="bar">
   <div>
-    <h1>課堂口說練習設計小幫手</h1>
+    <h1>課堂口說練習設計</h1>
     <div class="sub">填好語法點，複製提示詞，貼給任何 AI（Claude、ChatGPT、Gemini 都可以）</div>
   </div>
-  <a href="index.html">→ 語法練習單產生器（紙本練習單）</a>
 </header>
+<nav class="tabs"><button class="on" data-tab="design">設計</button><button data-tab="history">歷史紀錄</button></nav>
 <main>
-
-  <h2>1　要練什麼</h2>
+<section id="tabDesign">
+  <h2><span class="no">①</span>要練什麼</h2>
   <div class="fld"><label>語法點（可按「＋」新增，最多 6 個；填 2 個以上會多要一份「組合練習方案」）</label>
     <div id="ptInputs"></div>
     <div class="row" style="margin:4px 0">
@@ -88,58 +107,49 @@ summary{cursor:pointer;color:var(--accent);font-size:.86rem}
       <button class="quiet" id="btnFromWs" title="從「語法練習單產生器」目前的專案帶入語法點">從練習單帶入語法點</button>
     </div>
   </div>
-
   <div class="grid2">
     <div class="fld"><label>學生程度</label>
       <select id="fLevel"><option value="">不指定</option><option>A1</option><option>A2</option><option>B1</option><option>B2</option></select></div>
     <div class="fld"><label>課堂時間</label><input id="fTime" placeholder="例如：20 分鐘"></div>
   </div>
   <div class="fld"><label>主題</label><input id="fTopic" placeholder="例如：旅行、租房、餐廳"></div>
-  <div class="fld"><label>已學過的詞彙</label><textarea id="fVocab" rows="2" placeholder="貼上學生已經學過的詞彙"></textarea></div>
-  <div class="fld"><label>教材內容</label><textarea id="fMaterial" rows="2" placeholder="貼上課本或簡報裡的相關內容"></textarea></div>
-  <div class="fld"><label>例句</label><textarea id="fExamples" rows="2" placeholder="貼上你想用的例句"></textarea></div>
+  <details><summary>更多條件（已學詞彙、教材內容、例句、學生常犯的錯）</summary>
+    <div class="fld" style="margin-top:8px"><label>已學過的詞彙</label><textarea id="fVocab" rows="2" placeholder="貼上學生已經學過的詞彙"></textarea></div>
+    <div class="fld"><label>教材內容</label><textarea id="fMaterial" rows="2" placeholder="貼上課本或簡報裡的相關內容"></textarea></div>
+    <div class="fld"><label>例句</label><textarea id="fExamples" rows="2" placeholder="貼上你想用的例句"></textarea></div>
+    <details class="fld" id="errDet"><summary>學生常犯的錯（跟「練習單」頁共用，那邊寫過的這裡會自動帶出來）<span id="errCount"></span></summary>
+      <div id="errBox" style="margin-top:8px"></div></details>
+  </details>
 
-  <details class="fld" id="errDet"><summary>學生常犯的錯（選填；跟「語法練習單產生器」共用，那邊寫過的這裡會自動帶出來）<span id="errCount"></span></summary>
-    <div id="errBox" style="margin-top:8px"></div></details>
-
-  <h2>2　翻譯與練習模式</h2>
+  <h2 style="margin-top:34px"><span class="no">②</span>輸出選項</h2>
   <div class="row" style="margin:4px 0">
     <label class="chk"><input type="checkbox" id="fEs"> 附上西班牙文翻譯</label>
     <label class="chk"><input type="checkbox" id="fEn"> 附上英文翻譯</label>
   </div>
-  <p class="hint">兩個可以分開勾選，都不勾就不附翻譯。</p>
-
   <div class="fld"><label>練習模式（不勾＝讓 AI 自己挑最適合的 4～7 種；有勾＝只從勾的裡面選）</label>
     <div class="modes" id="modes"></div></div>
-
   <div class="fld"><label>我想要的</label>
     <select id="fScope">
       <option value="">先分析語法，選出練習模式（預設）</option>
       <option value="full">直接產生完整教材（所有推薦的練習一次產生）</option>
     </select></div>
+  <details><summary>看提示詞內容</summary><textarea id="promptView" readonly rows="16"></textarea></details>
 
-  <div class="row">
+  <details style="margin-top:18px"><summary>AI 回覆之後的後續指令</summary>
+    <p class="hint" style="margin-top:8px">在<b>同一個對話</b>裡繼續。按一下就複製那句指令，貼過去即可。</p>
+    <div class="chips" id="follow"></div></details>
+
+  <div class="stickybar">
     <button class="primary" id="btnCopy">複製提示詞</button>
     <button class="quiet" id="btnClear">清空</button>
   </div>
-  <details><summary>看提示詞內容</summary><textarea id="promptView" readonly rows="16"></textarea></details>
+</section>
 
-  <hr>
-  <h2>3　後續指令</h2>
-  <p class="hint">AI 回覆之後，在<b>同一個對話</b>裡繼續。按一下就複製那句指令，貼過去即可。</p>
-  <div class="chips" id="follow"></div>
-
-  <hr>
-  <h2>4　歷史紀錄</h2>
-  <p class="hint">把 AI 回的分析貼在下面，連同目前填的設定一起存起來。存在這台裝置的瀏覽器裡，不會上傳到任何地方。</p>
-  <div class="box" id="cloudBox">
-    <div class="hint" id="cloudMsg" style="margin:0 0 8px"></div>
-    <div class="row" style="margin:0">
-      <button class="quiet" id="btnLogin">用 Google 登入同步</button>
-      <button class="quiet" id="btnPull" hidden>從雲端更新</button>
-      <button class="quiet" id="btnLogout" hidden>登出</button>
-    </div>
-  </div>
+<section id="tabHistory" hidden>
+  <h2>歷史紀錄</h2>
+  <p class="hint">把 AI 回的分析貼在下面，連同設計頁目前的設定一起存起來。預設只存在這台裝置的瀏覽器；登入後會同步到雲端。</p>
+  <div class="hint" id="cloudMsg" style="margin:0 0 4px"></div>
+  <div class="row" style="margin:0 0 10px"><button class="quiet" id="btnPull" hidden>從雲端更新</button></div>
   <div class="fld"><label>AI 的分析（貼上）</label><textarea id="hAnalysis" rows="6" placeholder="把 AI 回覆的分析貼在這裡"></textarea></div>
   <div class="fld"><label>備註（選填）</label><input id="hNote" placeholder="例如：上課時第二個活動效果很好"></div>
   <div class="row"><button class="primary" id="btnSave">存到歷史紀錄</button></div>
@@ -153,6 +163,7 @@ summary{cursor:pointer;color:var(--accent);font-size:.86rem}
   </div>
   <div class="meter" id="meter"></div>
   <div id="histList"></div>
+</section>
 </main>
 <div id="toast"></div>
 
@@ -697,6 +708,13 @@ function buildPrompt() {
 function refresh() { $('#promptView').value = buildPrompt(); saveForm(); }
 
 /* ---------- 語法點欄位 ---------- */
+function showTab(t) {
+  $('#tabDesign').hidden = t !== 'design'; $('#tabHistory').hidden = t !== 'history';
+  $$('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
+  try { sessionStorage.setItem('gwm.oral.tab', t); } catch (e) {}
+}
+$$('.tabs button').forEach(b => b.onclick = () => showTab(b.dataset.tab));
+try { const t = sessionStorage.getItem('gwm.oral.tab'); if (t) showTab(t); } catch (e) {}
 function renderPts() {
   $('#ptInputs').innerHTML = F.points.map((p, i) =>
     `<div class="ptrow"><input data-pt="${i}" value="${esc(p)}" placeholder="${i === 0 ? '語法點 1，例如：越……越……' : '語法點 ' + (i + 1)}">` +
@@ -733,7 +751,7 @@ const FIELDS = { fLevel: 'level', fTime: 'time', fTopic: 'topic', fVocab: 'vocab
 Object.entries(FIELDS).forEach(([id, k]) => $('#' + id).addEventListener('input', e => { F[k] = e.target.value; refresh(); }));
 $('#fEs').onchange = e => { F.es = e.target.checked; refresh(); };
 $('#fEn').onchange = e => { F.en = e.target.checked; refresh(); };
-$('#modes').innerHTML = MODES.map((m, i) => `<label class="chk"><input type="checkbox" data-mode="${esc(m)}"> ${i + 1}. ${esc(m)}</label>`).join('');
+$('#modes').innerHTML = MODES.map((m, i) => `<label><input type="checkbox" data-mode="${esc(m)}">${i + 1}. ${esc(m)}</label>`).join('');
 $('#modes').addEventListener('change', e => {
   if (e.target.dataset.mode === undefined) return;
   F.modes = $$('#modes input:checked').map(x => x.dataset.mode); refresh();
@@ -821,7 +839,7 @@ $('#histList').addEventListener('click', async e => {
   const box = b.closest('.hist'), h = H.find(x => x.id === box.dataset.id); if (!h) return;
   const a = b.dataset.a;
   if (a === 'open') { box.classList.toggle('open'); b.textContent = box.classList.contains('open') ? '收合' : '展開'; }
-  else if (a === 'load') { F = Object.assign(blank(), JSON.parse(JSON.stringify(h.form || {}))); if (!F.points || !F.points.length) F.points = ['']; fillForm(); toast('已載入當時的設定'); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+  else if (a === 'load') { F = Object.assign(blank(), JSON.parse(JSON.stringify(h.form || {}))); if (!F.points || !F.points.length) F.points = ['']; fillForm(); toast('已載入當時的設定'); showTab('design'); window.scrollTo({ top: 0, behavior: 'smooth' }); }
   else if (a === 'ws') {
     const p = ((h.form && h.form.points) || []).map(x => String(x || '').trim()).filter(Boolean);
     if (!p.length) { toast('這筆紀錄沒有語法點'); return; }

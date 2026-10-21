@@ -59,7 +59,7 @@ input[type=checkbox],input[type=radio]{accent-color:#333;width:auto}
 .msg .bad{color:var(--warn);background:var(--warnbg);padding:10px 12px;border-left:2px solid var(--warn);white-space:pre-wrap}
 details{margin:6px 0}
 summary{cursor:pointer;color:var(--accent);font-size:.86rem}
-.summary{border:1px solid var(--line);padding:12px 16px;margin:18px 0;display:flex;justify-content:space-between;
+.summary{position:sticky;top:0;z-index:6;background:#fff;border:1px solid var(--line);padding:10px 16px;margin:12px 0;display:flex;justify-content:space-between;
   gap:12px;flex-wrap:wrap;align-items:center;font-size:.9rem}
 .summary .n{color:var(--sub)}
 .sec{margin:34px 0 0}
@@ -68,9 +68,9 @@ summary{cursor:pointer;color:var(--accent);font-size:.86rem}
 .sechead .t small{color:var(--sub);font-size:.78rem;margin-left:8px}
 .sechead .count{color:var(--sub);font-size:.8rem}
 .chk{display:inline-flex;gap:8px;align-items:baseline;cursor:pointer}
-.card{border:2px solid #b5b0a7;padding:0 22px 14px;margin:26px 0;background:#fff;box-shadow:0 2px 0 #e4e1da}
+.card{border:1px solid var(--line);padding:0 18px 12px;margin:16px 0;background:#fff}
 .card.off{opacity:.45}
-.card .ch{display:flex;justify-content:space-between;align-items:center;margin:0 -22px 12px;padding:9px 22px;background:var(--paper);border-bottom:1px solid #b5b0a7;font-size:.95rem;color:var(--ink)}
+.card .ch{display:flex;justify-content:space-between;align-items:center;margin:0 -18px 10px;padding:6px 18px;background:var(--paper);border-bottom:1px solid var(--line);font-size:.92rem;color:var(--ink)}
 .card .chbtns{display:flex;gap:6px}
 .derived{margin-top:12px;padding-top:8px;border-top:1px dashed #c9c5bd;font-size:.9rem;color:var(--sub);line-height:1.6}
 .derived div{margin:1px 0}
@@ -161,6 +161,7 @@ summary{cursor:pointer;color:var(--accent);font-size:.86rem}
 .sheet rt{font-size:.42em;color:#555;font-weight:400;letter-spacing:0}
 .sheet .s-zh ruby, .sheet .s-para ruby{ruby-align:center}
 
+@media(max-width:640px){.sitebar{padding:12px 16px 0}.sitetabs{gap:16px}}
 @media print{
   body.print-sheet header.bar,body.print-sheet nav.steps,body.print-sheet .noprint,
   body.print-sheet section.step{display:none!important}
@@ -172,6 +173,22 @@ summary{cursor:pointer;color:var(--accent);font-size:.86rem}
   .s-answer.pg::before{display:none}
   body.print-sheet #toast{display:none}
 }
+.sitebar{max-width:900px;margin:0 auto;padding:14px 24px 0;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.sitetabs{display:flex;gap:22px;flex-wrap:wrap}
+.sitetabs a{color:var(--sub);text-decoration:none;font-size:.9rem;letter-spacing:.06em;padding:4px 0;border-bottom:2px solid transparent}
+.sitetabs a.on{color:var(--ink);border-bottom-color:var(--ink)}
+.siteauth{display:flex;align-items:center;gap:8px;font-size:.8rem;color:var(--sub)}
+details.menu{position:relative}
+details.menu>summary{list-style:none;display:inline-block;border:1px solid var(--line);color:var(--accent);padding:5px 14px;font-size:.88rem;letter-spacing:.05em;cursor:pointer}
+details.menu>summary::-webkit-details-marker{display:none}
+.menuitems{position:absolute;right:0;top:calc(100% + 4px);background:#fff;border:1px solid var(--line);min-width:170px;z-index:30;box-shadow:0 4px 14px rgba(0,0,0,.06)}
+.menuitems .mi{display:block;width:100%;text-align:left;border:0;border-bottom:1px solid var(--line2);padding:9px 14px;background:#fff;color:var(--ink);font-size:.9rem;cursor:pointer}
+.menuitems .mi:last-child{border-bottom:0}
+.menuitems .mi:hover{background:#efede8}
+h2 .no{display:inline-block;min-width:1.6em;color:var(--sub);font-weight:400}
+details.errdet,details.metadet{margin:10px 0}
+.optgrp h3{font-size:.84rem;font-weight:400;color:var(--sub);margin:16px 0 2px;letter-spacing:.06em}
+.between{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
 .pjpanel{border:1px solid var(--line);background:var(--paper);padding:6px 18px 16px;margin:18px 0 6px}
 .pjpanel h2{margin-top:14px}
 .pjbox{border:1px solid var(--line);background:#fff;padding:10px 14px;margin:10px 0}
@@ -184,17 +201,24 @@ summary{cursor:pointer;color:var(--accent);font-size:.86rem}
 <style id="pageStyle"></style>
 </head>
 <body>
+<div class="sitebar noprint">
+  <nav class="sitetabs"><a href="index.html" class="on">練習單</a><a href="oral-practice.html">口說練習</a><a href="dialogue-prompt.html">對話教材</a></nav>
+  <div class="siteauth"><span id="siteUser"></span><button class="quiet" id="pjLogin">登入同步</button><button class="tiny" id="pjLogout" hidden>登出</button></div>
+</div>
 <header class="bar noprint">
   <div>
     <h1>語法練習單產生器</h1>
     <div class="sub">給西語學生的華語語法練習單：出題、檢查、輸出</div>
   </div>
   <div class="proj">
-    <button class="quiet" id="btnProjList">我的練習單</button>
-    <a class="filebtn quiet" href="oral-practice.html" style="border-color:var(--line);color:var(--accent);text-decoration:none">課堂口說練習設計 →</a>
-    <button class="quiet" id="btnNew">新專案</button>
-    <button class="quiet" id="btnSaveProj">儲存專案</button>
-    <label class="filebtn quiet" style="border-color:var(--line);color:var(--accent)">開啟專案<input type="file" id="fileOpen" accept=".json,application/json" hidden></label>
+    <details class="menu" id="projMenu"><summary>專案 ▾</summary>
+      <div class="menuitems">
+        <button class="mi" id="btnProjList">我的練習單</button>
+        <button class="mi" id="btnNew">新專案</button>
+        <button class="mi" id="btnSaveProj">儲存成檔案</button>
+        <label class="mi filebtn" style="border:0;border-bottom:0;cursor:pointer">開啟檔案<input type="file" id="fileOpen" accept=".json,application/json" hidden></label>
+      </div>
+    </details>
   </div>
 </header>
 <nav class="steps noprint">
@@ -209,9 +233,7 @@ summary{cursor:pointer;color:var(--accent);font-size:.86rem}
     <div class="pjbox">
       <div class="hint" id="pjCloudMsg" style="margin:0 0 8px"></div>
       <div class="row" style="margin:0">
-        <button class="quiet" id="pjLogin">用 Google 登入同步</button>
         <button class="quiet" id="pjPull" hidden>從雲端更新</button>
-        <button class="quiet" id="pjLogout" hidden>登出</button>
       </div>
     </div>
     <div class="row"><input id="pjName" placeholder="這份的名稱（不填就用語法點）" style="max-width:420px"><button class="primary" id="pjSave">存入清單</button></div>
@@ -221,7 +243,7 @@ summary{cursor:pointer;color:var(--accent);font-size:.86rem}
   </section>
   <!-- ============ 1 出題 ============ -->
   <section id="step1" class="step on noprint">
-    <h2>出題指令</h2>
+    <h2><span class="no">①</span>設定，複製出題指令</h2>
     <p class="hint">填好語法點，複製指令，貼給任何 AI（Claude、ChatGPT、Gemini 都可以）。AI 回覆之後，把整段貼回下面。</p>
     <div class="grid2">
       <div class="fld"><label>語法點（填 1 個是單一語法點；填 2～3 個就會出「綜合練習」，題目會混合使用）</label>
@@ -234,16 +256,17 @@ summary{cursor:pointer;color:var(--accent);font-size:.86rem}
     <div class="fld"><label>段落填空的主題</label><input id="fTheme" placeholder="例如：生活情境（點餐、問路、介紹家人）"></div>
     <div class="fld"><label>各題型要幾題（填 0 就不出這一種；段落填空的數字是空格數）</label></div>
     <div class="counts" id="counts"></div>
-    <div class="errbox" id="errBox"></div>
+    <details class="errdet"><summary>西語學生常錯的地方（選填）</summary><div class="errbox" id="errBox"></div></details>
     <div class="row">
       <button class="primary" id="btnCopyPrompt">複製出題指令</button>
-      <button id="btnExample">載入範例（單一：比較句）</button>
-      <button id="btnExample2">載入範例（綜合：比較句＋得字補語）</button>
+      <span class="hint" style="margin:0 0 0 6px">範例：</span>
+      <button class="link" id="btnExample">單一（比較句）</button>
+      <button class="link" id="btnExample2">綜合（比較句＋得字補語）</button>
     </div>
     <details><summary>看指令內容</summary><textarea id="promptView" readonly rows="14"></textarea></details>
 
     <hr>
-    <h2>貼回 AI 的回覆</h2>
+    <h2><span class="no">②</span>貼回 AI 的回覆</h2>
     <p class="hint">整段貼上就好，前後有說明文字也沒關係。格式不對時，我會告訴你哪裡有問題。</p>
     <textarea id="pasteBox" rows="9" placeholder="把 AI 回傳的內容貼在這裡"></textarea>
     <div class="row"><button class="primary" id="btnImport">讀入並檢查</button><button class="quiet" id="btnClearPaste">清空</button></div>
@@ -946,7 +969,7 @@ $$('nav.steps button').forEach(b => b.addEventListener('click', () => goStep(+b.
 function renderErrBox() {
   const pts = pointsList();
   const ph = '例如：\n「比」後面加「很」：他比我很高\n把「比」放在形容詞後面：他高比我';
-  const lab = '西語學生常錯的地方（寫過的會記住，下次同一個語法點會自動帶入）';
+  const lab = '每行寫一個錯誤（寫過的會記住，下次同一個語法點會自動帶入）';
   $('#errBox').innerHTML = pts.length <= 1
     ? `<div class="fld"><label>${lab}</label><textarea rows="4" data-ep="${esc(pts[0] || '')}" placeholder="${esc(ph)}">${esc(errorsFor(pts[0] || ''))}</textarea></div>`
     : `<div class="fld"><label>${lab}（每個語法點分開寫）</label></div>` + pts.map(p => `<div class="fld"><label style="color:var(--accent)">${esc(tagName(p))}</label><textarea rows="3" data-ep="${esc(p)}" placeholder="${esc(ph)}">${esc(errorsFor(p))}</textarea></div>`).join('');
@@ -1112,10 +1135,11 @@ function renderCheck() {
   const missing = TYPES.filter(t => !secOf(t));
   root.innerHTML = `<div class="summary" id="summary"></div>
     <div id="importNotes"></div>
-    <h2>標題</h2>
+    <details class="metadet"><summary>標題、程度與語法說明框</summary>
     <div class="grid2">${fld('標題', `<input data-m="meta.title" value="${esc(state.meta.title)}" placeholder="例如：比較句 · Las comparaciones">`)}${fld('程度', `<select data-m="meta.level">${Object.keys(LEVEL_ES).map(l => `<option ${l === state.meta.level ? 'selected' : ''}>${l}</option>`).join('')}</select>`)}</div>
     ${fld('副標題（留空會自動產生）', `<input data-m="meta.subtitle" value="${esc(state.meta.subtitle)}" placeholder="Ejercicios de gramática china · ${LEVEL_ES[state.meta.level] || ''}">`)}
     <div id="gbBox">${gbHTML()}</div>
+    </details>
     ${state.sections.map(secHTML).join('')}
     ${missing.length ? `<div class="row" style="margin-top:28px"><span class="hint" style="margin:0">新增題型：</span>${missing.map(t => `<button class="quiet" data-act="addSection" data-t="${t}">${DEF[t].name}</button>`).join('')}</div>` : ''}
     <div class="row" style="margin-top:30px"><button class="primary" data-act="goStep3">下一步：輸出 →</button></div>`;
@@ -1252,15 +1276,19 @@ function renderOut() {
   const o = state.opts;
   const chk = (k, label) => `<label><input type="checkbox" data-m="opts.${k}" ${o[k] ? 'checked' : ''}> ${label}</label>`;
   $('#outControls').innerHTML = `
-    <h2>輸出設定</h2>
-    <div class="opts">
+    <div class="between"><h2 style="margin:24px 0 0">輸出設定</h2><button class="primary" id="btnPrint">列印／存成 PDF</button></div>
+    <div class="optgrp"><h3>內容</h3><div class="opts">
       ${chk('cueEs', '練習頁顯示西文提示')}
       ${chk('keyEs', '答案頁顯示西文翻譯')}
-      ${chk('pinyin', '答案頁顯示拼音')}
-      ${chk('zhuyin', '答案頁顯示注音')}
-      ${chk('simp', '答案頁顯示簡體字')}
-      ${chk('simpPhrases', '簡體同時轉換台灣用語（例如 軟體→軟件）')}
       ${chk('teacherNote', '答案頁附老師備註')}
+    </div></div>
+    <div class="optgrp"><h3>答案頁加註</h3><div class="opts">
+      ${chk('pinyin', '顯示拼音')}
+      ${chk('zhuyin', '顯示注音')}
+      ${chk('simp', '顯示簡體字')}
+      ${chk('simpPhrases', '簡體同時轉換台灣用語（例如 軟體→軟件）')}
+    </div></div>
+    <div class="optgrp"><h3>紙張與列印</h3><div class="opts">
       <label>練習頁加注音／拼音
         <select data-m="opts.student"><option value="none" ${o.student === 'none' ? 'selected' : ''}>不加</option><option value="pinyin" ${o.student === 'pinyin' ? 'selected' : ''}>拼音</option><option value="zhuyin" ${o.student === 'zhuyin' ? 'selected' : ''}>注音</option></select></label>
       <label>紙張
@@ -1268,11 +1296,10 @@ function renderOut() {
       <label>列印內容
         <select data-m="opts.print"><option value="both" ${o.print === 'both' ? 'selected' : ''}>練習頁＋答案頁</option><option value="student" ${o.print === 'student' ? 'selected' : ''}>只印練習頁</option><option value="key" ${o.print === 'key' ? 'selected' : ''}>只印答案頁</option></select></label>
     </div>
-    <div class="fld" style="max-width:420px"><label>每頁底部的文字</label><input data-m="meta.footer" value="${esc(state.meta.footer)}"></div>
+    <div class="fld" style="max-width:420px"><label>每頁底部的文字</label><input data-m="meta.footer" value="${esc(state.meta.footer)}"></div></div>
     <div class="row">
-      <button class="primary" id="btnPrint">列印／存成 PDF</button>
-      <button id="btnExpJson">匯出句子庫 JSON</button>
-      <button id="btnExpCsv">匯出句子庫 CSV</button>
+      <button class="quiet" id="btnExpJson">匯出句子庫 JSON</button>
+      <button class="quiet" id="btnExpCsv">匯出句子庫 CSV</button>
     </div>
     <details><summary>讀音修正表</summary>
       <p class="hint">拼音是電腦自動轉的，遇到不對的讀音可以在這裡改，之後都會記住。每行一個：詞=拼音（每個字一個音節，用空格分開）。</p>
@@ -1495,6 +1522,11 @@ function loadState(s) {
   save(); renderStep1(); goStep(state.sections.length ? 2 : 1);
 }
 
+document.addEventListener('click', e => {
+  const m = $('#projMenu'); if (!m || !m.open) return;
+  if (e.target.closest('.mi') || !e.target.closest('#projMenu')) setTimeout(() => { m.open = false; }, 0);
+});
+
 /* =====================================================================
    我的練習單（專案清單）：存在瀏覽器，登入 Google 後可同步到 Firebase
    雲端路徑：users/{uid}/worksheetProjects/{id}（規則要允許本人讀寫，見 README）
@@ -1546,6 +1578,7 @@ function pjErr(e) {
 function renderPjCloud() {
   $('#pjLogin').hidden = pjCloud.state !== 'off';
   $('#pjPull').hidden = $('#pjLogout').hidden = pjCloud.state !== 'in';
+  $('#siteUser').textContent = pjCloud.state === 'in' ? (pjCloud.user.email || '') : '';
   $('#pjCloudMsg').textContent = pjCloud.state === 'in' ? `已登入 ${pjCloud.user.email || ''}。存入清單的練習單會同步到雲端。`
     : pjCloud.state === 'connecting' ? '連線中…'
     : '目前只存在這台裝置。登入 Google 後會同步到雲端（只有你自己看得到），不登入也可以照常使用。';
