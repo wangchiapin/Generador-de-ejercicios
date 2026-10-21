@@ -8,7 +8,7 @@
 <script src="https://cdn.jsdelivr.net/npm/opencc-js@1.4.2/dist/umd/full.js"></script>
 <style>
 :root{
-  --bg:#ffffff; --paper:#f7f6f3; --ink:#333333; --sub:#6f6c66; --line:#dedbd5; --line2:#ece9e4;
+  --bg:#f1efea; --paper:#e8e5de; --ink:#1f1f1f; --sub:#57534d; --line:#c4bfb6; --line2:#d8d4cc;
   --accent:#5f5a53; --warn:#8a5a3c; --warnbg:#f6f1ea;
 }
 *{box-sizing:border-box}
@@ -25,7 +25,7 @@ header.bar .sub{color:var(--sub);font-size:.8rem;margin-top:2px}
 nav.steps{max-width:900px;margin:0 auto;padding:0 24px;display:flex;gap:28px;border-bottom:1px solid var(--line)}
 nav.steps button{background:none;border:0;border-bottom:2px solid transparent;padding:10px 0;margin-bottom:-1px;
   font:inherit;color:var(--sub);cursor:pointer;letter-spacing:.06em}
-nav.steps button.on{color:var(--ink);border-bottom-color:var(--ink)}
+nav.steps button.on{color:var(--ink);border-bottom-color:var(--ink);font-weight:500}
 main{max-width:900px;margin:0 auto;padding:8px 24px 80px}
 section.step{display:none}
 section.step.on{display:block}
@@ -34,7 +34,7 @@ p.hint{color:var(--sub);font-size:.86rem;margin:2px 0 14px}
 hr{border:0;border-top:1px solid var(--line);margin:34px 0 6px}
 button,.filebtn{font:inherit;font-size:.88rem;letter-spacing:.05em;color:var(--ink);background:transparent;
   border:1px solid var(--ink);border-radius:0;padding:5px 14px;cursor:pointer;display:inline-block}
-button:hover,.filebtn:hover{background:#efede8}
+button:hover,.filebtn:hover{background:#e2dfd8}
 button.primary{background:var(--ink);color:#fff}
 button.primary:hover{background:#4a4a4a}
 button.quiet{border-color:var(--line);color:var(--accent)}
@@ -42,7 +42,7 @@ button.tiny{padding:1px 9px;font-size:.78rem;border-color:var(--line);color:var(
 button.link{border:0;padding:0;text-decoration:underline;color:var(--accent);font-size:.8rem}
 .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:12px 0}
 input[type=text],input:not([type]),input[type=number],select,textarea{
-  font:inherit;font-size:1rem;color:var(--ink);background:#fff;border:1px solid #c9c5bd;border-radius:0;
+  font:inherit;font-size:1rem;color:var(--ink);background:#fff;border:1px solid #a8a39a;border-radius:0;
   padding:8px 11px;width:100%;letter-spacing:.02em}
 textarea{resize:vertical;line-height:1.6}
 input:focus,select:focus,textarea:focus{outline:none;border-color:var(--ink)}
@@ -72,7 +72,7 @@ summary{cursor:pointer;color:var(--accent);font-size:.86rem}
 .card.off{opacity:.45}
 .card .ch{display:flex;justify-content:space-between;align-items:center;margin:0 -18px 10px;padding:6px 18px;background:var(--paper);border-bottom:1px solid var(--line);font-size:.92rem;color:var(--ink)}
 .card .chbtns{display:flex;gap:6px}
-.derived{margin-top:12px;padding-top:8px;border-top:1px dashed #c9c5bd;font-size:.9rem;color:var(--sub);line-height:1.6}
+.derived{margin-top:12px;padding-top:8px;border-top:1px dashed #a8a39a;font-size:.9rem;color:var(--sub);line-height:1.6}
 .derived div{margin:1px 0}
 .derived b{font-weight:400;color:var(--accent);margin-right:6px}
 .derived details.more{margin:2px 0 0}
@@ -163,6 +163,7 @@ summary{cursor:pointer;color:var(--accent);font-size:.86rem}
 
 @media(max-width:640px){.sitebar{padding:12px 16px 0}.sitetabs{gap:16px}}
 @media print{
+  body{background:#fff}
   body.print-sheet header.bar,body.print-sheet nav.steps,body.print-sheet .noprint,
   body.print-sheet section.step{display:none!important}
   body.print-sheet section#step3{display:block!important}
@@ -175,8 +176,8 @@ summary{cursor:pointer;color:var(--accent);font-size:.86rem}
 }
 .sitebar{max-width:900px;margin:0 auto;padding:14px 24px 0;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .sitetabs{display:flex;gap:22px;flex-wrap:wrap}
-.sitetabs a{color:var(--sub);text-decoration:none;font-size:.9rem;letter-spacing:.06em;padding:4px 0;border-bottom:2px solid transparent}
-.sitetabs a.on{color:var(--ink);border-bottom-color:var(--ink)}
+.sitetabs a{color:var(--sub);text-decoration:none;font-size:.9rem;letter-spacing:.06em;padding:4px 0;border-bottom:3px solid transparent}
+.sitetabs a.on{color:var(--ink);border-bottom-color:var(--ink);font-weight:500}
 .siteauth{display:flex;align-items:center;gap:8px;font-size:.8rem;color:var(--sub)}
 details.menu{position:relative}
 details.menu>summary{list-style:none;display:inline-block;border:1px solid var(--line);color:var(--accent);padding:5px 14px;font-size:.88rem;letter-spacing:.05em;cursor:pointer}
@@ -184,7 +185,7 @@ details.menu>summary::-webkit-details-marker{display:none}
 .menuitems{position:absolute;right:0;top:calc(100% + 4px);background:#fff;border:1px solid var(--line);min-width:170px;z-index:30;box-shadow:0 4px 14px rgba(0,0,0,.06)}
 .menuitems .mi{display:block;width:100%;text-align:left;border:0;border-bottom:1px solid var(--line2);padding:9px 14px;background:#fff;color:var(--ink);font-size:.9rem;cursor:pointer}
 .menuitems .mi:last-child{border-bottom:0}
-.menuitems .mi:hover{background:#efede8}
+.menuitems .mi:hover{background:#e2dfd8}
 h2 .no{display:inline-block;min-width:1.6em;color:var(--sub);font-weight:400}
 details.errdet,details.metadet{margin:10px 0}
 .optgrp h3{font-size:.84rem;font-weight:400;color:var(--sub);margin:16px 0 2px;letter-spacing:.06em}

@@ -6,7 +6,7 @@
 <title>課堂口說練習設計小幫手</title>
 <style>
 :root{
-  --bg:#ffffff; --paper:#f7f6f3; --ink:#333333; --sub:#6f6c66; --line:#dedbd5; --line2:#ece9e4;
+  --bg:#f1efea; --paper:#e8e5de; --ink:#1f1f1f; --sub:#57534d; --line:#c4bfb6; --line2:#d8d4cc;
   --accent:#5f5a53; --warn:#8a5a3c; --warnbg:#f6f1ea;
 }
 *{box-sizing:border-box}
@@ -26,14 +26,14 @@ p.hint,div.hint{color:var(--sub);font-size:.86rem;margin:2px 0 14px}
 hr{border:0;border-top:1px solid var(--line);margin:34px 0 6px}
 button,.filebtn{font:inherit;font-size:.88rem;letter-spacing:.05em;color:var(--ink);background:transparent;
   border:1px solid var(--ink);border-radius:0;padding:5px 14px;cursor:pointer;display:inline-block}
-button:hover,.filebtn:hover{background:#efede8}
+button:hover,.filebtn:hover{background:#e2dfd8}
 button.primary{background:var(--ink);color:#fff}
 button.primary:hover{background:#4a4a4a}
 button.quiet{border-color:var(--line);color:var(--accent)}
 button.tiny{padding:1px 9px;font-size:.78rem;border-color:var(--line);color:var(--accent)}
 .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:12px 0}
 input[type=text],input:not([type]),input[type=number],select,textarea{
-  font:inherit;font-size:1rem;color:var(--ink);background:#fff;border:1px solid #c9c5bd;border-radius:0;
+  font:inherit;font-size:1rem;color:var(--ink);background:#fff;border:1px solid #a8a39a;border-radius:0;
   padding:8px 11px;width:100%;letter-spacing:.02em}
 textarea{resize:vertical;line-height:1.6}
 input:focus,select:focus,textarea:focus{outline:none;border-color:var(--ink)}
@@ -69,14 +69,14 @@ summary{cursor:pointer;color:var(--accent);font-size:.86rem}
 
 .sitebar{max-width:900px;margin:0 auto;padding:14px 24px 0;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .sitetabs{display:flex;gap:22px;flex-wrap:wrap}
-.sitetabs a{color:var(--sub);text-decoration:none;font-size:.9rem;letter-spacing:.06em;padding:4px 0;border-bottom:2px solid transparent}
-.sitetabs a.on{color:var(--ink);border-bottom-color:var(--ink)}
+.sitetabs a{color:var(--sub);text-decoration:none;font-size:.9rem;letter-spacing:.06em;padding:4px 0;border-bottom:3px solid transparent}
+.sitetabs a.on{color:var(--ink);border-bottom-color:var(--ink);font-weight:500}
 .siteauth{display:flex;align-items:center;gap:8px;font-size:.8rem;color:var(--sub)}
 @media(max-width:640px){.sitebar{padding:12px 16px 0}.sitetabs{gap:16px}header.bar{padding:22px 16px 10px}main{padding:8px 16px 80px}}
 .tabs{display:flex;gap:26px;max-width:900px;margin:0 auto;padding:0 24px;border-bottom:1px solid var(--line)}
 .tabs button{border:0;border-bottom:2px solid transparent;padding:10px 0;color:var(--sub);background:none;font-size:.95rem}
 .tabs button:hover{background:none}
-.tabs button.on{color:var(--ink);border-bottom-color:var(--ink)}
+.tabs button.on{color:var(--ink);border-bottom-color:var(--ink);font-weight:500}
 .modes{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
 .modes label{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);padding:4px 12px;cursor:pointer;font-size:.88rem;margin:0}
 .modes label:has(input:checked){border-color:var(--ink);background:var(--paper)}
