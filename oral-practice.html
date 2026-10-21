@@ -862,7 +862,7 @@ $('#fImport').addEventListener('change', e => {
 const FB = 'https://www.gstatic.com/firebasejs/10.14.1/';
 const FB_CONFIG = { apiKey: 'AIzaSyDB6zYAHvi0oTkObv-qDnP6nn0UUnscby0', authDomain: 'moneybook-50481.firebaseapp.com', projectId: 'moneybook-50481',
   storageBucket: 'moneybook-50481.firebasestorage.app', messagingSenderId: '549256761796', appId: '1:549256761796:web:254332f109e7b8ad871491' };
-const SYNCED_KEY = 'gwm.oral.synced.v1', FLAG_KEY = 'gwm.oral.cloud.v1';
+const SYNCED_KEY = 'gwm.oral.synced.v1', FLAG_KEY = 'gwm.oral.cloud.v1', COMMON_FLAG = 'gwm.cloud.v1'; // COMMON_FLAG：兩個頁面共用的「已登入過」記號
 let synced = new Set(lsGet(SYNCED_KEY, []));
 const cloud = { user: null, started: false, state: 'off' }; // off | connecting | in
 function saveSynced() { lsSet(SYNCED_KEY, Array.from(synced)); }
@@ -950,17 +950,17 @@ async function startCloud() {
   } catch (err) { cloud.started = false; cloud.state = 'off'; renderCloud(); toast('無法載入雲端功能，請確認網路連線'); }
 }
 $('#btnLogin').onclick = async () => {
-  try { lsSet(FLAG_KEY, 1); await startCloud(); cloud.state = cloud.user ? 'in' : 'connecting'; renderCloud(); await adapter.login(); }
+  try { lsSet(FLAG_KEY, 1); lsSet(COMMON_FLAG, 1); await startCloud(); cloud.state = cloud.user ? 'in' : 'connecting'; renderCloud(); await adapter.login(); }
   catch (err) { cloud.state = cloud.user ? 'in' : 'off'; renderCloud(); toast(cloudErr(err)); }
 };
 $('#btnPull').onclick = () => cloudPull();
 $('#btnLogout').onclick = async () => {
   try { await adapter.logout(); } catch (err) {}
-  try { localStorage.removeItem(FLAG_KEY); } catch (e) {}
+  try { localStorage.removeItem(FLAG_KEY); localStorage.removeItem(COMMON_FLAG); } catch (e) {}
   cloud.user = null; cloud.state = 'off'; renderCloud(); renderHist(); toast('已登出（這台裝置上的紀錄還在）');
 };
 renderCloud();
-if (lsGet(FLAG_KEY, 0)) startCloud();
+if (lsGet(FLAG_KEY, 0) || lsGet(COMMON_FLAG, 0)) startCloud();
 
 renderFollow(); fillForm(); renderHist();
 </script>

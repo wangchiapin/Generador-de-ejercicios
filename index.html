@@ -1499,7 +1499,7 @@ function loadState(s) {
    我的練習單（專案清單）：存在瀏覽器，登入 Google 後可同步到 Firebase
    雲端路徑：users/{uid}/worksheetProjects/{id}（規則要允許本人讀寫，見 README）
    ===================================================================== */
-const PJ = { list: 'gwm.projects.v1', synced: 'gwm.projects.synced.v1', flag: 'gwm.projects.cloud.v1' };
+const PJ = { list: 'gwm.projects.v1', synced: 'gwm.projects.synced.v1', flag: 'gwm.projects.cloud.v1', common: 'gwm.cloud.v1' }; // common：兩個頁面共用的「已登入過」記號
 function lsSetOk(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } }
 let PL = lsGet(PJ.list, []); if (!Array.isArray(PL)) PL = [];
 let pjSynced = new Set(lsGet(PJ.synced, []));
@@ -1642,17 +1642,17 @@ $('#pjList').addEventListener('click', e => {
   }
 });
 $('#pjLogin').addEventListener('click', async () => {
-  try { lsSetOk(PJ.flag, 1); await startPjCloud(); pjCloud.state = pjCloud.user ? 'in' : 'connecting'; renderPjCloud(); await pjAdapter.login(); }
+  try { lsSetOk(PJ.flag, 1); lsSetOk(PJ.common, 1); await startPjCloud(); pjCloud.state = pjCloud.user ? 'in' : 'connecting'; renderPjCloud(); await pjAdapter.login(); }
   catch (err) { pjCloud.state = pjCloud.user ? 'in' : 'off'; renderPjCloud(); toast(pjErr(err)); }
 });
 $('#pjPull').addEventListener('click', () => pjPull());
 $('#pjLogout').addEventListener('click', async () => {
   try { await pjAdapter.logout(); } catch (err) {}
-  try { localStorage.removeItem(PJ.flag); } catch (e) {}
+  try { localStorage.removeItem(PJ.flag); localStorage.removeItem(PJ.common); } catch (e) {}
   pjCloud.user = null; pjCloud.state = 'off'; renderPjCloud(); renderPj(); toast('已登出（這台裝置上的清單還在）');
 });
 renderPjCloud();
-if (lsGet(PJ.flag, 0)) startPjCloud();
+if (lsGet(PJ.flag, 0) || lsGet(PJ.common, 0)) startPjCloud();
 
 /* =====================================================================
    啟動
