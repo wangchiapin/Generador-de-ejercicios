@@ -769,6 +769,7 @@ function buildPrompt() {
   L.push('【基本條件】');
   if (multi) pointsList().forEach((p, i) => L.push(`- 語法點 ${i + 1}：${p}（標記名稱：「${tn[i]}」）`));
   else L.push(`- 語法點：${m.grammar || '（請填語法點）'}`);
+  { const gr = GrammarPicker.ref(pointsList()); if (gr) L.push(gr); }
   L.push(`- 程度：${m.level}。只用這個程度的學生已經學過的字詞和語法；超出程度的生詞不要放在句子裡，必要時放進 vocab 當提示。`);
   L.push(`- 段落主題：${m.theme || '生活情境'}`);
   L.push('- 全部用繁體字和台灣的用詞（例如：捷運、公車、手機、計程車、影片、軟體、馬鈴薯）。');
@@ -814,6 +815,7 @@ function buildSwapPrompt(sec, it) {
   L.push('只回覆這一題的 JSON 物件，前後不要加任何說明文字。');
   L.push('');
   L.push(`- 語法點：${m.grammar || '（未填）'}`);
+  { const gr = GrammarPicker.ref(pointsList()); if (gr) L.push(gr); }
   if (isMulti()) L.push(`- 這是綜合練習，要在 points 欄位標出這一題用到的語法點（名稱只能用：${tagNames().join('、')}）。原本這一題的標記是：${(it.points || []).join('、') || '（無）'}，新題請維持${isMixed(it) ? '同時用到 2 個以上語法點' : '相同的語法點'}。`);
   L.push(`- 程度：${m.level}（只用這個程度學生學過的字詞）`);
   L.push(`- 題型：${DEF[sec.type].name}`);

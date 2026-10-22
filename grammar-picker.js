@@ -58,7 +58,21 @@
   }
   list.addEventListener('mousedown',function(e){ e.preventDefault(); var d=e.target.closest('[data-i]'); if(d) pick(+d.dataset.i); });
   function mark(){ Array.prototype.forEach.call(list.children,function(c,i){c.classList.toggle('on',i===sel)}); }
+  /* 依語法點名稱，回傳要附進指令的「教材參考資料」（名稱要和速查表完全一樣才會帶入；沒有就回傳空字串） */
+  function ref(titles){
+    var g=G(); if(!g) return '';
+    var lines=[];
+    (titles||[]).forEach(function(t){
+      t=String(t||'').trim(); if(!t) return;
+      var p=null; for(var i=0;i<g.points.length;i++){ if(g.points[i].t.tc===t){p=g.points[i];break;} }
+      if(!p) return;
+      var ex=p.ex.slice(0,3).map(function(e){return e.c}).join('／');
+      lines.push('  〔'+t+'〕（第 '+p.b+' 冊第 '+p.l+' 課）說明：'+p.d.tc+(ex?' 教材例句：'+ex:''));
+    });
+    return lines.length? '- 語法點參考資料（來自《當代中文課程》，用來掌握這個語法點在教材裡的用法範圍，不必照抄）：\n'+lines.join('\n') : '';
+  }
   window.GrammarPicker={
+    ref:ref,
     attach:function(box,selector){
       box.addEventListener('input',function(e){ if(e.target.matches(selector)) show(e.target); });
       box.addEventListener('focusin',function(e){ if(e.target.matches(selector) && e.target.value.trim()) show(e.target); });

@@ -519,7 +519,7 @@ function generatePrompt(){
   }
 
   const gps = ['gp0','gp1','gp2'].map(id => document.getElementById(id).value.trim()).filter(Boolean);
-  const gpBlock = gps.length ? `- 要練習的語法點：${gps.join('、')}（請讓對話自然、不生硬地用到這些語法點，每個至少出現 2 次；語法點本身可以略超出 HSK 級別，其他用詞仍要維持在該級別內）\n` : '';
+  const gpBlock = gps.length ? `- 要練習的語法點：${gps.join('、')}（請讓對話自然、不生硬地用到這些語法點，每個至少出現 2 次；語法點本身可以略超出 HSK 級別，其他用詞仍要維持在該級別內）\n` + (GrammarPicker.ref(gps) ? GrammarPicker.ref(gps) + '\n' : '') : '';
 
   const prompt = `你是一位中文（繁體中文／台灣）語言教材編寫者，請針對西班牙語系的中文學習者，設計一段雙人對話。
 

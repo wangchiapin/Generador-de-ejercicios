@@ -701,6 +701,7 @@ function buildPrompt() {
 
   const L = [];
   if (multi) P.forEach((p, i) => L.push(`語法點 ${i + 1}：${p}`)); else L.push('語法：' + (P[0] || 'XXX'));
+  { const gr = GrammarPicker.ref(P); if (gr) L.push(gr); }
   const add = (k, v) => { v = String(v || '').trim(); if (v) L.push(k + '：' + v); };
   add('學生程度', F.level); add('主題', F.topic); add('課堂時間', F.time);
   add('已學過的詞彙', F.vocab); add('教材內容', F.material); add('例句', F.examples);

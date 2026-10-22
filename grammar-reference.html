@@ -19,7 +19,7 @@ header{max-width:760px;margin:0 auto;padding:26px 20px 10px}
 .toprow{display:flex;gap:14px;align-items:flex-start;justify-content:space-between}
 header h1{margin:0;font-size:1.35rem;font-weight:500;letter-spacing:.06em}
 header p{margin:4px 0 0;color:var(--sub);font-size:.86rem}
-.langsel{flex:none}
+.langsel{flex:none;display:flex;gap:6px;align-items:center}
 .langsel select{font:inherit;font-size:.88rem;color:var(--ink);background:#fff;border:1px solid #8a857b;border-radius:0;padding:5px 8px;cursor:pointer}
 .langsel select:focus{outline:none;border-color:var(--ink)}
 .searchbar{position:sticky;top:0;z-index:10;background:var(--bg);border-bottom:1px solid var(--line);padding:10px 0 12px}
@@ -65,6 +65,16 @@ summary::-webkit-details-marker{display:none}
 .more{display:block;margin:14px auto;font:inherit;font-size:.9rem;color:var(--ink);background:transparent;border:1px solid var(--ink);border-radius:0;padding:6px 20px;cursor:pointer}
 .empty{margin:30px 0;color:var(--sub);font-size:.95rem}
 mark{background:#cfc8b6;color:inherit;padding:0 1px}
+.tbar{margin-top:6px}
+.py{color:var(--sub);font-size:.86rem;letter-spacing:.01em;margin-top:1px}
+.pybtn{font:inherit;font-size:.8rem;color:var(--ink);background:transparent;border:1px solid var(--ink);border-radius:0;padding:3px 10px;cursor:pointer;white-space:nowrap}
+.pybtn.on{background:var(--ink);color:var(--bg)}
+.tbtn.on{background:var(--ink);color:var(--bg)}
+.selbar{position:fixed;left:0;right:0;bottom:0;z-index:50;background:var(--paper);border-top:2px solid var(--ink);padding:8px 14px;display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;justify-content:center;font-size:.88rem}
+.selbar b{font-weight:600}
+.selbar button{font:inherit;font-size:.82rem;color:var(--ink);background:transparent;border:1px solid var(--ink);border-radius:0;padding:5px 10px;cursor:pointer}
+.selbar button.go{background:var(--ink);color:var(--bg)}
+body.hasbar{padding-bottom:96px}
 .tbtn{display:inline-block;margin:6px 6px 0 0;font:inherit;font-size:.82rem;color:var(--ink);background:transparent;border:1px solid var(--ink);border-radius:0;padding:4px 12px;cursor:pointer}
 footer{max-width:760px;margin:0 auto;padding:10px 20px 40px;color:var(--sub);font-size:.76rem;border-top:1px solid var(--line)}
 </style>
@@ -77,6 +87,7 @@ footer{max-width:760px;margin:0 auto;padding:10px 20px 40px;color:var(--sub);fon
       <p id="sub"></p>
     </div>
     <div class="langsel">
+      <button id="pybtn" type="button" class="pybtn"></button>
       <select id="lang" aria-label="Language / 語言">
         <option value="tc">繁體中文</option>
         <option value="sc">简体中文</option>
@@ -106,6 +117,17 @@ try{
   if(tp==='1') localStorage.setItem('gr-teacher','1'); else if(tp==='0') localStorage.removeItem('gr-teacher');
   TEACHER=localStorage.getItem('gr-teacher')==='1';
 }catch(e){}
+var SEL={}, SHOWPY=false, PYSET=null;
+try{ var ps=localStorage.getItem('gr-py'); if(ps==='1') PYSET=true; else if(ps==='0') PYSET=false; }catch(e){}
+var TUI={
+  tc:{sel:'＋ 選取',selOn:'✓ 已選取',picked:function(n){return '已選 '+n+' 個語法點'},idx:'帶到練習單',oral:'帶到口說練習',dlg:'帶到對話產生器',clr:'清除',lim:function(n,m,name){return '你選了 '+n+' 個，「'+name+'」最多 '+m+' 個，只會帶前 '+m+' 個。繼續嗎？'}},
+  sc:{sel:'＋ 选取',selOn:'✓ 已选取',picked:function(n){return '已选 '+n+' 个语法点'},idx:'带到练习单',oral:'带到口说练习',dlg:'带到对话生成器',clr:'清除',lim:function(n,m,name){return '你选了 '+n+' 个，“'+name+'”最多 '+m+' 个，只会带前 '+m+' 个。继续吗？'}},
+  es:{sel:'+ Seleccionar',selOn:'✓ Seleccionado',picked:function(n){return n+(n===1?' punto seleccionado':' puntos seleccionados')},idx:'Llevar a hoja de ejercicios',oral:'Llevar a práctica oral',dlg:'Llevar a generador de diálogos',clr:'Borrar',lim:function(n,m,name){return 'Elegiste '+n+'; «'+name+'» admite máximo '+m+', se llevarán los primeros '+m+'. ¿Continuar?'}},
+  en:{sel:'+ Select',selOn:'✓ Selected',picked:function(n){return n+(n===1?' point selected':' points selected')},idx:'Send to worksheet',oral:'Send to speaking practice',dlg:'Send to dialogue generator',clr:'Clear',lim:function(n,m,name){return 'You picked '+n+'; "'+name+'" takes at most '+m+', so only the first '+m+' will be sent. Continue?'}}
+};
+var TARGETS={idx:{key:'gwm.handoff.v1',url:'index.html',max:3,name:{tc:'練習單',sc:'练习单',es:'hoja de ejercicios',en:'worksheet'}},
+  oral:{key:'gwm.handoff.oral.v1',url:'oral-practice.html',max:6,name:{tc:'口說練習',sc:'口说练习',es:'práctica oral',en:'speaking practice'}},
+  dlg:{key:'gwm.handoff.dialogue.v1',url:'dialogue-prompt.html',max:3,name:{tc:'對話產生器',sc:'对话生成器',es:'generador de diálogos',en:'dialogue generator'}}};
 var $q=document.getElementById('q'), $out=document.getElementById('out'), $clr=document.getElementById('clr'), $lang=document.getElementById('lang');
 
 // ───────── 介面文字（四種語言）─────────
@@ -114,22 +136,22 @@ var UI={
       book:function(b){return '第 '+b+' 冊'},lesson:function(l){return '第 '+l+' 課'},pts:function(n){return n+' 個語法點'},cnt:function(n){return '共 '+n+' 筆'},
       orMsg:function(n){return '沒有同時符合所有關鍵字的結果，以下是符合其中任一個關鍵字的結果（'+n+' 筆）'},
       more:function(n){return '顯示更多（'+n+'）'},empty:function(q){return '找不到「'+q+'」。試試只輸入一個詞（例如 了、比、ba、被動），或點上面的常用字。'},
-      foot:'語法點清單依據《當代中文課程》第 1–3 冊整理。說明為基礎參考，不清楚的地方請問老師。'},
+      foot:'語法點清單依據《當代中文課程》第 1–4 冊整理。說明為基礎參考，不清楚的地方請問老師。'},
   sc:{htmlLang:'zh-CN',h1:'语法速查表',sub:'输入语法点，查看说明和例句。',ph:'搜索：了、比、ba、比较、被动…',clr:'清除',common:'常用：',
       book:function(b){return '第 '+b+' 册'},lesson:function(l){return '第 '+l+' 课'},pts:function(n){return n+' 个语法点'},cnt:function(n){return '共 '+n+' 条'},
       orMsg:function(n){return '没有同时符合所有关键词的结果，以下是符合其中任一个关键词的结果（'+n+' 条）'},
       more:function(n){return '显示更多（'+n+'）'},empty:function(q){return '找不到“'+q+'”。试试只输入一个词（例如 了、比、ba、被动），或点上面的常用字。'},
-      foot:'语法点清单依据《当代中文课程》第 1–3 册整理。说明为基础参考，不清楚的地方请问老师。'},
+      foot:'语法点清单依据《当代中文课程》第 1–4 册整理。说明为基础参考，不清楚的地方请问老师。'},
   es:{htmlLang:'es',h1:'Guía rápida de gramática china',sub:'文法速查表 · Busca un punto gramatical y mira la explicación con ejemplos.',ph:'Busca: 了, 比, ba, comparar, pasado…',clr:'Borrar',common:'Frecuentes:',
       book:function(b){return 'Libro '+b},lesson:function(l){return 'Lección '+l},pts:function(n){return n+' puntos'},cnt:function(n){return n+(n===1?' resultado':' resultados')},
       orMsg:function(n){return 'No hay coincidencias con todas las palabras; te muestro resultados con alguna de ellas ('+n+')'},
       more:function(n){return 'Mostrar más ('+n+')'},empty:function(q){return 'No encontré nada para «'+q+'». Prueba con una sola palabra (por ejemplo 了, 比, ba, pasado) o usa los botones de arriba.'},
-      foot:'Lista de puntos gramaticales basada en 當代中文課程 (Libros 1–3). Las explicaciones son una guía básica; si algo no te queda claro, pregúntale a tu profesor.'},
+      foot:'Lista de puntos gramaticales basada en 當代中文課程 (Libros 1–4). Las explicaciones son una guía básica; si algo no te queda claro, pregúntale a tu profesor.'},
   en:{htmlLang:'en',h1:'Quick Guide to Chinese Grammar',sub:'文法速查表 · Look up a grammar point to see the explanation and examples.',ph:'Search: 了, 比, ba, compare, passive…',clr:'Clear',common:'Common:',
       book:function(b){return 'Book '+b},lesson:function(l){return 'Lesson '+l},pts:function(n){return n+(n===1?' point':' points')},cnt:function(n){return n+(n===1?' result':' results')},
       orMsg:function(n){return 'Nothing matches all of your words; showing results that match any of them ('+n+')'},
       more:function(n){return 'Show more ('+n+')'},empty:function(q){return 'Nothing found for “'+q+'”. Try a single word (for example 了, 比, ba, passive) or use the buttons above.'},
-      foot:'Grammar point list based on 當代中文課程 (Contemporary Chinese, Books 1–3). The explanations are a basic guide; if something is unclear, ask your teacher.'}
+      foot:'Grammar point list based on 當代中文課程 (Contemporary Chinese, Books 1–4). The explanations are a basic guide; if something is unclear, ask your teacher.'}
 };
 
 var LANGS=['tc','sc','es','en'], lang='es';
@@ -184,7 +206,7 @@ function whereText(p){var t=UI[lang]; return t.book(p.b)+' · '+t.lesson(p.l)+' 
 function exHtml(e,hl){
   var zh=(lang==='sc')?e.s:e.c;
   var tr=(lang==='es'||lang==='en')?e[lang]:'';
-  return '<div class="ex"><div class="zh">'+(hl?highlight(esc(zh),hl):esc(zh))+'</div>'+(tr?'<div class="tr">'+esc(tr)+'</div>':'')+'</div>';
+  return '<div class="ex"><div class="zh">'+(hl?highlight(esc(zh),hl):esc(zh))+'</div>'+(SHOWPY&&e.p?'<div class="py">'+esc(e.p)+'</div>':'')+(tr?'<div class="tr">'+esc(tr)+'</div>':'')+'</div>';
 }
 
 function pointHtml(p,open,hl){
@@ -194,7 +216,7 @@ function pointHtml(p,open,hl){
   return '<details class="pt"'+(open?' open':'')+'><summary><span class="t">'+title+
     (hl?'<span class="where">'+esc(whereText(p))+'</span>':'')+'</span></summary>'+
     '<div class="body"><p class="es">'+esc(p.d[lang])+'</p>'+ex+
-    (TEACHER?'<div class="tbar"><button class="tbtn" type="button" data-ws="'+p.id+'" data-to="index">帶到練習單</button> <button class="tbtn" type="button" data-ws="'+p.id+'" data-to="oral">帶到口說練習</button> <button class="tbtn" type="button" data-ws="'+p.id+'" data-to="dlg">帶到對話產生器</button></div>':'')+'</div></details>';
+    (TEACHER?'<div class="tbar"><button class="tbtn'+(SEL[p.id]?' on':'')+'" type="button" data-sel="'+p.id+'">'+esc(SEL[p.id]?TUI[lang].selOn:TUI[lang].sel)+'</button></div>':'')+'</div></details>';
 }
 
 function highlight(html,toks){
@@ -292,21 +314,57 @@ function applyLang(l,fromUser){
   document.getElementById('chipsLb').textContent=t.common;
   document.getElementById('foot').textContent=t.foot;
   if(fromUser){ try{localStorage.setItem('gr-lang',l)}catch(e){} }
+  var pb=document.getElementById('pybtn');
+  pb.textContent=(l==='es'||l==='en')?'Pinyin':'拼音';
+  if(fromUser||PYSET===null){ /* 還沒手動設定過：西文、英文預設顯示拼音，中文預設不顯示 */ }
+  if(PYSET===null) SHOWPY=(l==='es'||l==='en'); else SHOWPY=PYSET;
+  pb.classList.toggle('on',SHOWPY);
   buildIndex();
   shown=LIMIT;
   update();
+  renderBar();
 }
 
+function selIds(){return P.filter(function(p){return SEL[p.id]})}
+function renderBar(){
+  if(!TEACHER) return;
+  var bar=document.getElementById('selbar'), n=selIds().length, t=TUI[lang];
+  if(!bar){ bar=document.createElement('div'); bar.id='selbar'; bar.className='selbar'; document.body.appendChild(bar); }
+  if(!n){ bar.hidden=true; document.body.classList.remove('hasbar'); return; }
+  bar.hidden=false; document.body.classList.add('hasbar');
+  bar.innerHTML='<b>'+esc(t.picked(n))+'</b>'+
+    '<button class="go" type="button" data-send="idx">'+esc(t.idx)+'</button>'+
+    '<button class="go" type="button" data-send="oral">'+esc(t.oral)+'</button>'+
+    '<button class="go" type="button" data-send="dlg">'+esc(t.dlg)+'</button>'+
+    '<button type="button" data-clear="1">'+esc(t.clr)+'</button>';
+}
 document.addEventListener('click',function(e){
-  var b=e.target.closest&&e.target.closest('[data-ws]'); if(!b) return;
-  var p=P.filter(function(x){return String(x.id)===b.dataset.ws})[0]; if(!p) return;
-  var to={index:['gwm.handoff.v1','index.html'],oral:['gwm.handoff.oral.v1','oral-practice.html'],dlg:['gwm.handoff.dialogue.v1','dialogue-prompt.html']}[b.dataset.to]||['gwm.handoff.v1','index.html'];
-  try{ localStorage.setItem(to[0],JSON.stringify({points:[p.t.tc],theme:''})); location.href=to[1]; }
-  catch(err){ alert('無法傳到練習單'); }
+  var b=e.target.closest&&e.target.closest('[data-sel]');
+  if(b){
+    var id=b.dataset.sel; if(SEL[id]) delete SEL[id]; else SEL[id]=1;
+    Array.prototype.forEach.call(document.querySelectorAll('[data-sel="'+id+'"]'),function(x){
+      x.classList.toggle('on',!!SEL[id]); x.textContent=SEL[id]?TUI[lang].selOn:TUI[lang].sel;
+    });
+    renderBar(); return;
+  }
+  var c=e.target.closest&&e.target.closest('[data-clear]');
+  if(c){ SEL={}; Array.prototype.forEach.call(document.querySelectorAll('[data-sel]'),function(x){x.classList.remove('on'); x.textContent=TUI[lang].sel}); renderBar(); return; }
+  var g=e.target.closest&&e.target.closest('[data-send]');
+  if(g){
+    var T=TARGETS[g.dataset.send], pts=selIds().map(function(p){return p.t.tc});
+    if(!pts.length||!T) return;
+    if(pts.length>T.max && !confirm(TUI[lang].lim(pts.length,T.max,T.name[lang]))) return;
+    try{ localStorage.setItem(T.key,JSON.stringify({points:pts.slice(0,T.max),theme:''})); location.href=T.url; }
+    catch(err){ alert('Error'); }
+  }
 });
 var timer;
 $q.addEventListener('input',function(){clearTimeout(timer);timer=setTimeout(update,120)});
 $clr.onclick=function(){$q.value='';update();$q.focus()};
+document.getElementById('pybtn').addEventListener('click',function(){
+  PYSET=!SHOWPY; try{localStorage.setItem('gr-py',PYSET?'1':'0')}catch(e){}
+  applyLang(lang,false);
+});
 $lang.addEventListener('change',function(){applyLang($lang.value,true)});
 
 // 常用快捷
