@@ -3,7 +3,7 @@
 給華語老師用的小工具：**用任何 AI 出題，貼回來，自動轉換、檢查，一鍵印出練習單和答案頁。**
 專為教西班牙語母語學生設計（練習單說明為西班牙文，內容為繁體中文）。
 
-網址（開啟 GitHub Pages 後）：https://wangchiapin.github.io/generador-de-ejercicios/
+網址（開啟 GitHub Pages 後）：https://wangchiapin.github.io/Generador-de-ejercicios/
 
 ## 三個頁面
 
@@ -19,9 +19,10 @@
 
 ### 文法速查表（grammar-reference.html，給學生用）
 
-- **獨立頁面，沒有老師的分頁列**，網址直接給學生：`.../generador-de-ejercicios/grammar-reference.html`。介面是西班牙文。
-- 內容：《當代中文課程》Book 1–3 共 253 個文法點，每點有西語說明和例句。可輸入「了」「比」「ba」或西班牙文（comparar、pasiva…）搜尋，也可以依冊、課慢慢點開。搜尋結果可分享：網址後面的 `#q=…` 會帶入搜尋字。
-- 資料在 `grammar-data.js`（`window.GRAMMAR`），要改說明或例句改這個檔，不用動頁面。每筆的 `k` 是西語搜尋用關鍵字（自動產生、不顯示）。
+- **獨立頁面，沒有老師的分頁列**，網址直接給學生：`https://wangchiapin.github.io/Generador-de-ejercicios/grammar-reference.html`（**網址分大小寫**，G 要大寫）。
+- **四種語言可選**：繁體中文／简体中文／Español／English，右上角選單切換。第一次依瀏覽器語言自動選，之後會記住；網址可帶語言，例如 `...grammar-reference.html?lang=en`，搜尋字用 `#q=…`（例如 `?lang=sc#q=被`）。介面文字、文法點標題、說明、例句翻譯都會跟著換。中文介面的例句只放中文，不放翻譯或拼音。
+- 內容：《當代中文課程》Book 1–3 共 253 個文法點，每點有四語標題、說明和例句。可輸入「了」「比」「ba」或各語言的關鍵字（comparar、passive、被動…）搜尋，也可以依冊、課慢慢點開。
+- 資料在 `grammar-data.js`（`window.GRAMMAR`），要改說明或例句改這個檔，不用動頁面。每筆的 `t` 是標題、`d` 是說明、`ex` 是例句；`k` 是搜尋用關鍵字（自動產生、不顯示）。**簡體是由繁體自動轉換**（OpenCC `tw2s`，只換字形、保留台灣用語），要改簡體請改繁體再重新轉換。
 - **目前說明為草稿，尚待老師逐點審核**；還沒有「常見錯誤」和拼音。
 
 ### 課堂口說練習設計（oral-practice.html）

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Guía rápida de gramática china</title>
+<title>Guía rápida de gramática china · 文法速查表</title>
 <style>
 :root{
   --bg:#e6e3dc; --paper:#d9d5cc; --ink:#161616; --sub:#46423c; --line:#a9a398; --line2:#c4bfb4; --accent:#5f5a53;
@@ -14,17 +14,22 @@ html{font-size:17px}
 body{margin:0;background:var(--bg);color:var(--ink);
   font-family:"Noto Sans TC","PingFang TC","Hiragino Sans TC","Microsoft JhengHei",system-ui,-apple-system,"Segoe UI",sans-serif;
   letter-spacing:.02em;line-height:1.65;-webkit-font-smoothing:antialiased}
-header{max-width:760px;margin:0 auto;padding:30px 20px 10px}
+html[lang="zh-CN"] body{font-family:"Noto Sans SC","PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,-apple-system,"Segoe UI",sans-serif}
+header{max-width:760px;margin:0 auto;padding:26px 20px 10px}
+.toprow{display:flex;gap:14px;align-items:flex-start;justify-content:space-between}
 header h1{margin:0;font-size:1.35rem;font-weight:500;letter-spacing:.06em}
 header p{margin:4px 0 0;color:var(--sub);font-size:.86rem}
+.langsel{flex:none}
+.langsel select{font:inherit;font-size:.88rem;color:var(--ink);background:#fff;border:1px solid #8a857b;border-radius:0;padding:5px 8px;cursor:pointer}
+.langsel select:focus{outline:none;border-color:var(--ink)}
 .searchbar{position:sticky;top:0;z-index:10;background:var(--bg);border-bottom:1px solid var(--line);padding:10px 0 12px}
 .searchin{max-width:760px;margin:0 auto;padding:0 20px}
 .sbox{display:flex;gap:8px}
 .sbox input{flex:1;min-width:0;font:inherit;font-size:1.05rem;color:var(--ink);background:#fff;border:1px solid #8a857b;border-radius:0;padding:10px 12px}
 .sbox input:focus{outline:none;border-color:var(--ink)}
+.sbox input[type=search]::-webkit-search-cancel-button{-webkit-appearance:none;display:none}
 .sbox button{font:inherit;font-size:.9rem;color:var(--ink);background:transparent;border:1px solid var(--line);border-radius:0;padding:0 14px;cursor:pointer}
 .sbox button:hover{background:#cfcbc1}
-.sbox input[type=search]::-webkit-search-cancel-button{-webkit-appearance:none;display:none}
 .chips{display:flex;gap:8px;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin-top:10px;align-items:center;padding-bottom:2px}
 .chips::-webkit-scrollbar{display:none}
 .chips span.lb{color:var(--sub);font-size:.8rem;flex:none}
@@ -65,33 +70,94 @@ footer{max-width:760px;margin:0 auto;padding:10px 20px 40px;color:var(--sub);fon
 </head>
 <body>
 <header>
-  <h1>Guía rápida de gramática china</h1>
-  <p>文法速查表 · Busca un punto gramatical y mira la explicación con ejemplos.</p>
+  <div class="toprow">
+    <div>
+      <h1 id="h1"></h1>
+      <p id="sub"></p>
+    </div>
+    <div class="langsel">
+      <select id="lang" aria-label="Language / 語言">
+        <option value="tc">繁體中文</option>
+        <option value="sc">简体中文</option>
+        <option value="es">Español</option>
+        <option value="en">English</option>
+      </select>
+    </div>
+  </div>
 </header>
 <div class="searchbar"><div class="searchin">
   <div class="sbox">
-    <input id="q" type="search" inputmode="search" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Busca: 了, 比, ba, comparar, pasado…" aria-label="Buscar">
-    <button id="clr" type="button" hidden>Borrar</button>
+    <input id="q" type="search" inputmode="search" autocomplete="off" autocapitalize="off" spellcheck="false">
+    <button id="clr" type="button" hidden></button>
   </div>
-  <div class="chips" id="chips"><span class="lb">Frecuentes:</span></div>
+  <div class="chips" id="chips"><span class="lb" id="chipsLb"></span></div>
 </div></div>
 <main id="out"></main>
-<footer>Lista de puntos gramaticales basada en 當代中文課程 (Libros 1–3). Las explicaciones son una guía básica; si algo no te queda claro, pregúntale a tu profesor.</footer>
+<footer id="foot"></footer>
 <script src="grammar-data.js"></script>
 <script>
 (function(){
 var G=window.GRAMMAR, P=G.points;
-var $q=document.getElementById('q'), $out=document.getElementById('out'), $clr=document.getElementById('clr');
+var $q=document.getElementById('q'), $out=document.getElementById('out'), $clr=document.getElementById('clr'), $lang=document.getElementById('lang');
+
+// ───────── 介面文字（四種語言）─────────
+var UI={
+  tc:{htmlLang:'zh-TW',h1:'文法速查表',sub:'輸入文法點，查看說明和例句。',ph:'搜尋：了、比、ba、比較、被動…',clr:'清除',common:'常用：',
+      book:function(b){return '第 '+b+' 冊'},lesson:function(l){return '第 '+l+' 課'},pts:function(n){return n+' 個語法點'},cnt:function(n){return '共 '+n+' 筆'},
+      orMsg:function(n){return '沒有同時符合所有關鍵字的結果，以下是符合其中任一個關鍵字的結果（'+n+' 筆）'},
+      more:function(n){return '顯示更多（'+n+'）'},empty:function(q){return '找不到「'+q+'」。試試只輸入一個詞（例如 了、比、ba、被動），或點上面的常用字。'},
+      foot:'語法點清單依據《當代中文課程》第 1–3 冊整理。說明為基礎參考，不清楚的地方請問老師。'},
+  sc:{htmlLang:'zh-CN',h1:'语法速查表',sub:'输入语法点，查看说明和例句。',ph:'搜索：了、比、ba、比较、被动…',clr:'清除',common:'常用：',
+      book:function(b){return '第 '+b+' 册'},lesson:function(l){return '第 '+l+' 课'},pts:function(n){return n+' 个语法点'},cnt:function(n){return '共 '+n+' 条'},
+      orMsg:function(n){return '没有同时符合所有关键词的结果，以下是符合其中任一个关键词的结果（'+n+' 条）'},
+      more:function(n){return '显示更多（'+n+'）'},empty:function(q){return '找不到“'+q+'”。试试只输入一个词（例如 了、比、ba、被动），或点上面的常用字。'},
+      foot:'语法点清单依据《当代中文课程》第 1–3 册整理。说明为基础参考，不清楚的地方请问老师。'},
+  es:{htmlLang:'es',h1:'Guía rápida de gramática china',sub:'文法速查表 · Busca un punto gramatical y mira la explicación con ejemplos.',ph:'Busca: 了, 比, ba, comparar, pasado…',clr:'Borrar',common:'Frecuentes:',
+      book:function(b){return 'Libro '+b},lesson:function(l){return 'Lección '+l},pts:function(n){return n+' puntos'},cnt:function(n){return n+(n===1?' resultado':' resultados')},
+      orMsg:function(n){return 'No hay coincidencias con todas las palabras; te muestro resultados con alguna de ellas ('+n+')'},
+      more:function(n){return 'Mostrar más ('+n+')'},empty:function(q){return 'No encontré nada para «'+q+'». Prueba con una sola palabra (por ejemplo 了, 比, ba, pasado) o usa los botones de arriba.'},
+      foot:'Lista de puntos gramaticales basada en 當代中文課程 (Libros 1–3). Las explicaciones son una guía básica; si algo no te queda claro, pregúntale a tu profesor.'},
+  en:{htmlLang:'en',h1:'Quick Guide to Chinese Grammar',sub:'文法速查表 · Look up a grammar point to see the explanation and examples.',ph:'Search: 了, 比, ba, compare, passive…',clr:'Clear',common:'Common:',
+      book:function(b){return 'Book '+b},lesson:function(l){return 'Lesson '+l},pts:function(n){return n+(n===1?' point':' points')},cnt:function(n){return n+(n===1?' result':' results')},
+      orMsg:function(n){return 'Nothing matches all of your words; showing results that match any of them ('+n+')'},
+      more:function(n){return 'Show more ('+n+')'},empty:function(q){return 'Nothing found for “'+q+'”. Try a single word (for example 了, 比, ba, passive) or use the buttons above.'},
+      foot:'Grammar point list based on 當代中文課程 (Contemporary Chinese, Books 1–3). The explanations are a basic guide; if something is unclear, ask your teacher.'}
+};
+
+var LANGS=['tc','sc','es','en'], lang='es';
+function detectLang(){
+  try{
+    var u=new URLSearchParams(location.search).get('lang');
+    if(u&&LANGS.indexOf(u)>=0) return u;
+  }catch(e){}
+  try{
+    var s=localStorage.getItem('gr-lang');
+    if(s&&LANGS.indexOf(s)>=0) return s;
+  }catch(e){}
+  var nav=(navigator.languages&&navigator.languages.length?navigator.languages:[navigator.language||'es']);
+  for(var i=0;i<nav.length;i++){
+    var c=String(nav[i]).toLowerCase();
+    if(c.indexOf('es')===0) return 'es';
+    if(c.indexOf('en')===0) return 'en';
+    if(/^zh-(cn|sg|hans)/.test(c)) return 'sc';
+    if(c.indexOf('zh')===0) return 'tc';
+  }
+  return 'es';
+}
 
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 function norm(s){return String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase()}
+function lessonTitle(p){var L=G.lessons[p.b+'-'+p.l]; return L? (lang==='sc'?L.sc:L.tc) : ''}
 
-// 預先整理每個點的搜尋用文字
-P.forEach(function(p){
-  p._t=norm(p.t);
-  p._ex=norm(p.ex.map(function(e){return e[0]+' '+e[1]}).join(' '));
-  p._es=norm(p.es+' '+(p.k||'')+' '+(G.lessons[p.b+'-'+p.l]||''));
-});
+// ───────── 搜尋用文字（依目前語言重建）─────────
+function buildIndex(){
+  P.forEach(function(p){
+    var ex=p.ex.map(function(e){return e.c+' '+e.s+' '+(e[lang]||'')}).join(' ');
+    p._t=norm([p.t[lang],p.t.en,p.t.ens,p.t.es,p.t.tc,p.t.sc].join(' '));
+    p._ex=norm(ex);
+    p._es=norm([p.d[lang],p.k||'',lessonTitle(p)].join(' '));
+  });
+}
 
 // 英文／拼音／西文的比對：短字（≤3 字母）要整個字相符，長字從字首比對；中文則直接找是否包含
 function matcher(tk){
@@ -105,21 +171,24 @@ function matcher(tk){
   return function(h){return rx.test(h)};
 }
 
-function whereText(p){return 'Libro '+p.b+' · Lección '+p.l+' · '+(G.lessons[p.b+'-'+p.l]||'')}
+function whereText(p){var t=UI[lang]; return t.book(p.b)+' · '+t.lesson(p.l)+' · '+lessonTitle(p)}
+
+function exHtml(e,hl){
+  var zh=(lang==='sc')?e.s:e.c;
+  var tr=(lang==='es'||lang==='en')?e[lang]:'';
+  return '<div class="ex"><div class="zh">'+(hl?highlight(esc(zh),hl):esc(zh))+'</div>'+(tr?'<div class="tr">'+esc(tr)+'</div>':'')+'</div>';
+}
 
 function pointHtml(p,open,hl){
-  var title=esc(p.t);
+  var title=esc(p.t[lang]);
   if(hl) title=highlight(title,hl);
-  var ex=p.ex.map(function(e){
-    return '<div class="ex"><div class="zh">'+(hl?highlight(esc(e[0]),hl):esc(e[0]))+'</div><div class="tr">'+esc(e[1])+'</div></div>';
-  }).join('');
+  var ex=p.ex.map(function(e){return exHtml(e,hl)}).join('');
   return '<details class="pt"'+(open?' open':'')+'><summary><span class="t">'+title+
     (hl?'<span class="where">'+esc(whereText(p))+'</span>':'')+'</span></summary>'+
-    '<div class="body"><p class="es">'+esc(p.es)+'</p>'+ex+'</div></details>';
+    '<div class="body"><p class="es">'+esc(p.d[lang])+'</p>'+ex+'</div></details>';
 }
 
 function highlight(html,toks){
-  // 只在純文字部分標記，避免破壞 &amp; 等字元
   toks.forEach(function(tk){
     if(!tk||!/[^\x00-\x7f]/.test(tk)) return; // 只標記中文，英文／拼音比對方式不同，不標
     var safe=esc(tk).replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
@@ -130,15 +199,15 @@ function highlight(html,toks){
 }
 
 function renderBrowse(){
-  var books={};
+  var t=UI[lang], books={};
   P.forEach(function(p){ ((books[p.b]=books[p.b]||{})[p.l]=books[p.b][p.l]||[]).push(p); });
   var h='';
   Object.keys(books).forEach(function(b){
     var n=0; Object.keys(books[b]).forEach(function(l){n+=books[b][l].length});
-    h+='<details class="book"><summary>Libro '+b+'<span class="n">'+G.books[b]+' · '+n+' puntos</span></summary>';
+    h+='<details class="book"><summary>'+esc(t.book(b))+'<span class="n">'+G.books[b]+' · '+esc(t.pts(n))+'</span></summary>';
     Object.keys(books[b]).sort(function(a,c){return a-c}).forEach(function(l){
-      var arr=books[b][l];
-      h+='<details class="lesson"><summary>Lección '+l+' · '+esc(G.lessons[b+'-'+l]||'')+'<span class="n">('+arr.length+')</span></summary><div class="inner">'+
+      var arr=books[b][l], L=G.lessons[b+'-'+l]||{tc:'',sc:''};
+      h+='<details class="lesson"><summary>'+esc(t.lesson(l))+' · '+esc(lang==='sc'?L.sc:L.tc)+'<span class="n">('+arr.length+')</span></summary><div class="inner">'+
         arr.map(function(p){return pointHtml(p,false,null)}).join('')+'</div></details>';
     });
     h+='</details>';
@@ -150,7 +219,7 @@ function search(q){
   var toks=q.trim().split(/\s+/).filter(Boolean).map(norm);
   if(!toks.length) return {list:[],mode:'and'};
   var ms=toks.map(matcher);
-  function score(p,tk,j){
+  function score(p,j){
     var s=0, m=ms[j];
     if(m(p._t)) s+=10;
     if(m(p._ex)) s+=3;
@@ -161,7 +230,7 @@ function search(q){
     var out=[];
     P.forEach(function(p,i){
       var tot=0,hit=0;
-      toks.forEach(function(tk,j){var s=score(p,tk,j); if(s>0){hit++; tot+=s;}});
+      toks.forEach(function(tk,j){var s=score(p,j); if(s>0){hit++; tot+=s;}});
       if(mode==='and'? hit===toks.length : hit>0) out.push({p:p,s:tot+hit*5,i:i});
     });
     out.sort(function(a,b){return b.s-a.s||a.i-b.i});
@@ -174,39 +243,64 @@ function search(q){
 
 var LIMIT=25, shown=LIMIT, lastQ='';
 function renderResults(q){
-  var r=search(q), n=r.list.length;
+  var t=UI[lang], r=search(q), n=r.list.length;
   if(!n){
     $out.className='res';
-    $out.innerHTML='<p class="empty">No encontré nada para «'+esc(q)+'». Prueba con una sola palabra (por ejemplo 了, 比, ba, pasado) o usa los botones de arriba.</p>';
+    $out.innerHTML='<p class="empty">'+esc(t.empty(q))+'</p>';
     return;
   }
-  var msg=n+(n===1?' resultado':' resultados');
-  if(r.mode==='or') msg='No hay coincidencias con todas las palabras; te muestro resultados con alguna de ellas ('+n+')';
-  var h='<p class="count">'+msg+'</p>';
+  var msg=(r.mode==='or')? t.orMsg(n) : t.cnt(n);
+  var h='<p class="count">'+esc(msg)+'</p>';
   r.list.slice(0,shown).forEach(function(p,i){ h+=pointHtml(p,n<=3&&i<3,r.toks); });
-  if(n>shown) h+='<button class="more" id="more" type="button">Mostrar más ('+(n-shown)+')</button>';
+  if(n>shown) h+='<button class="more" id="more" type="button">'+esc(t.more(n-shown))+'</button>';
   $out.className='res'; $out.innerHTML=h;
   var m=document.getElementById('more');
   if(m) m.onclick=function(){shown+=LIMIT; renderResults(q);};
+}
+
+function syncUrl(q){
+  try{ history.replaceState(null,'',location.pathname+'?lang='+lang+(q?('#q='+encodeURIComponent(q)):'')); }catch(e){}
 }
 
 function update(){
   var q=$q.value;
   $clr.hidden=!q;
   if(q!==lastQ){shown=LIMIT; lastQ=q;}
-  try{ history.replaceState(null,'',q?('#q='+encodeURIComponent(q)):location.pathname+location.search); }catch(e){}
+  syncUrl(q);
   if(!q.trim()) renderBrowse(); else renderResults(q);
+}
+
+function applyLang(l,fromUser){
+  lang=l; var t=UI[l];
+  $lang.value=l;
+  document.documentElement.lang=t.htmlLang;
+  document.getElementById('h1').textContent=t.h1;
+  document.getElementById('sub').textContent=t.sub;
+  document.title=t.h1+' · 文法速查表';
+  $q.placeholder=t.ph;
+  $clr.textContent=t.clr;
+  document.getElementById('chipsLb').textContent=t.common;
+  document.getElementById('foot').textContent=t.foot;
+  if(fromUser){ try{localStorage.setItem('gr-lang',l)}catch(e){} }
+  buildIndex();
+  shown=LIMIT;
+  update();
 }
 
 var timer;
 $q.addEventListener('input',function(){clearTimeout(timer);timer=setTimeout(update,120)});
 $clr.onclick=function(){$q.value='';update();$q.focus()};
+$lang.addEventListener('change',function(){applyLang($lang.value,true)});
 
 // 常用快捷
 var chips=document.getElementById('chips');
 ['了','比','把','過','在','得','會','被','跟','才','就'].forEach(function(c){
   var b=document.createElement('button'); b.type='button'; b.textContent=c;
-  b.onclick=function(){$q.value=c;update();window.scrollTo({top:0})};
+  b.onclick=function(){
+    // 簡體介面時，「過／會」要換成簡體字才搜得到簡體內容
+    var v=c; if(lang==='sc'){ v={'過':'过','會':'会'}[c]||c; }
+    $q.value=v;update();window.scrollTo({top:0});
+  };
   chips.appendChild(b);
 });
 
@@ -215,7 +309,7 @@ try{
   var m=location.hash.match(/^#q=(.*)$/);
   if(m) $q.value=decodeURIComponent(m[1]);
 }catch(e){}
-update();
+applyLang(detectLang(),false);
 })();
 </script>
 </body>
