@@ -283,9 +283,10 @@ function applyLang(l,fromUser){
   lang=l; var t=UI[l];
   $lang.value=l;
   document.documentElement.lang=t.htmlLang;
-  document.getElementById('h1').textContent=t.h1;
+  var tag=TEACHER?({tc:'（教師版）',sc:'（教师版）',es:' (versión docente)',en:' (Teacher edition)'})[l]:'';
+  document.getElementById('h1').textContent=t.h1+tag;
   document.getElementById('sub').textContent=t.sub;
-  document.title=t.h1+' · 文法速查表';
+  document.title=t.h1+tag+' · 文法速查表';
   $q.placeholder=t.ph;
   $clr.textContent=t.clr;
   document.getElementById('chipsLb').textContent=t.common;
