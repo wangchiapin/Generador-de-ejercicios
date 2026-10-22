@@ -286,6 +286,8 @@ details.errdet,details.metadet{margin:10px 0}
 </main>
 <div id="toast"></div>
 
+<script src="grammar-data.js"></script>
+<script src="grammar-picker.js"></script>
 <script>
 'use strict';
 /* =====================================================================
@@ -1718,6 +1720,7 @@ if (lsGet(PJ.flag, 0) || lsGet(PJ.common, 0)) startPjCloud();
   if (handed) { goStep(1); toast('已從口說練習帶入 ' + pointsList().length + ' 個語法點'); }
   else if (state.sections.length) goStep(2);
 })();
+  GrammarPicker.attach($('#ptInputs'), 'input[data-pt]');
 </script>
 </body>
 </html>

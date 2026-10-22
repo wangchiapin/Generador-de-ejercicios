@@ -65,6 +65,7 @@ summary::-webkit-details-marker{display:none}
 .more{display:block;margin:14px auto;font:inherit;font-size:.9rem;color:var(--ink);background:transparent;border:1px solid var(--ink);border-radius:0;padding:6px 20px;cursor:pointer}
 .empty{margin:30px 0;color:var(--sub);font-size:.95rem}
 mark{background:#cfc8b6;color:inherit;padding:0 1px}
+.tbtn{display:inline-block;margin:6px 6px 0 0;font:inherit;font-size:.82rem;color:var(--ink);background:transparent;border:1px solid var(--ink);border-radius:0;padding:4px 12px;cursor:pointer}
 footer{max-width:760px;margin:0 auto;padding:10px 20px 40px;color:var(--sub);font-size:.76rem;border-top:1px solid var(--line)}
 </style>
 </head>
@@ -98,6 +99,13 @@ footer{max-width:760px;margin:0 auto;padding:10px 20px 40px;color:var(--sub);fon
 <script>
 (function(){
 var G=window.GRAMMAR, P=G.points;
+// 老師模式：網址加 ?teacher=1 開啟（會記住），?teacher=0 關閉；學生看不到「帶到練習單」
+var TEACHER=false;
+try{
+  var tp=new URLSearchParams(location.search).get('teacher');
+  if(tp==='1') localStorage.setItem('gr-teacher','1'); else if(tp==='0') localStorage.removeItem('gr-teacher');
+  TEACHER=localStorage.getItem('gr-teacher')==='1';
+}catch(e){}
 var $q=document.getElementById('q'), $out=document.getElementById('out'), $clr=document.getElementById('clr'), $lang=document.getElementById('lang');
 
 // ───────── 介面文字（四種語言）─────────
@@ -185,7 +193,8 @@ function pointHtml(p,open,hl){
   var ex=p.ex.map(function(e){return exHtml(e,hl)}).join('');
   return '<details class="pt"'+(open?' open':'')+'><summary><span class="t">'+title+
     (hl?'<span class="where">'+esc(whereText(p))+'</span>':'')+'</span></summary>'+
-    '<div class="body"><p class="es">'+esc(p.d[lang])+'</p>'+ex+'</div></details>';
+    '<div class="body"><p class="es">'+esc(p.d[lang])+'</p>'+ex+
+    (TEACHER?'<div class="tbar"><button class="tbtn" type="button" data-ws="'+p.id+'" data-to="index">帶到練習單</button> <button class="tbtn" type="button" data-ws="'+p.id+'" data-to="oral">帶到口說練習</button> <button class="tbtn" type="button" data-ws="'+p.id+'" data-to="dlg">帶到對話產生器</button></div>':'')+'</div></details>';
 }
 
 function highlight(html,toks){
@@ -287,6 +296,13 @@ function applyLang(l,fromUser){
   update();
 }
 
+document.addEventListener('click',function(e){
+  var b=e.target.closest&&e.target.closest('[data-ws]'); if(!b) return;
+  var p=P.filter(function(x){return String(x.id)===b.dataset.ws})[0]; if(!p) return;
+  var to={index:['gwm.handoff.v1','index.html'],oral:['gwm.handoff.oral.v1','oral-practice.html'],dlg:['gwm.handoff.dialogue.v1','dialogue-prompt.html']}[b.dataset.to]||['gwm.handoff.v1','index.html'];
+  try{ localStorage.setItem(to[0],JSON.stringify({points:[p.t.tc],theme:''})); location.href=to[1]; }
+  catch(err){ alert('無法傳到練習單'); }
+});
 var timer;
 $q.addEventListener('input',function(){clearTimeout(timer);timer=setTimeout(update,120)});
 $clr.onclick=function(){$q.value='';update();$q.focus()};

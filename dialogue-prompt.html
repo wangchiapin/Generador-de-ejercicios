@@ -117,6 +117,16 @@
       <input type="text" id="topic" placeholder="例如：在餐廳點餐、問路、租房子、看醫生…">
     </div>
 
+    <div class="field" id="gpts">
+      <label>要用到的語法點（選填，最多 3 個）</label>
+      <div style="display:grid;gap:8px">
+        <input type="text" id="gp0" data-gp placeholder="例如：把字句、比較句…（打字會跳出選單）" autocomplete="off">
+        <input type="text" id="gp1" data-gp placeholder="語法點 2（選填）" autocomplete="off">
+        <input type="text" id="gp2" data-gp placeholder="語法點 3（選填）" autocomplete="off">
+      </div>
+      <div class="hint">填了之後，指令會要求對話自然用到這些語法點。語法點可能比上面選的 HSK 級別難，以語法點為準，其他用詞仍維持該級別，請自己確認程度合不合適。</div>
+    </div>
+
     <div class="field row2">
       <div>
         <label for="genderA">角色 A 的性別</label>
@@ -228,6 +238,8 @@
 
 </div>
 
+<script src="grammar-data.js"></script>
+<script src="grammar-picker.js"></script>
 <script>
 let dialogueLines = [];
 
@@ -506,12 +518,15 @@ function generatePrompt(){
     notesBlock = `- 額外需求：${notes}\n`;
   }
 
+  const gps = ['gp0','gp1','gp2'].map(id => document.getElementById(id).value.trim()).filter(Boolean);
+  const gpBlock = gps.length ? `- 要練習的語法點：${gps.join('、')}（請讓對話自然、不生硬地用到這些語法點，每個至少出現 2 次；語法點本身可以略超出 HSK 級別，其他用詞仍要維持在該級別內）\n` : '';
+
   const prompt = `你是一位中文（繁體中文／台灣）語言教材編寫者，請針對西班牙語系的中文學習者，設計一段雙人對話。
 
 【對話條件】
 - 中文程度：HSK ${hsk} 級（用詞、語法難度必須嚴格控制在此級別範圍內，避免出現超出此程度的生詞或句型）
 - 主題：${topic}
-- 對話總句數：約 ${lines} 句（兩位角色台詞合計）
+${gpBlock}- 對話總句數：約 ${lines} 句（兩位角色台詞合計）
 - 使用繁體中文（台灣慣用字詞與說法，不要用大陸用語，例如用「計程車」不用「出租車」）
 ${roleLine}
 ${notesBlock}
@@ -609,7 +624,7 @@ function copyOutput(){
 }
 
 /* ---------- 自動記住填寫的內容（重新整理、關掉再開都還在，只存在這台裝置的瀏覽器） ---------- */
-const SAVE_IDS = ['hsk','lines','topic','genderA','genderB','notes','dialogueContent','imgPlatform','imgStyle','styleExtra'];
+const SAVE_IDS = ['hsk','lines','topic','gp0','gp1','gp2','genderA','genderB','notes','dialogueContent','imgPlatform','imgStyle','styleExtra'];
 const SAVE_KEY = 'gwm.dialogue.v1';
 function saveFields(){
   try{
@@ -634,6 +649,21 @@ SAVE_IDS.forEach(id => {
   el.addEventListener('change', saveFields);
 });
 restoreFields();
+/* 從文法速查表（老師模式）帶過來的語法點 */
+try{
+  const hd = JSON.parse(localStorage.getItem('gwm.handoff.dialogue.v1') || 'null');
+  if(hd){
+    localStorage.removeItem('gwm.handoff.dialogue.v1');
+    const have = ['gp0','gp1','gp2'].map(id => document.getElementById(id).value.trim());
+    (hd.points || []).forEach(p => {
+      if(have.includes(p)) return;
+      const k = have.findIndex(x => !x); if(k < 0) return;
+      have[k] = p; document.getElementById('gp'+k).value = p;
+    });
+    saveFields();
+  }
+}catch(e){}
+GrammarPicker.attach(document.getElementById('gpts'), 'input[data-gp]');
 document.getElementById('btnResetAll').addEventListener('click', () => {
   if(!confirm('清掉所有填寫的內容（包含貼上的對話）？')) return;
   try{ localStorage.removeItem(SAVE_KEY); }catch(e){}

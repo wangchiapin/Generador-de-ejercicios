@@ -632,6 +632,8 @@ B2：
 直接開始分析語法並產生練習。
 除非我要求完整教材，否則不要一次產生所有練習。先分析語法，選出最適合的練習模式，再開始生成。</script>
 
+<script src="grammar-data.js"></script>
+<script src="grammar-picker.js"></script>
 <script>
 'use strict';
 const $ = (s, r = document) => r.querySelector(s);
@@ -980,7 +982,17 @@ $('#btnLogout').onclick = async () => {
 renderCloud();
 if (lsGet(FLAG_KEY, 0) || lsGet(COMMON_FLAG, 0)) startCloud();
 
+/* 從文法速查表（老師模式）帶過來的語法點 */
+(function(){
+  const h = lsGet('gwm.handoff.oral.v1', null); if (!h) return;
+  try { localStorage.removeItem('gwm.handoff.oral.v1'); } catch (e) {}
+  const add = (Array.isArray(h.points) ? h.points : []).map(x => String(x || '').trim()).filter(Boolean);
+  const cur = F.points.map(x => String(x || '').trim()).filter(Boolean);
+  add.forEach(x => { if (!cur.includes(x) && cur.length < MAXPT) cur.push(x); });
+  if (cur.length) { F.points = cur; saveForm(); setTimeout(() => toast('已從文法速查表帶入語法點：' + add.join('、')), 300); }
+})();
 renderFollow(); fillForm(); renderHist();
+GrammarPicker.attach($('#ptInputs'), 'input[data-pt]');
 </script>
 </body>
 </html>
