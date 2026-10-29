@@ -112,60 +112,80 @@ summary{cursor:pointer;color:var(--accent);font-size:.86rem}
 .opts select{width:auto}
 .previewWrap{margin:22px 0 0;border:1px solid var(--line);background:var(--paper);padding:20px}
 .previewNote{color:var(--sub);font-size:.78rem;margin:6px 0 0}
+
+.layoutbar{position:sticky;top:0;z-index:20;background:var(--bg);border:1px solid var(--line);padding:8px 14px;margin:22px 0 0;display:flex;gap:6px 22px;flex-wrap:wrap;align-items:center;font-size:.86rem}
+.layoutbar label{display:flex;gap:8px;align-items:center;white-space:nowrap}
+.layoutbar input[type=range]{width:130px;padding:0}
+.layoutbar .lv{display:inline-block;min-width:3.2em;color:var(--sub)}
+.layoutbar details{flex-basis:100%}
+.layoutbar .pbs{display:flex;flex-wrap:wrap;gap:6px 22px;margin:6px 0 2px}
 #toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:8px 18px;
   font-size:.86rem;letter-spacing:.05em;opacity:0;pointer-events:none;transition:opacity .2s;z-index:50}
 #toast.on{opacity:.95}
 
 /* ---------- worksheet (shared by preview and print) ---------- */
-.sheet{background:#fff;color:#222;font-size:10.5pt;line-height:1.5;padding:12mm 12mm 10mm;max-width:210mm;margin:0 auto;
+.sheet{background:#fff;color:#222;font-size:calc(10.5pt*var(--k,1));line-height:1.5;padding:12mm 12mm 10mm;max-width:210mm;margin:0 auto;
   box-shadow:0 0 0 1px var(--line)}
-.sheet h1{margin:0;font-size:22pt;font-weight:500;letter-spacing:.06em;line-height:1.2}
+.sheet h1{margin:0;font-size:calc(22pt*var(--k,1));font-weight:500;letter-spacing:.06em;line-height:1.2}
 .s-top{border-bottom:.75pt solid #222;padding-bottom:3mm}
-.s-sub{color:#777;font-size:9.5pt;margin-top:1mm}
-.s-who{display:flex;gap:8mm;margin:4mm 0 3mm;font-size:9.5pt;color:#555}
+.s-sub{color:#777;font-size:calc(9.5pt*var(--k,1));margin-top:1mm}
+.s-who{display:flex;gap:8mm;margin:4mm 0 3mm;font-size:calc(9.5pt*var(--k,1));color:#555}
 .s-who span{flex:1;border-bottom:.5pt solid #999;padding-bottom:.5mm}
-.s-box{border:.6pt solid #aaa;padding:3mm 4mm;margin:2mm 0 4mm;break-inside:avoid}
-.s-box h3{margin:0 0 1.5mm;font-size:10pt;font-weight:500;letter-spacing:.06em}
-.s-box table{width:100%;border-collapse:collapse;font-size:9.6pt}
+.s-box{border:.6pt solid #aaa;padding:3mm 4mm;margin:2mm 0 calc(4mm*var(--g,1));break-inside:avoid}
+.s-box h3{margin:0 0 1.5mm;font-size:calc(10pt*var(--k,1));font-weight:500;letter-spacing:.06em}
+.s-box table{width:100%;border-collapse:collapse;font-size:calc(9.6pt*var(--k,1))}
 .s-box td{padding:1mm 1.5mm;border-bottom:.4pt solid #ddd;vertical-align:top}
 .s-box tr:last-child td{border-bottom:0}
 .s-box td.p{white-space:nowrap;font-weight:500}
-.s-box td.x{font-size:11pt;white-space:nowrap}
-.s-warn{margin-top:1.5mm;font-size:9.2pt;color:#444}
-.s-sec{margin-top:5mm;break-inside:avoid}
+.s-box td.x{font-size:calc(11pt*var(--k,1));white-space:nowrap}
+.s-box td.py{color:#777;font-size:calc(9pt*var(--k,1));white-space:nowrap}
+.s-warn{margin-top:1.5mm;font-size:calc(9.2pt*var(--k,1));color:#444}
+.s-sec{margin-top:calc(5mm*var(--g,1))}
+.s-sec.keep{break-inside:avoid}
 .s-sh{display:flex;justify-content:space-between;align-items:baseline;border-bottom:.5pt solid #999;margin-bottom:2.5mm;padding-bottom:.8mm;break-after:avoid}
-.s-sh .t{font-size:12.5pt;font-weight:500;letter-spacing:.05em}
-.s-sh .t small{font-size:8.8pt;font-weight:400;color:#777;margin-left:2mm;letter-spacing:.02em}
-.s-sh .p{font-size:8.8pt;color:#777;white-space:nowrap}
-.s-bank{display:inline-block;border:.6pt solid #999;padding:1mm 4mm;margin-bottom:2.5mm;font-size:12pt;word-spacing:2mm}
-.s-bank small{color:#777;font-size:8.5pt;margin-left:2mm;word-spacing:0}
-.s-item{margin:0 0 2.6mm;break-inside:avoid}
-.s-no{display:inline-block;min-width:6mm;color:#777;font-size:9.5pt;margin-right:1.5mm}
-.s-zh{font-size:14pt}
-.s-es{color:#777;font-size:8.8pt;margin:.4mm 0 0 7.5mm}
+.s-sh .t{font-size:calc(12.5pt*var(--k,1));font-weight:500;letter-spacing:.05em}
+.s-sh .t small{font-size:calc(8.8pt*var(--k,1));font-weight:400;color:#777;margin-left:2mm;letter-spacing:.02em}
+.s-sh .p{font-size:calc(8.8pt*var(--k,1));color:#777;white-space:nowrap}
+.s-bank{display:inline-block;border:.6pt solid #999;padding:1mm 4mm;margin-bottom:2.5mm;font-size:calc(12pt*var(--k,1));word-spacing:2mm}
+.s-bank small{color:#777;font-size:calc(8.5pt*var(--k,1));margin-left:2mm;word-spacing:0}
+.s-item{margin:0 0 calc(2.6mm*var(--g,1));break-inside:avoid}
+.s-no{display:inline-block;min-width:6mm;color:#777;font-size:calc(9.5pt*var(--k,1));margin-right:1.5mm}
+.s-zh{font-size:calc(14pt*var(--k,1))}
+.s-es{color:#777;font-size:calc(8.8pt*var(--k,1));margin:.4mm 0 0 7.5mm}
 .s-blank{display:inline-block;width:17mm;border-bottom:.75pt solid #222;height:1em;vertical-align:-1pt;margin:0 1mm}
-.s-pblank{display:inline-block;min-width:19mm;border-bottom:.75pt solid #222;text-align:center;margin:0 1mm;font-size:11pt;color:#555;height:1.2em;vertical-align:-1pt}
-.s-para{font-size:12.5pt;line-height:2;border:.5pt solid #bbb;padding:2.5mm 4mm}
-.s-tok{display:inline-block;border:.6pt solid #888;border-radius:1mm;padding:.6mm 3mm;margin:0 2mm 1mm 0;font-size:13pt}
-.s-line{border-bottom:.5pt solid #999;height:8mm;margin:0 0 0 7.5mm}
+.s-pblank{display:inline-block;min-width:19mm;border-bottom:.75pt solid #222;text-align:center;margin:0 1mm;font-size:calc(11pt*var(--k,1));color:#555;height:1.2em;vertical-align:-1pt}
+.s-para{font-size:calc(12.5pt*var(--k,1));line-height:2;border:.5pt solid #bbb;padding:2.5mm 4mm}
+.s-tok{display:inline-block;border:.6pt solid #888;border-radius:1mm;padding:.6mm 3mm;margin:0 2mm 1mm 0;font-size:calc(13pt*var(--k,1))}
+.s-line{border-bottom:.5pt solid #999;height:calc(8mm*var(--k,1)*var(--g,1));margin:0 0 0 7.5mm}
 .s-opts{margin:1mm 0 0 7.5mm}
-.s-opt{display:inline-block;margin:0 5mm 0 0;font-size:12pt;white-space:nowrap}
+.s-opt{display:inline-block;margin:0 5mm 0 0;font-size:calc(12pt*var(--k,1));white-space:nowrap}
 .s-opt b{font-weight:500;margin-right:1.5mm;color:#555}
-.s-resp{float:right;color:#777;font-size:8.8pt;margin:0 4mm 0 0}
-.s-vocab{color:#555;font-size:8.8pt;margin:.4mm 0 1mm 7.5mm}
-.s-key{margin:0 0 2.2mm;padding-bottom:2mm;border-bottom:.25mm solid #ddd;break-inside:avoid}
-.s-key .s-zh{font-size:13pt}
+.s-resp{float:right;color:#777;font-size:calc(8.8pt*var(--k,1));margin:0 4mm 0 0}
+.s-vocab{color:#555;font-size:calc(8.8pt*var(--k,1));margin:.4mm 0 1mm 7.5mm}
+.s-key{margin:0 0 calc(2.2mm*var(--g,1));padding-bottom:calc(2mm*var(--g,1));border-bottom:.25mm solid #ddd;break-inside:avoid}
+.s-key .s-zh{font-size:calc(13pt*var(--k,1))}
 .s-ans{display:inline-block;min-width:8mm;text-align:center;font-weight:600;border-bottom:.75pt solid #222;margin:0 1mm;padding:0 1mm}
-.s-d{color:#777;font-size:8.8pt;margin:0 0 0 7.5mm}
-.s-note{color:#444;font-size:8.8pt;margin:.3mm 0 0 7.5mm}
-.s-tag{display:inline-block;font-size:7.8pt;color:#777;border:.2mm solid #bbb;padding:0 1.4mm;margin-left:2mm;letter-spacing:.04em;vertical-align:.3mm}
-.s-stat{margin-top:4mm;font-size:9pt;color:#555}
+.s-d{color:#777;font-size:calc(8.8pt*var(--k,1));margin:0 0 0 7.5mm}
+.s-note{color:#444;font-size:calc(8.8pt*var(--k,1));margin:.3mm 0 0 7.5mm}
+.s-tag{display:inline-block;font-size:calc(7.8pt*var(--k,1));color:#777;border:.2mm solid #bbb;padding:0 1.4mm;margin-left:2mm;letter-spacing:.04em;vertical-align:.3mm}
+.s-stat{margin-top:4mm;font-size:calc(9pt*var(--k,1));color:#555}
 .s-wrong{color:#999;text-decoration:line-through}
-.s-kh{font-size:11pt;font-weight:500;margin:3.5mm 0 1.5mm;border-bottom:.4pt solid #ccc;break-after:avoid}
-.s-teacher{border-left:1.5pt solid #555;padding:2mm 4mm;font-size:9pt;margin-top:4mm;color:#444;break-inside:avoid}
+.s-match{width:100%;border-collapse:collapse;font-size:calc(11pt*var(--k,1))}
+.s-match td{padding:1.2mm 1.5mm;vertical-align:baseline}
+.s-match .ml{width:6mm;color:#777;font-size:calc(9.5pt*var(--k,1))}
+.s-match .mz{font-size:calc(14pt*var(--k,1));white-space:nowrap}
+.s-match .mb{color:#777;white-space:nowrap}
+.s-match .mr b{font-weight:500;margin-right:2mm;color:#555}
+.s-kh{font-size:calc(11pt*var(--k,1));font-weight:500;margin:3.5mm 0 1.5mm;border-bottom:.4pt solid #ccc;break-after:avoid}
+.s-teacher{border-left:1.5pt solid #555;padding:2mm 4mm;font-size:calc(9pt*var(--k,1));margin-top:4mm;color:#444;break-inside:avoid}
 .s-answer{break-before:page;page-break-before:always}
 .s-answer.pg{margin-top:16mm;padding-top:10mm;border-top:3px double #bbb;position:relative}
-.s-answer.pg::before{content:'↓ 答案頁（列印時會自動另起一頁）';position:absolute;top:-4.2mm;left:50%;transform:translateX(-50%);background:#fff;padding:0 4mm;font-size:8.5pt;color:#999;letter-spacing:.08em;white-space:nowrap}
+.s-answer.pg::before{content:'↓ 答案頁（列印時會自動另起一頁）';position:absolute;top:-4.2mm;left:50%;transform:translateX(-50%);background:#fff;padding:0 4mm;font-size:calc(8.5pt*var(--k,1));color:#999;letter-spacing:.08em;white-space:nowrap}
+.s-sec.pb{break-before:page;page-break-before:always;position:relative}
+.s-sec.pb::before{content:'換頁';position:absolute;top:-3mm;left:0;right:0;border-top:1px dashed #b48a5a;color:#b48a5a;font-size:8pt;text-align:center;line-height:0}
+.pv-gap{display:block;position:relative;border-bottom:0;margin:0 -12mm;background:repeating-linear-gradient(135deg,#f1eee8,#f1eee8 6px,#e8e4dc 6px,#e8e4dc 12px)}
+.pv-gap span{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);text-align:center;font-size:8.5pt;color:#8a857b;letter-spacing:.08em}
+@media print{.pv-gap{display:none!important}.s-sec.pb::before{display:none}}
 .sheet ruby{ruby-position:over}
 .sheet rt{font-size:.42em;color:#555;font-weight:400;letter-spacing:0}
 .sheet .s-zh ruby, .sheet .s-para ruby{ruby-align:center}
@@ -255,8 +275,13 @@ details.errdet,details.metadet{margin:10px 0}
   <section id="step1" class="step on noprint">
     <h2><span class="no">①</span>設定，複製出題指令</h2>
     <p class="hint">填好語法點，複製指令，貼給任何 AI（Claude、ChatGPT、Gemini 都可以）。AI 回覆之後，把整段貼回下面。</p>
+    <div class="fld"><label>出題依據</label>
+      <div class="opts" style="margin:4px 0 0"><label><input type="radio" name="fSource" value="points"> 語法點（自己填）</label><label><input type="radio" name="fSource" value="slides"> 今天的簡報（附給 AI，由 AI 整理單字和文法）</label></div></div>
+    <div class="fld" id="slideFld" hidden>
+      <p class="hint" style="margin:0 0 6px">把簡報<b>轉成 PDF 再上傳</b>給 AI 最穩（pptx 有些 AI 讀不完整，圖片裡的字也可能漏掉）。AI 不能讀檔案時，把簡報的文字貼在下面，會一起放進指令。</p>
+      <label>簡報文字（選填）</label><textarea id="fSlideText" rows="5" placeholder="可以留空，直接把簡報檔和指令一起交給 AI"></textarea></div>
     <div class="grid2">
-      <div class="fld"><label>語法點（填 1 個是單一語法點；填 2～3 個就會出「綜合練習」，題目會混合使用）</label>
+      <div class="fld"><label id="ptLabel">語法點（填 1 個是單一語法點；填 2～3 個就會出「綜合練習」，題目會混合使用）</label>
         <div class="ptinputs" id="ptInputs"></div></div>
       <div class="fld"><label>程度</label>
         <select id="fLevel"><option>入門</option><option selected>初級</option><option>初中級</option><option>中級</option><option>中高級</option></select></div>
@@ -266,6 +291,7 @@ details.errdet,details.metadet{margin:10px 0}
     <div class="fld"><label>段落填空的主題</label><input id="fTheme" placeholder="例如：生活情境（點餐、問路、介紹家人）"></div>
     <div class="fld"><label>各題型要幾題（填 0 就不出這一種；段落填空的數字是空格數）</label></div>
     <div class="counts" id="counts"></div>
+    <div class="fld" style="max-width:260px"><label>生詞表要幾個（0 = 不要；印在練習單最上面，附拼音和西文）</label><input type="number" id="fVocabN" min="0" max="40"></div>
     <details class="errdet"><summary>西語學生常錯的地方（選填）</summary><div class="errbox" id="errBox"></div></details>
     <div class="row">
       <button class="primary" id="btnCopyPrompt">複製出題指令</button>
@@ -289,14 +315,16 @@ details.errdet,details.metadet{margin:10px 0}
   <!-- ============ 3 輸出 ============ -->
   <section id="step3" class="step">
     <div class="noprint" id="outControls"></div>
+    <div id="layoutBar" class="layoutbar noprint"></div>
     <div class="previewWrap"><div id="sheet" class="sheet"></div></div>
-    <p class="previewNote noprint">預覽只是大概的樣子，實際分頁以列印出來的結果為準。</p>
+    <p class="previewNote noprint">預覽的換頁位置（灰色斜線帶）是電腦估算的，實際分頁以列印或存成 PDF 的結果為準。</p>
   </section>
 </main>
 <div id="toast"></div>
 
 <script src="grammar-data.js"></script>
 <script src="grammar-picker.js"></script>
+<script src="worksheet-docx.js"></script>
 <script>
 'use strict';
 /* =====================================================================
@@ -311,6 +339,7 @@ const str = v => (v === undefined || v === null) ? '' : String(v).trim();
 const NUM = ['一','二','三','四','五','六','七','八','九','十'];
 const CIRC = ['①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩'];
 const LETTER = ['A','B','C','D'];
+const ALPHA = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
 const LS = { proj: 'gwm.project.v1', errors: 'gwm.errors.v1', read: 'gwm.readings.v1' };
 function lsGet(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }
@@ -445,24 +474,28 @@ function zyLine(trad) {
 /* =====================================================================
    資料結構
    ===================================================================== */
-const TYPES = ['fill', 'cloze', 'order', 'choice', 'fix', 'translate'];
+const TYPES = ['fill', 'cloze', 'order', 'choice', 'fix', 'translate', 'zh2es', 'match', 'sentence'];
 const DEF = {
   fill:      { name: '選詞填空', es: 'Completa con la palabra correcta' },
   cloze:     { name: '段落填空', es: 'Completa el texto con la palabra correcta' },
   order:     { name: '排序',     es: 'Ordena las palabras para formar una oración (guíate por el significado)' },
   choice:    { name: '選擇',     es: 'Elige la oración correcta' },
   fix:       { name: '改錯',     es: 'Encierra el error en un círculo y escribe la oración correcta' },
-  translate: { name: '西翻中',   es: 'Traduce al chino' }
+  translate: { name: '西翻中',   es: 'Traduce al chino' },
+  zh2es:     { name: '中翻西',   es: 'Traduce al español' },
+  match:     { name: '配對',     es: 'Une cada palabra con su significado' },
+  sentence:  { name: '造句',     es: 'Escribe una oración con la palabra o estructura indicada' }
 };
 const LEVEL_ES = { '入門': 'Nivel introductorio', '初級': 'Nivel inicial', '初中級': 'Nivel pre-intermedio', '中級': 'Nivel intermedio', '中高級': 'Nivel intermedio-alto' };
 
 function newState() {
   return {
-    meta: { grammar: '', points: ['', '', ''], mix: 50, level: '初級', theme: '生活情境', title: '', subtitle: '', footer: '每天一分鐘 · Un minuto al día' },
-    counts: { fill: 6, cloze: 5, order: 5, choice: 5, fix: 5, translate: 5 },
+    meta: { source: 'points', slideText: '', grammar: '', points: ['', '', ''], mix: 50, level: '初級', theme: '生活情境', title: '', subtitle: '', footer: '每天一分鐘 · Un minuto al día' },
+    counts: { fill: 6, cloze: 5, order: 5, choice: 5, fix: 5, translate: 5, zh2es: 0, match: 0, sentence: 0, vocab: 0 },
     grammarBox: { points: [], warning: '' },
+    vocab: [],
     sections: [],
-    opts: { pinyin: true, zhuyin: false, simp: false, simpPhrases: false, cueEs: true, keyEs: true, student: 'none', paper: 'A4', print: 'both', teacherNote: true }
+    opts: { fontPct: 100, gapPct: 100, guides: true, keepSec: false, vocab: true, vocabPy: true, pinyin: true, zhuyin: false, simp: false, simpPhrases: false, cueEs: true, keyEs: true, student: 'none', paper: 'A4', print: 'both', teacherNote: true }
   };
 }
 let state = newState();
@@ -478,6 +511,9 @@ function blankItem(type) {
     case 'choice': return Object.assign(b, { es: '', options: ['', '', ''], answer: 0 });
     case 'fix': return Object.assign(b, { wrong: '', correct: '', tip: '' });
     case 'translate': return Object.assign(b, { es: '', vocab: '', answer: '' });
+    case 'zh2es': return Object.assign(b, { zh: '', vocab: '', answer: '' });
+    case 'match': return Object.assign(b, { zh: '', es: '' });
+    case 'sentence': return Object.assign(b, { cue: '', es: '', answer: '' });
   }
 }
 function blankSection(type) { return { id: uid(), type, enabled: true, bank: [], items: [] }; }
@@ -503,6 +539,24 @@ function answerIndex(a, n) {
   if (i >= 0 && s.length <= 2) return i;
   const k = parseInt(s, 10);
   return Number.isFinite(k) ? ((k >= 1 && k <= n) ? k - 1 : k) : 0;
+}
+
+/* ---- 西文翻譯有沒有跟著中文改：記下「這句西文是對著哪句中文寫的」 ---- */
+function srcZh(type, it) {
+  switch (type) {
+    case 'fill': case 'cloze': return answerSentence(type, it);
+    case 'order': return it.answer;
+    case 'choice': return it.options[it.answer] || '';
+    case 'zh2es': case 'match': return it.zh;
+  }
+  return null;
+}
+function esKey(type) { return type === 'zh2es' ? 'answer' : 'es'; }
+function stampEs(type, it) { const s = srcZh(type, it); if (s === null) return; it.esSrc = str(it[esKey(type)]) ? s : ''; }
+function isStale(type, it) {
+  const s = srcZh(type, it);
+  if (s === null || !str(it[esKey(type)])) return false;
+  return it.esSrc !== undefined && it.esSrc !== '' && it.esSrc !== s;
 }
 
 /* ---- 語法點（綜合練習） ---- */
@@ -565,7 +619,11 @@ function normItem(type, it) {
     }
     case 'fix': b.wrong = str(it.wrong); b.correct = str(it.correct); b.tip = str(it.tip || it.explanation); break;
     case 'translate': b.es = str(it.es); b.vocab = str(it.vocab); b.answer = str(it.answer); break;
+    case 'zh2es': b.zh = str(it.zh || it.sentence); b.vocab = str(it.vocab); b.answer = str(it.answer || it.es); break;
+    case 'match': b.zh = str(it.zh || it.word); b.es = str(it.es || it.answer); break;
+    case 'sentence': b.cue = str(it.cue || it.word || it.pattern); b.es = str(it.es); b.answer = str(it.answer || it.sample); break;
   }
+  stampEs(type, b);
   return b;
 }
 
@@ -577,6 +635,7 @@ function fromAI(j) {
   if (gb && Array.isArray(gb.points)) {
     res.grammarBox = { points: gb.points.map(p => ({ pattern: str(p.pattern), es: str(p.es), example: str(p.example) })), warning: str(gb.warning) };
   }
+  if (Array.isArray(j.vocab)) res.vocab = j.vocab.map(v => ({ zh: str(v.zh || v.word), es: str(v.es) })).filter(v => v.zh).map(v => { v.esSrc = v.es ? v.zh : ''; return v; });
   for (const type of TYPES) {
     const blk = j[type];
     if (!blk) continue;
@@ -741,7 +800,10 @@ const TYPE_RULES = {
   order: n => `【排序 order】${n} 題。tokens 是打散的詞塊（4～7 塊，順序必須打亂，不能剛好是正確順序）；answer 是完整正確的句子；es 是西班牙文翻譯，用來限定意思（如果打散後有兩種合理排法，要靠 es 區分）。`,
   choice: n => `【選擇 choice】${n} 題。es 是這句話的西班牙文意思；options 有 3 個句子，只有 1 個正確，錯的用學生常犯的錯；answer 用 "A"、"B" 或 "C"，正確答案的位置要平均分散。`,
   fix: n => `【改錯 fix】${n} 題。wrong 是有一處錯的句子（用學生常犯的錯）；correct 是改正後的句子；tip 用一句白話繁體中文說明錯在哪裡。`,
-  translate: n => `【西翻中 translate】${n} 題。es 是西班牙文句子；answer 是標準答案（台灣用法）；vocab 列出關鍵詞（中文＋西文，用 · 隔開）。`
+  translate: n => `【西翻中 translate】${n} 題。es 是西班牙文句子；answer 是標準答案（台灣用法）；vocab 列出關鍵詞（中文＋西文，用 · 隔開）。`,
+  zh2es: n => `【中翻西 zh2es】${n} 題。zh 是中文句子（台灣用法，自然的句子）；answer 是標準的西班牙文翻譯（自然、準確）；vocab 列出需要提示的關鍵詞（中文＋西文，用 · 隔開，不需要可留空字串）。`,
+  match: n => `【配對 match】${n} 組。每組 zh 是中文詞語（教材裡的生詞或句型），es 是對應的西班牙文意思；同一大題裡不能有兩組意思太接近，讓每組只有一個正確配對。`,
+  sentence: n => `【造句 sentence】${n} 題。cue 是要學生用的詞語或句型（中文）；es 用西班牙文描述情境或想表達的意思，要寫清楚，學生才知道造什麼句子；answer 是一個示範答案（學生的答案可以不同）。`
 };
 const TYPE_SKELETON = {
   fill: '"fill": {"bank": ["…"], "items": [{"zh": "…__…。", "answer": "…", "es": "…", "note": ""}]}',
@@ -749,7 +811,10 @@ const TYPE_SKELETON = {
   order: '"order": {"items": [{"tokens": ["…", "…", "…"], "answer": "…。", "es": "…"}]}',
   choice: '"choice": {"items": [{"es": "…", "options": ["…", "…", "…"], "answer": "B"}]}',
   fix: '"fix": {"items": [{"wrong": "…", "correct": "…", "tip": "…"}]}',
-  translate: '"translate": {"items": [{"es": "…", "vocab": "…", "answer": "…"}]}'
+  translate: '"translate": {"items": [{"es": "…", "vocab": "…", "answer": "…"}]}',
+  zh2es: '"zh2es": {"items": [{"zh": "…", "vocab": "…", "answer": "…"}]}',
+  match: '"match": {"items": [{"zh": "…", "es": "…"}]}',
+  sentence: '"sentence": {"items": [{"cue": "…", "es": "…", "answer": "…。"}]}'
 };
 function errorsFor(g) { const m = lsGet(LS.errors, {}); return m[g] || ''; }
 function errsText() {
@@ -770,16 +835,24 @@ function buildPrompt() {
   const m = state.meta, c = state.counts;
   const errs = errsText() || '（沒有特別提供，請依你對西班牙語母語者學華語的了解，自己挑最常見的錯。）';
   const multi = isMulti(), tn = tagNames();
-  const types = TYPES.filter(t => +c[t] > 0);
+  const types = TYPES.filter(t => t !== 'vocab' && +c[t] > 0);
+  const slides = m.source === 'slides', vn = +c.vocab || 0;
   const L = [];
-  L.push(multi ? '你是專門教西班牙語母語者學華語的老師。請針對下面的幾個語法點，出一份「綜合練習單」。' : '你是專門教西班牙語母語者學華語的老師。請針對下面的語法點，出一份練習單。');
+  if (slides) L.push('你是專門教西班牙語母語者學華語的老師。我會附上「今天上課的簡報」（PDF、pptx 或貼在下面的文字）。請先完整讀過簡報，整理出今天的單字和語法，再依簡報的內容出一份練習單。');
+  else L.push(multi ? '你是專門教西班牙語母語者學華語的老師。請針對下面的幾個語法點，出一份「綜合練習單」。' : '你是專門教西班牙語母語者學華語的老師。請針對下面的語法點，出一份練習單。');
   L.push('只回覆一個 JSON，前後不要加任何說明文字。');
   L.push('');
   L.push('【基本條件】');
-  if (multi) pointsList().forEach((p, i) => L.push(`- 語法點 ${i + 1}：${p}（標記名稱：「${tn[i]}」）`));
+  if (slides) {
+    L.push('- 內容依據：只用簡報裡出現的生詞、句型和例句出題；簡報沒教過的生詞不要放進句子（必要時放在提示詞裡）。');
+    if (multi) pointsList().forEach((p, i) => L.push(`- 只針對這個語法點出題（簡報裡其他語法點略過）${i + 1}：${p}（標記名稱：「${tn[i]}」）`));
+    else if (pointsList().length) L.push(`- 只針對這個語法點出題（簡報裡其他語法點略過）：${m.grammar}`);
+    else L.push('- 語法點：請從簡報裡找出今天教的語法點（最多 3 個），整理進 grammar_box，出題以這些語法點為主。');
+  } else if (multi) pointsList().forEach((p, i) => L.push(`- 語法點 ${i + 1}：${p}（標記名稱：「${tn[i]}」）`));
   else L.push(`- 語法點：${m.grammar || '（請填語法點）'}`);
   { const gr = GrammarPicker.ref(pointsList()); if (gr) L.push(gr); }
   L.push(`- 程度：${m.level}。只用這個程度的學生已經學過的字詞和語法；超出程度的生詞不要放在句子裡，必要時放進 vocab 當提示。`);
+  if (slides && vn > 0) L.push(`- 生詞表：從簡報挑出最重要的 ${vn} 個生詞（優先選今天新教的），放進最外層的 "vocab" 陣列；每個有 zh（繁體字，台灣用法）和 es（西班牙文意思，簡短）。不要寫拼音，我會自己加。`);
   L.push(`- 段落主題：${m.theme || '生活情境'}`);
   L.push('- 全部用繁體字和台灣的用詞（例如：捷運、公車、手機、計程車、影片、軟體、馬鈴薯）。');
   L.push('- 句子要自然、是台灣人真的會說的話；不要寫成教科書才有的怪句子。');
@@ -805,12 +878,15 @@ function buildPrompt() {
     L.push('- 另外請提供 grammar_box：3～5 條句型（pattern 句型、es 西班牙文意思、example 例句），以及 warning（一句常見錯誤的提醒，用 ✗ 和 ✓ 表示）。');
   }
   L.push('');
+  if (slides && m.slideText.trim()) { L.push(''); L.push('【簡報內容（文字）】'); L.push(m.slideText.trim()); }
+  L.push('');
   L.push('【輸出前自我檢查】逐題確認：答案真的正確嗎？中文自然嗎？有沒有第二個合理答案？有問題就先改掉再輸出。');
   L.push('');
   L.push('【輸出格式】只輸出下面這個結構的 JSON（欄位名稱不要改，note 可以留空字串）：');
   L.push('{');
   L.push('  "title": "語法點 · Título en español",');
   L.push('  "grammar_box": {"points": [{"pattern": "…", "es": "…", "example": "…"}], "warning": "…"},');
+  if (slides && vn > 0) L.push('  "vocab": [{"zh": "…", "es": "…"}],');
   L.push(types.map(t => '  ' + withPoints(TYPE_SKELETON[t])).join(',\n'));
   L.push('}');
   return L.join('\n');
@@ -837,7 +913,8 @@ function buildSwapPrompt(sec, it) {
   L.push('輸出格式（欄位名稱不要改）：');
   const sk = { fill: '{"zh": "…__…。", "answer": "…", "es": "…"}', cloze: '{"text": "…{1}…", "answers": ["…"], "es": "…"}',
     order: '{"tokens": ["…", "…", "…"], "answer": "…。", "es": "…"}', choice: '{"es": "…", "options": ["…", "…", "…"], "answer": "B"}',
-    fix: '{"wrong": "…", "correct": "…", "tip": "…"}', translate: '{"es": "…", "vocab": "…", "answer": "…"}' };
+    fix: '{"wrong": "…", "correct": "…", "tip": "…"}', translate: '{"es": "…", "vocab": "…", "answer": "…"}',
+    zh2es: '{"zh": "…", "vocab": "…", "answer": "…"}', match: '{"zh": "…", "es": "…"}', sentence: '{"cue": "…", "es": "…", "answer": "…。"}' };
   L.push(isMulti() ? sk[sec.type].replace('{', `{"points": ["…"], `) : sk[sec.type]);
   return L.join('\n');
 }
@@ -849,6 +926,9 @@ function itemSummary(type, it) {
     case 'choice': return `${it.es}（正確：${it.options[it.answer] || ''}）`;
     case 'fix': return `${it.wrong} → ${it.correct}`;
     case 'translate': return `${it.es} → ${it.answer}`;
+    case 'zh2es': return `${it.zh} → ${it.answer}`;
+    case 'match': return `${it.zh} = ${it.es}`;
+    case 'sentence': return `${it.cue}：${it.es}`;
   }
 }
 
@@ -866,6 +946,9 @@ function fieldTexts(type, it) {
     case 'choice': return it.options;
     case 'fix': return [it.wrong, it.correct, it.tip];
     case 'translate': return [it.vocab, it.answer];
+    case 'zh2es': return [it.zh, it.vocab];
+    case 'match': return [it.zh];
+    case 'sentence': return [it.cue, it.answer];
   }
   return [];
 }
@@ -931,7 +1014,24 @@ function validate() {
           if (!it.answer) add(it.id, '還沒有標準答案。');
           break;
         }
+        case 'zh2es': {
+          if (!it.zh) add(it.id, '還沒有中文句子。');
+          if (!it.answer) add(it.id, '還沒有西班牙文答案。');
+          break;
+        }
+        case 'match': {
+          if (!it.zh) add(it.id, '還沒有中文詞語。');
+          if (!it.es) add(it.id, '還沒有西班牙文意思。');
+          break;
+        }
+        case 'sentence': {
+          if (!it.cue) add(it.id, '還沒有要學生用的詞語或句型。');
+          if (!it.es) add(it.id, '沒有西文情境，學生不知道要造什麼句子。');
+          if (!it.answer) add(it.id, '還沒有示範答案。');
+          break;
+        }
       }
+      if (isStale(sec.type, it)) add(it.id, '中文改過了，西文可能要重新翻（可按上方「更新翻譯」）。');
       // 簡體字、大陸用語
       const texts = fieldTexts(sec.type, it).join('');
       const simp = suspectSimplified(texts);
@@ -945,6 +1045,12 @@ function validate() {
         if (!it.points.length) add(it.id, '沒有標記語法點。');
         else { const bad = it.points.filter(t => !names.includes(t)); if (bad.length) add(it.id, `語法點標記「${bad.join('、')}」不在你填的語法點裡。`); }
       }
+    }
+    if (sec.type === 'match') {
+      const its = sec.items.filter(i => i.enabled);
+      if (its.length < 3) gen.push('「配對」至少要 3 組才有意義。');
+      const es = its.map(i => i.es).filter(Boolean);
+      if (new Set(es).size !== es.length) gen.push('「配對」有兩組的西文意思一樣，學生會分不出來。');
     }
     if (sec.type === 'choice' && letters.length >= 4 && new Set(letters).size === 1) gen.push('「選擇」的正確答案全部都在同一個選項，建議分散。');
   }
@@ -994,6 +1100,11 @@ function renderStep1() {
   $('#mixFld').hidden = !isMulti(); $('#fMix').value = String(state.meta.mix);
   $('#fLevel').value = state.meta.level;
   $('#fTheme').value = state.meta.theme;
+  $$('input[name=fSource]').forEach(r => r.checked = r.value === state.meta.source);
+  $('#slideFld').hidden = state.meta.source !== 'slides';
+  $('#fSlideText').value = state.meta.slideText || '';
+  $('#fVocabN').value = state.counts.vocab || 0;
+  $('#ptLabel').textContent = state.meta.source === 'slides' ? '語法點（選填：不填就由 AI 從簡報裡挑；想只考某幾個就填。填 2～3 個會出「綜合練習」）' : '語法點（填 1 個是單一語法點；填 2～3 個就會出「綜合練習」，題目會混合使用）';
   renderErrBox();
   $('#counts').innerHTML = TYPES.map(t => `<div class="fld"><label>${DEF[t].name}</label><input type="number" min="0" max="20" data-count="${t}" value="${state.counts[t]}"></div>`).join('');
   updatePromptView();
@@ -1004,6 +1115,13 @@ $('#ptInputs').addEventListener('input', e => {
   state.meta.points[+i] = e.target.value.trim(); syncGrammar(); save(); updatePromptView();
 });
 $('#ptInputs').addEventListener('change', () => { $('#mixFld').hidden = !isMulti(); renderErrBox(); });
+$$('input[name=fSource]').forEach(r => r.addEventListener('change', e => {
+  state.meta.source = e.target.value;
+  if (state.meta.source === 'slides' && !state.counts.vocab) state.counts.vocab = 12;
+  save(); renderStep1();
+}));
+$('#fSlideText').addEventListener('input', e => { state.meta.slideText = e.target.value; save(); updatePromptView(); });
+$('#fVocabN').addEventListener('input', e => { state.counts.vocab = Math.max(0, Math.min(40, parseInt(e.target.value, 10) || 0)); save(); updatePromptView(); });
 $('#fMix').addEventListener('change', e => { state.meta.mix = +e.target.value; save(); updatePromptView(); });
 $('#fLevel').addEventListener('change', e => { state.meta.level = e.target.value; save(); updatePromptView(); });
 $('#fTheme').addEventListener('input', e => { state.meta.theme = e.target.value.trim(); save(); updatePromptView(); });
@@ -1013,7 +1131,7 @@ $('#counts').addEventListener('input', e => {
   state.counts[t] = Math.max(0, Math.min(20, parseInt(e.target.value, 10) || 0)); save(); updatePromptView();
 });
 $('#btnCopyPrompt').addEventListener('click', async () => {
-  if (!pointsList().length) { toast('先填語法點'); $('#ptInputs input').focus(); return; }
+  if (state.meta.source !== 'slides' && !pointsList().length) { toast('先填語法點'); $('#ptInputs input').focus(); return; }
   updatePromptView();
   const ok = await copyText(buildPrompt());
   if (ok) toast('已複製，貼給 AI 就可以了');
@@ -1042,6 +1160,7 @@ function applyImport(r, replace) {
   if (r.title) state.meta.title = r.title;
   if (r.subtitle) state.meta.subtitle = r.subtitle;
   if (r.grammarBox) state.grammarBox = r.grammarBox;
+  if (r.vocab && r.vocab.length) state.vocab = r.vocab;
   save();
 }
 $('#btnImport').addEventListener('click', () => {
@@ -1050,7 +1169,7 @@ $('#btnImport').addEventListener('click', () => {
   if (!txt.trim()) { box.innerHTML = '<div class="bad">還沒有貼上內容。</div>'; return; }
   let r;
   try { r = fromAI(tolerantParse(txt)); } catch (e) { box.innerHTML = '<div class="bad">' + esc(e.message) + '</div>'; return; }
-  if (!r.sections.length) { box.innerHTML = '<div class="bad">讀得懂格式，但裡面沒有找到任何題目。請確認有 fill、cloze、order、choice、fix、translate 這些欄位。</div>'; return; }
+  if (!r.sections.length && !(r.vocab && r.vocab.length)) { box.innerHTML = '<div class="bad">讀得懂格式，但裡面沒有找到任何題目。請確認有 fill、cloze、order、choice、fix、translate 這些欄位。</div>'; return; }
   if (state.sections.length && !confirm('目前的題目會被這次的內容取代，繼續嗎？')) return;
   applyImport(r, true);
   const n = r.sections.map(s => `${DEF[s.type].name} ${s.type === 'cloze' ? s.items.reduce((a, i) => a + i.answers.length, 0) + ' 空' : s.items.length + ' 題'}`).join('、');
@@ -1082,6 +1201,9 @@ function cardBody(type, it) {
       `<div class="optrow"><label><input type="radio" name="ans-${it.id}" data-f="answer" value="${i}" ${it.answer === i ? 'checked' : ''}> ${LETTER[i]}　正確</label>${inp('opt' + i, o)}</div>`).join('');
     case 'fix': return fld('錯誤句子', inp('wrong', it.wrong)) + fld('正確句子', inp('correct', it.correct)) + fld('說明（白話）', inp('tip', it.tip));
     case 'translate': return fld('西班牙文', inp('es', it.es)) + `<div class="grid2">${fld('提示詞', inp('vocab', it.vocab))}${fld('標準答案', inp('answer', it.answer))}</div>`;
+    case 'zh2es': return fld('中文句子', inp('zh', it.zh)) + `<div class="grid2">${fld('提示詞', inp('vocab', it.vocab))}${fld('標準答案（西班牙文）', inp('answer', it.answer))}</div>`;
+    case 'match': return `<div class="grid2">${fld('中文詞語', inp('zh', it.zh))}${fld('西班牙文意思', inp('es', it.es))}</div>`;
+    case 'sentence': return `<div class="grid2">${fld('要用的詞語或句型', inp('cue', it.cue))}${fld('西文情境（說明要造什麼句子）', inp('es', it.es))}</div>` + fld('示範答案', inp('answer', it.answer));
   }
 }
 function answerSentence(type, it) {
@@ -1092,6 +1214,9 @@ function answerSentence(type, it) {
     case 'choice': return it.options[it.answer] || '';
     case 'fix': return it.correct;
     case 'translate': return it.answer;
+    case 'zh2es': return it.zh;
+    case 'match': return it.zh;
+    case 'sentence': return it.answer;
   }
   return '';
 }
@@ -1140,6 +1265,23 @@ function gbHTML() {
     ${fld('常見錯誤提醒（一句話）', `<input data-m="grammarBox.warning" value="${esc(g.warning)}">`)}
   </details>`;
 }
+function vocabRowHTML(v, i) {
+  return `<div class="gbrow" data-vi="${i}"><input data-v="zh" value="${esc(v.zh)}" placeholder="詞語（繁體）"><input data-v="es" value="${esc(v.es)}" placeholder="西文意思"><span class="vpy" style="font-size:.84rem;color:var(--sub)">${esc(v.zh ? vPy(v.zh) : '')}${vStale(v) ? ' <b style="color:var(--warn)">西文待更新</b>' : ''}</span><button class="tiny" data-act="delVocab" data-i="${i}">刪</button></div>`;
+}
+function vPy(z) { return pyLine(z).replace(/^./, c => c.toLowerCase()); }
+function vStale(v) { return !!(v.es && v.esSrc && v.esSrc !== v.zh); }
+function vocabHTML() {
+  return `<details ${state.vocab.length ? 'open' : ''}><summary>生詞表（印在練習單上方，共 ${state.vocab.length} 個；拼音會自動跟著中文更新）</summary>
+    ${state.vocab.map(vocabRowHTML).join('')}
+    <div class="row"><button class="tiny" data-act="addVocab">＋ 新增一個生詞</button></div></details>`;
+}
+let staleSnap = [];
+function staleList() {
+  const out = [];
+  state.vocab.forEach(v => { if (vStale(v)) out.push({ zh: v.zh, apply: es => { v.es = es; v.esSrc = v.zh; } }); });
+  state.sections.forEach(sec => sec.items.forEach(it => { if (isStale(sec.type, it)) out.push({ zh: srcZh(sec.type, it), apply: es => { it[esKey(sec.type)] = es; stampEs(sec.type, it); } }); }));
+  return out;
+}
 function renderCheck() {
   const root = $('#step2');
   if (!state.sections.length) {
@@ -1154,6 +1296,15 @@ function renderCheck() {
     ${fld('副標題（留空會自動產生）', `<input data-m="meta.subtitle" value="${esc(state.meta.subtitle)}" placeholder="Ejercicios de gramática china · ${LEVEL_ES[state.meta.level] || ''}">`)}
     <div id="gbBox">${gbHTML()}</div>
     </details>
+    <details class="metadet" id="vocabBox" ${state.vocab.length ? 'open' : ''}><summary>生詞表</summary><div id="vocabInner">${vocabHTML()}</div></details>
+    <div id="staleNote"></div>
+    <div class="swapbox" id="stalePanel" hidden>
+      <div>中文改過、西文還沒更新的句子：複製下面的指令貼給 AI，再把它回覆的結果貼回來。</div>
+      <div class="row" style="margin:6px 0"><button class="tiny" data-act="staleCopy">複製翻譯指令</button></div>
+      <textarea rows="5" id="staleIn" placeholder="貼上 AI 回覆的 JSON 陣列"></textarea>
+      <div class="row" style="margin:6px 0 0"><button class="primary tiny" data-act="staleApply">套用翻譯</button><button class="tiny" data-act="staleClose">關閉</button></div>
+      <div class="msg" id="staleMsg"></div>
+    </div>
     ${state.sections.map(secHTML).join('')}
     ${missing.length ? `<div class="row" style="margin-top:28px"><span class="hint" style="margin:0">新增題型：</span>${missing.map(t => `<button class="quiet" data-act="addSection" data-t="${t}">${DEF[t].name}</button>`).join('')}</div>` : ''}
     <div class="row" style="margin-top:30px"><button class="primary" data-act="goStep3">下一步：輸出 →</button></div>`;
@@ -1173,6 +1324,8 @@ function refreshIssues() {
   const ps = isMulti() ? pointStats() : null;
   if (el) el.innerHTML = (ps ? `<div class="n" style="margin-bottom:4px">${ps.names.map(n => `${esc(n)} ${ps.per[n]} 題`).join('・')}・<b>混合 ${ps.mixed} 題</b>（不含段落填空，共 ${ps.total} 題）</div>` : '') + `<div>共 <b>${total}</b> 分　<span class="n">${state.sections.filter(s => s.enabled).map(s => DEF[s.type].name + ' ' + countPoints(s)).join('・')}</span></div>
     <div>${cnt ? `<span style="color:var(--warn)">有 ${cnt} 個提醒，印之前請看一下</span>` : '<span class="n">檢查沒有發現問題</span>'}</div>`;
+  const sn = $('#staleNote');
+  if (sn) { const n = staleList().length; sn.innerHTML = n ? `<div class="msg"><div class="bad">有 ${n} 句中文改過了，西文可能要更新。 <button class="tiny" data-act="staleOpen">更新翻譯</button></div></div>` : ''; }
   const gen = $('#importNotes');
   if (gen) gen.dataset.gen = JSON.stringify(v.general);
   let g = $('#genIssues'); if (!g && el) { g = document.createElement('div'); g.id = 'genIssues'; el.after(g); }
@@ -1199,6 +1352,13 @@ const step2 = $('#step2');
 step2.addEventListener('input', e => {
   const t = e.target;
   if (t.dataset.m) { setPath(state, t.dataset.m, t.value); save(); if (t.dataset.m.startsWith('meta.level')) renderCheck(); return; }
+  if (t.dataset.v) {
+    const row = t.closest('[data-vi]'); const v = state.vocab[+row.dataset.vi]; if (!v) return;
+    v[t.dataset.v] = t.value.trim();
+    if (t.dataset.v === 'es') v.esSrc = v.es ? v.zh : '';
+    const sp = $('.vpy', row); if (sp) sp.innerHTML = esc(v.zh ? vPy(v.zh) : '') + (vStale(v) ? ' <b style="color:var(--warn)">西文待更新</b>' : '');
+    save(); refreshIssues(); return;
+  }
   if (t.dataset.sf === 'bank') { const sec = findSec(t.closest('.sec').dataset.sid); sec.bank = splitList(t.value); save(); refreshIssues(); return; }
   const f = t.dataset.f; if (!f) return;
   const { card, sec, it } = cardCtx(t); if (!it) return;
@@ -1210,6 +1370,7 @@ step2.addEventListener('input', e => {
     it.text = t.value;
     $('.clozeAns', card).innerHTML = clozeAnswersHTML(it);
   } else it[f] = (f === 'es' || f === 'note' || f === 'tip' || f === 'vocab') ? t.value : t.value.trim();
+  if (f === esKey(sec.type)) stampEs(sec.type, it);
   save(); refreshCard(card);
 });
 step2.addEventListener('change', e => {
@@ -1230,6 +1391,29 @@ step2.addEventListener('click', async e => {
   if (act === 'goStep3') return goStep(3);
   if (act === 'example') { applyImport(fromAI(EXAMPLE), true); return renderCheck(); }
   if (act === 'addSection') { state.sections.push(blankSection(b.dataset.t)); sortSections(); save(); return renderCheck(); }
+  if (act === 'addVocab') { state.vocab.push({ zh: '', es: '', esSrc: '' }); save(); $('#vocabInner').innerHTML = vocabHTML(); $('#vocabBox').open = true; const ins = $$('#vocabInner [data-v="zh"]'); if (ins.length) ins[ins.length - 1].focus(); return; }
+  if (act === 'delVocab') { state.vocab.splice(+b.dataset.i, 1); save(); $('#vocabInner').innerHTML = vocabHTML(); return refreshIssues(); }
+  if (act === 'staleOpen') { $('#stalePanel').hidden = false; $('#staleMsg').innerHTML = ''; return; }
+  if (act === 'staleClose') { $('#stalePanel').hidden = true; return; }
+  if (act === 'staleCopy') {
+    staleSnap = staleList();
+    const L = ['你是西班牙語和華語的翻譯。下面每一行是一句台灣華語，請翻成自然、準確的西班牙文。', '只回覆一個 JSON 陣列（每個元素是一句西班牙文的字串），順序和數量要跟下面完全一樣，前後不要加說明。', ''];
+    staleSnap.forEach((x, i) => L.push(`${i + 1}. ${x.zh}`));
+    const ok = await copyText(L.join('\n')); return toast(ok ? '已複製，貼給 AI 就可以了' : '無法自動複製');
+  }
+  if (act === 'staleApply') {
+    const msg = $('#staleMsg');
+    try {
+      const txt = $('#staleIn').value; const a = txt.indexOf('['), z = txt.lastIndexOf(']');
+      if (a < 0 || z < a) throw new Error('找不到 JSON 陣列（要以「[」開頭、以「]」結尾）。');
+      const arr = JSON.parse(txt.slice(a, z + 1).replace(/,\s*]/g, ']'));
+      if (!staleSnap.length) staleSnap = staleList();
+      if (!Array.isArray(arr) || arr.length !== staleSnap.length) throw new Error(`要有 ${staleSnap.length} 句翻譯，但這裡有 ${Array.isArray(arr) ? arr.length : 0} 句。請確認順序和數量。`);
+      arr.forEach((e, i) => staleSnap[i].apply(str(e)));
+      staleSnap = []; save(); $('#staleIn').value = ''; renderCheck(); toast('已更新翻譯');
+    } catch (err) { msg.innerHTML = '<div class="bad">' + esc(err.message) + '</div>'; }
+    return;
+  }
   if (act === 'addGb') { state.grammarBox.points.push({ pattern: '', es: '', example: '' }); save(); return $('#gbBox').innerHTML = gbHTML(), $('#gbBox details').open = true; }
   if (act === 'delGb') { state.grammarBox.points.splice(+b.dataset.i, 1); save(); return $('#gbBox').innerHTML = gbHTML(), $('#gbBox details').open = true; }
   if (act === 'toggleSec') { const sec = findSec(b.closest('.sec').dataset.sid); sec.enabled = b.checked; save(); return refreshIssues(); }
@@ -1290,11 +1474,13 @@ function renderOut() {
   const o = state.opts;
   const chk = (k, label) => `<label><input type="checkbox" data-m="opts.${k}" ${o[k] ? 'checked' : ''}> ${label}</label>`;
   $('#outControls').innerHTML = `
-    <div class="between"><h2 style="margin:24px 0 0">輸出設定</h2><button class="primary" id="btnPrint">列印／存成 PDF</button></div>
+    <div class="between"><h2 style="margin:24px 0 0">輸出設定</h2><span class="row" style="margin:0"><button class="primary" id="btnPrint">列印／存成 PDF</button><button class="primary" id="btnWord">匯出 Word (.docx)</button></span></div>
     <div class="optgrp"><h3>內容</h3><div class="opts">
       ${chk('cueEs', '練習頁顯示西文提示')}
       ${chk('keyEs', '答案頁顯示西文翻譯')}
       ${chk('teacherNote', '答案頁附老師備註')}
+      ${chk('vocab', '練習頁印生詞表')}
+      ${chk('vocabPy', '生詞表附拼音')}
     </div></div>
     <div class="optgrp"><h3>答案頁加註</h3><div class="opts">
       ${chk('pinyin', '顯示拼音')}
@@ -1319,18 +1505,60 @@ function renderOut() {
       <p class="hint">拼音是電腦自動轉的，遇到不對的讀音可以在這裡改，之後都會記住。每行一個：詞=拼音（每個字一個音節，用空格分開）。</p>
       <textarea id="readingsBox" rows="4">${esc(Object.entries(readingsDict()).map(([k, v]) => k + '=' + v).join('\n'))}</textarea>
     </details>`;
+  renderLayoutBar();
   rebuildSheet();
+}
+function renderLayoutBar() {
+  const o = state.opts;
+  const secs = state.sections.filter(s => s.enabled && s.items.some(i => i.enabled));
+  $('#layoutBar').innerHTML = `
+    <label>字體大小 <input type="range" min="70" max="140" step="5" data-m="opts.fontPct" value="${+o.fontPct || 100}"><span class="lv" id="lbl-fontPct">${+o.fontPct || 100}%</span></label>
+    <label>段落間距 <input type="range" min="50" max="200" step="10" data-m="opts.gapPct" value="${+o.gapPct || 100}"><span class="lv" id="lbl-gapPct">${+o.gapPct || 100}%</span></label>
+    <label><input type="checkbox" data-m="opts.keepSec" ${o.keepSec ? 'checked' : ''}> 每一大題盡量不拆成兩頁</label>
+    <label><input type="checkbox" data-m="opts.guides" ${o.guides ? 'checked' : ''}> 預覽顯示換頁位置</label>
+    ${secs.length ? `<details><summary>指定從哪一大題開始換頁</summary><div class="pbs">${secs.map(s => `<label><input type="checkbox" data-pb="${s.id}" ${s.pageBreak ? 'checked' : ''}> ${esc(DEF[s.type].name)} 前換頁</label>`).join('')}</div></details>` : ''}`;
+}
+function paginatePreview() {
+  const sh = $('#sheet'); if (!sh) return;
+  $$('.pv-gap', sh).forEach(g => g.remove());
+  if (!state.opts.guides) return;
+  const mm = 96 / 25.4, H = ((state.opts.paper === 'Letter' ? 279.4 : 297) - 29) * mm;
+  const top0 = sh.getBoundingClientRect().top;
+  const Y = el => el.getBoundingClientRect().top - top0;
+  const keep = state.opts.keepSec;
+  let atoms = $$('.s-top,.s-who,.s-box,.s-sh,.s-bank,.s-item,.s-match,.s-kh,.s-key,.s-teacher,.s-stat' + (keep ? ',.s-sec' : ''), sh);
+  if (keep) atoms = atoms.filter(a => a.classList.contains('s-sec') ? a.offsetHeight <= H : !(a.closest('.s-sec') && a.closest('.s-sec').offsetHeight <= H));
+  let pageTop = 12 * mm, n = 1;
+  for (let i = 0; i < atoms.length; i++) {
+    const el = atoms[i];
+    const forced = (el.classList.contains('s-sec') && el.classList.contains('pb')) || (el.classList.contains('s-sh') && el.parentElement.classList.contains('pb')) || (el.matches('.s-answer > .s-top') && el.parentElement.classList.contains('pg'));
+    const top = Y(el); let bottom = top + el.offsetHeight;
+    if (el.matches('.s-sh,.s-kh') && atoms[i + 1]) bottom = Y(atoms[i + 1]) + atoms[i + 1].offsetHeight;
+    if (el.offsetHeight > H) continue;
+    if (top > pageTop + 4 && (forced || bottom > pageTop + H)) {
+      const g = document.createElement('div'); g.className = 'pv-gap';
+      g.style.height = Math.max(16, pageTop + H - top) + 'px';
+      g.innerHTML = `<span>第 ${n} 頁結束　·　第 ${n + 1} 頁開始</span>`;
+      el.parentNode.insertBefore(g, el);
+      pageTop = Y(el); n++;
+    }
+  }
 }
 function rebuildSheet() {
   $('#sheet').innerHTML = buildSheetHTML();
   const o = state.opts;
+  $('#sheet').style.setProperty('--k', String((+o.fontPct || 100) / 100));
+  $('#sheet').style.setProperty('--g', String((+o.gapPct || 100) / 100));
   const foot = (state.meta.footer || '').replace(/[\\"]/g, '');
   $('#pageStyle').textContent = `@page{size:${o.paper === 'Letter' ? 'Letter' : 'A4'};margin:13mm 14mm 16mm 14mm;
     @bottom-left{content:"${foot}";font-size:7.5pt;color:#888;font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif}
     @bottom-right{content:counter(page) " / " counter(pages);font-size:7.5pt;color:#888;font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif}}`;
+  paginatePreview();
 }
 $('#step3').addEventListener('input', e => {
   const t = e.target;
+  if (t.dataset.pb) { const sec = findSec(t.dataset.pb); if (sec) { sec.pageBreak = t.checked; save(); rebuildSheet(); } return; }
+  if (t.dataset.m && t.type === 'range') { const lb = $('#lbl-' + t.dataset.m.split('.')[1]); if (lb) lb.textContent = t.value + '%'; }
   if (t.id === 'readingsBox') {
     const d = {}; t.value.split('\n').forEach(l => { const i = l.indexOf('='); if (i > 0) d[l.slice(0, i).trim()] = l.slice(i + 1).trim(); });
     lsSet(LS.read, d); SYL.clear(); rebuildSheet(); return;
@@ -1348,6 +1576,7 @@ $('#step3').addEventListener('click', e => {
     try { window.print(); } catch (err) { off(); }
     setTimeout(off, 4000);
   }
+  if (e.target.id === 'btnWord') exportWord();
   if (e.target.id === 'btnExpJson') download(`${safeName()}-sentences.json`, JSON.stringify(allSentences(), null, 2), 'application/json;charset=utf-8');
   if (e.target.id === 'btnExpCsv') download(`${safeName()}-sentences.csv`, toCSV(allSentences()), 'text/csv;charset=utf-8');
 });
@@ -1391,17 +1620,30 @@ function derivedLines(s) {
   if (o.zhuyin) h += `<div class="s-d">${esc(zyLine(s))}</div>`;
   return h;
 }
+function hashStr(s) { let h = 0; for (const c of String(s)) h = (h * 31 + c.charCodeAt(0)) | 0; return h >>> 0; }
+/* 配對題右欄的順序（用題目 id 算出固定的打散順序，重新整理不會變）：perm[k] = 右欄第 k 格放第幾題 */
+function matchPerm(items) {
+  const idx = items.map((_, i) => i);
+  idx.sort((a, b) => hashStr(items[a].id + 'm') - hashStr(items[b].id + 'm'));
+  if (idx.length > 1 && idx.every((v, i) => v === i)) idx.push(idx.shift());
+  return idx;
+}
 function levelEs() { return LEVEL_ES[state.meta.level] || ''; }
 function sectionStudent(sec, no) {
   const o = state.opts, mode = o.student, items = sec.items.filter(i => i.enabled);
   const pts = countPoints(sec);
-  let h = `<div class="s-sec"><div class="s-sh"><div class="t">${NUM[no]}、${DEF[sec.type].name}<small>${esc(sectionEs(sec))}</small></div><div class="p">${pts} pts</div></div>`;
+  let h = `<div class="s-sec${sec.pageBreak ? ' pb' : ''}${o.keepSec ? ' keep' : ''}" data-sid="${sec.id}"><div class="s-sh"><div class="t">${NUM[no]}、${DEF[sec.type].name}<small>${esc(sectionEs(sec))}</small></div><div class="p">${pts} pts</div></div>`;
   const uniqAns = a => new Set(a).size === a.length;
   if (sec.type === 'fill' && sec.bank.length) {
     const rep = !uniqAns(items.map(i => i.answer));
     h += `<div class="s-bank">${sec.bank.map(esc).join('　')}<small>(${rep ? 'se pueden repetir' : 'cada palabra se usa una vez'})</small></div>`;
   }
   if (sec.type === 'cloze' && sec.bank.length) h += `<div class="s-bank">${sec.bank.map(esc).join('　')}</div>`;
+  if (sec.type === 'match') {
+    const perm = matchPerm(items);
+    h += `<table class="s-match">` + items.map((it, r) => `<tr><td class="ml">${r + 1}</td><td class="mz">${plain(it.zh, mode)}</td><td class="mb">${esc('______')}</td><td class="mr"><b>${ALPHA[r] || r + 1}</b>${esc(items[perm[r]].es)}</td></tr>`).join('') + `</table>`;
+    return h + '</div>';
+  }
   items.forEach((it, i) => {
     const n = `<span class="s-no">${i + 1}</span>`;
     switch (sec.type) {
@@ -1417,7 +1659,11 @@ function sectionStudent(sec, no) {
       case 'fix':
         h += `<div class="s-item">${n}<span class="s-zh">${plain(it.wrong, mode)}</span><div class="s-line"></div></div>`; break;
       case 'translate':
-        h += `<div class="s-item">${n}<span style="font-size:11pt">${esc(it.es)}</span>${it.vocab ? `<div class="s-vocab">${esc(it.vocab)}</div>` : ''}<div class="s-line"></div></div>`; break;
+        h += `<div class="s-item">${n}<span style="font-size:calc(11pt*var(--k,1))">${esc(it.es)}</span>${it.vocab ? `<div class="s-vocab">${esc(it.vocab)}</div>` : ''}<div class="s-line"></div></div>`; break;
+      case 'zh2es':
+        h += `<div class="s-item">${n}<span class="s-zh">${plain(it.zh, mode)}</span>${it.vocab ? `<div class="s-vocab">${esc(it.vocab)}</div>` : ''}<div class="s-line"></div></div>`; break;
+      case 'sentence':
+        h += `<div class="s-item">${n}<span class="s-zh">${plain(it.cue, mode)}</span>${it.es ? `<div class="s-es">${esc(it.es)}</div>` : ''}<div class="s-line"></div><div class="s-line"></div></div>`; break;
     }
   });
   return h + '</div>';
@@ -1435,6 +1681,7 @@ function sectionKey(sec, no) {
   let h = `<div class="s-kh">${NUM[no]}、${DEF[sec.type].name}</div>`;
   const note = it => (o.teacherNote && it.note) ? `<div class="s-note">${esc(it.note)}</div>` : '';
   const es = s => (o.keyEs && s) ? `<div class="s-d">${esc(s)}</div>` : '';
+  const perm = sec.type === 'match' ? matchPerm(items) : null;
   items.forEach((it, i) => {
     const n = `<span class="s-no">${i + 1}</span>`;
     switch (sec.type) {
@@ -1445,13 +1692,16 @@ function sectionKey(sec, no) {
       case 'cloze': {
         const filled = answerSentence('cloze', it);
         h += `<div class="s-key"><div class="s-zh" style="font-weight:500">${it.answers.map((a, k) => `${CIRC[k] || k + 1} ${esc(a)}`).join('　')}${tagHTML(it)}</div>
-          <div class="s-para" style="font-size:12pt;line-height:1.9;margin-top:1.5mm">${renderParts(partsOf('cloze', it), 'none', p => `<span class="s-ans">${esc(p.a)}</span>`)}</div>
+          <div class="s-para" style="font-size:calc(12pt*var(--k,1));line-height:1.9;margin-top:1.5mm">${renderParts(partsOf('cloze', it), 'none', p => `<span class="s-ans">${esc(p.a)}</span>`)}</div>
           <div style="margin-top:1.5mm">${derivedLines(filled).replace(/s-d"/g, 's-d" style="margin-left:0"')}</div>${o.keyEs && it.es ? `<div class="s-d" style="margin-left:0">${esc(it.es)}</div>` : ''}${note(it).replace('class="s-note"', 'class="s-note" style="margin-left:0"')}</div>`; break;
       }
       case 'order': h += `<div class="s-key">${n}<span class="s-zh">${esc(it.answer)}</span>${tagHTML(it)}${derivedLines(it.answer)}${es(it.es)}${note(it)}</div>`; break;
       case 'choice': h += `<div class="s-key">${n}<span class="s-zh"><span class="s-ans">${LETTER[it.answer] || '?'}</span>${esc(it.options[it.answer] || '')}</span>${tagHTML(it)}${derivedLines(it.options[it.answer] || '')}${es(it.es)}${note(it)}</div>`; break;
       case 'fix': h += `<div class="s-key">${n}<span class="s-zh"><span class="s-wrong">${esc(it.wrong)}</span> → <span class="s-ans">${esc(it.correct)}</span></span>${tagHTML(it)}${derivedLines(it.correct)}${it.tip ? `<div class="s-note">${esc(it.tip)}</div>` : ''}${note(it)}</div>`; break;
       case 'translate': h += `<div class="s-key">${n}<span class="s-zh">${esc(it.answer)}</span>${tagHTML(it)}${derivedLines(it.answer)}${es(it.es)}${note(it)}</div>`; break;
+      case 'zh2es': h += `<div class="s-key">${n}<span class="s-zh">${esc(it.zh)}</span>${tagHTML(it)}${derivedLines(it.zh)}<div class="s-d">${esc(it.answer)}</div>${note(it)}</div>`; break;
+      case 'match': h += `<div class="s-key">${n}<span class="s-ans">${ALPHA[perm.indexOf(i)] || '?'}</span><span class="s-zh">${esc(it.zh)}</span>${derivedLines(it.zh)}<div class="s-d">${esc(it.es)}</div>${note(it)}</div>`; break;
+      case 'sentence': h += `<div class="s-key">${n}<span class="s-d" style="margin:0 2mm 0 0">【${esc(it.cue)}】</span><span class="s-zh">${esc(it.answer)}</span>${tagHTML(it)}${derivedLines(it.answer)}${es(it.es)}<div class="s-note">示範答案。學生的句子不同也可以，只要用了指定的詞語、句子正確自然就給分。</div>${note(it)}</div>`; break;
     }
   });
   return h;
@@ -1471,10 +1721,13 @@ function buildSheetHTML() {
     if (g.points.some(p => p.pattern)) {
       h += `<div class="s-box"><h3>Recuerda · 先看一下</h3><table>${g.points.filter(p => p.pattern).map(p => `<tr><td class="p">${esc(p.pattern)}</td><td>${esc(p.es)}</td><td class="x">${esc(p.example)}</td></tr>`).join('')}</table>${g.warning ? `<div class="s-warn">${esc(g.warning)}</div>` : ''}</div>`;
     }
+    if (o.vocab && state.vocab.some(v => v.zh)) {
+      h += `<div class="s-box"><h3>Vocabulario · 生詞</h3><table class="s-vt">${state.vocab.filter(v => v.zh).map(v => `<tr><td class="x">${esc(v.zh)}</td>${o.vocabPy ? `<td class="py">${esc(vPy(v.zh))}</td>` : ''}<td>${esc(v.es)}</td></tr>`).join('')}</table></div>`;
+    }
     secs.forEach((s, i) => { h += sectionStudent(s, i); });
   }
   if (o.print !== 'student') {
-    h += `<div class="s-answer${o.print === 'both' ? ' pg' : ''}"><div class="s-top"><h1 style="font-size:19pt">答案 · Respuestas</h1><div class="s-sub">${esc(title)}${(o.pinyin || o.zhuyin) ? '　·　拼音、注音為電腦自動產生，使用前請老師再確認' : ''}</div></div>`;
+    h += `<div class="s-answer${o.print === 'both' ? ' pg' : ''}"><div class="s-top"><h1 style="font-size:calc(19pt*var(--k,1))">答案 · Respuestas</h1><div class="s-sub">${esc(title)}${(o.pinyin || o.zhuyin) ? '　·　拼音、注音為電腦自動產生，使用前請老師再確認' : ''}</div></div>`;
     secs.forEach((s, i) => { h += sectionKey(s, i); });
     if (isMulti()) { const st = pointStats(); h += `<div class="s-stat">語法點分布（不含段落填空）：${st.names.map(n => `${esc(n)} ${st.per[n]} 題`).join('、')}；混合題 ${st.mixed} 題 / 共 ${st.total} 題。</div>`; }
     if (o.teacherNote) h += `<div class="s-teacher">全部 ${total} 分，每題 1 分。西翻中、排序的答案不只一種時，語序正確、使用指定句型即可給分。</div>`;
@@ -1497,7 +1750,7 @@ function allSentences() {
       if (!it.enabled) continue;
       curPts = (it.points || []).join('＋');
       if (sec.type === 'cloze') { answerSentence('cloze', it).split(/(?<=[。！？])/).forEach(s => push('cloze', s.trim(), '')); }
-      else push(sec.type, answerSentence(sec.type, it), it.es || '');
+      else push(sec.type, answerSentence(sec.type, it), sec.type === 'zh2es' ? it.answer : (it.es || ''));
     }
   }
   out.forEach((r, i) => r.id = i + 1);
@@ -1526,13 +1779,15 @@ $('#fileOpen').addEventListener('change', e => {
 });
 $('#btnNew').addEventListener('click', () => { if (state.sections.length && !confirm('目前的題目會清空，確定要開新專案嗎？（建議先儲存專案）')) return; state = newState(); save(); renderStep1(); $('#pasteBox').value = ''; $('#importMsg').innerHTML = ''; goStep(1); });
 function loadState(s) {
-  const base = newState();
-  state = Object.assign(base, s);
-  state.meta = Object.assign(base.meta, s.meta || {}); fixMeta(state.meta); syncGrammar();
-  state.counts = Object.assign(base.counts, s.counts || {});
-  state.opts = Object.assign(base.opts, s.opts || {});
+  const d = newState();
+  state = Object.assign({}, d, s);
+  state.meta = Object.assign({}, d.meta, s.meta || {}); fixMeta(state.meta); syncGrammar();
+  state.counts = Object.assign({}, d.counts, s.counts || {});
+  state.opts = Object.assign({}, d.opts, s.opts || {});
   state.grammarBox = Object.assign({ points: [], warning: '' }, s.grammarBox || {});
-  state.sections = (s.sections || []).map(sec => Object.assign(blankSection(sec.type), sec, { items: (sec.items || []).map(it => Object.assign(blankItem(sec.type), it)) }));
+  state.vocab = Array.isArray(s.vocab) ? s.vocab : [];
+  state.sections = (s.sections || []).filter(sec => TYPES.includes(sec.type)).map(sec => Object.assign(blankSection(sec.type), sec, { items: (sec.items || []).map(it => Object.assign(blankItem(sec.type), it)) }));
+  state.sections.forEach(sec => sec.items.forEach(it => { if (it.esSrc === undefined) stampEs(sec.type, it); }));
   save(); renderStep1(); goStep(state.sections.length ? 2 : 1);
 }
 
