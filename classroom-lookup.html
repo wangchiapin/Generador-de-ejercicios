@@ -6,54 +6,71 @@
 <link rel="icon" type="image/png" href="icon.png">
 <link rel="apple-touch-icon" href="icon.png">
 <title>課堂速查</title>
-<style>
+<style id="panelcss">
   :root{
     --bg:#e6e3dc; --paper:#d9d5cc; --ink:#161616; --sub:#46423c; --line:#a9a398; --accent:#5f5a53;
   }
   *{box-sizing:border-box;}
   [hidden]{display:none!important;}
-  html{font-size:17px;}
+  html{font-size:16px;}
   body{
     margin:0;
     font-family:"Noto Sans TC","PingFang TC","Hiragino Sans TC","Microsoft JhengHei",system-ui,sans-serif;
-    background:var(--bg);color:var(--ink);line-height:1.7;letter-spacing:.02em;
+    background:var(--bg);color:var(--ink);line-height:1.6;letter-spacing:.02em;
     -webkit-font-smoothing:antialiased;
   }
+  body.pip{padding:10px;}
+
+  /* 查字面板（網頁內和浮動視窗共用） */
+  .qk{display:flex;flex-direction:column;gap:8px;}
+  .qk .inrow{display:flex;gap:6px;}
+  .qk input[type=text]{
+    flex:1;min-width:0;font:inherit;font-size:1.15rem;letter-spacing:.04em;color:var(--ink);
+    background:#fff;border:1px solid #8a857b;border-radius:0;padding:8px 10px;
+  }
+  .qk input[type=text]:focus{outline:none;border-color:var(--ink);}
+  .qk button{
+    cursor:pointer;font-family:inherit;font-size:.88rem;letter-spacing:.04em;
+    color:var(--ink);background:transparent;border:1px solid var(--ink);border-radius:0;padding:6px 10px;
+  }
+  .qk button:hover{background:#cfcbc1;}
+  .qk .go{background:var(--ink);color:#fff;padding:6px 14px;}
+  .qk .go:hover{background:#4a4a4a;}
+  .qk .quiet{border-color:var(--line);color:var(--accent);}
+  .qk .optrow{display:flex;gap:8px;align-items:center;font-size:.78rem;color:var(--sub);}
+  .qk select{font:inherit;font-size:.82rem;color:var(--ink);background:#fff;border:1px solid #8a857b;border-radius:0;padding:2px 6px;}
+  .qk .res{
+    background:#fff;border:1px solid var(--line);padding:10px 12px;min-height:84px;max-height:260px;overflow:auto;
+  }
+  body.pip .qk .res{flex:1;max-height:none;}
+  .qk .res .hint{color:var(--sub);font-size:.84rem;}
+  .qk .res .main{font-size:1.4rem;line-height:1.4;letter-spacing:.03em;word-break:break-word;}
+  .qk .res .alt{margin-top:6px;font-size:.88rem;color:var(--sub);}
+  .qk .res .from{margin-top:6px;font-size:.72rem;color:var(--accent);}
+  .qk .res .err{color:#7a2d22;font-size:.88rem;}
+  .qk .webrow{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+  .qk .webrow button{font-size:.8rem;padding:6px 4px;}
+
+  /* 只在網頁本體用 */
   .sitebar{max-width:900px;margin:0 auto;padding:14px 24px 0;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
   .sitetabs{display:flex;gap:22px;flex-wrap:wrap}
   .sitetabs a{color:var(--sub);text-decoration:none;font-size:.9rem;letter-spacing:.06em;padding:4px 0;border-bottom:3px solid transparent}
   .sitetabs a.on{color:var(--ink);border-bottom-color:var(--ink);font-weight:500}
   @media(max-width:640px){.sitebar{padding:12px 16px 0}.sitetabs{gap:16px}}
-
-  .wrap{max-width:640px;margin:0 auto;padding:28px 24px 60px;}
+  .wrap{max-width:560px;margin:0 auto;padding:28px 24px 60px;}
   header{margin-bottom:20px;border-bottom:1px solid var(--line);padding-bottom:12px;}
   h1{font-size:1.35rem;font-weight:500;letter-spacing:.08em;margin:0;}
   h1 span{display:block;font-size:.8rem;font-weight:400;color:var(--sub);margin-top:2px;letter-spacing:.02em;}
   .card{background:#fff;border:1px solid var(--line);padding:18px 20px;margin-bottom:18px;}
-
-  .inrow{display:flex;gap:8px;}
-  .inrow input{
-    flex:1;min-width:0;font:inherit;font-size:1.3rem;letter-spacing:.06em;color:var(--ink);
-    background:#fff;border:1px solid #8a857b;border-radius:0;padding:10px 12px;
+  .card.plain{background:var(--bg);border:0;padding:0;}
+  .pinrow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+  .pinbtn{
+    cursor:pointer;font-family:inherit;font-size:.95rem;letter-spacing:.05em;
+    color:#fff;background:var(--ink);border:1px solid var(--ink);border-radius:0;padding:10px 18px;
   }
-  .inrow input:focus{outline:none;border-color:var(--ink);}
-  button{
-    cursor:pointer;font-family:inherit;font-size:.9rem;letter-spacing:.05em;
-    color:var(--ink);background:transparent;border:1px solid var(--ink);border-radius:0;padding:8px 16px;
-  }
-  button:hover{background:#cfcbc1;}
-  button:disabled{opacity:.4;cursor:default;background:transparent;}
-  .btn-quiet{border-color:var(--line);color:var(--accent);padding:0 14px;}
-  .actions{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;}
-  .actions button{background:var(--ink);color:#fff;padding:11px 8px;font-size:.95rem;}
-  .actions button:hover:not(:disabled){background:#4a4a4a;}
-  .actions button small{display:block;font-size:.7rem;opacity:.75;letter-spacing:.02em;}
-  @media(max-width:480px){.actions{grid-template-columns:1fr;}}
-
-  .opt{margin-top:14px;font-size:.84rem;color:var(--sub);display:flex;align-items:center;gap:6px;cursor:pointer;}
-  .opt input{margin:0;}
-  .msg{margin-top:10px;font-size:.84rem;color:var(--accent);min-height:1.2em;}
-
+  .pinbtn:hover{background:#4a4a4a;}
+  .pinbtn:disabled{opacity:.4;cursor:default;}
+  .pinnote{font-size:.84rem;color:var(--sub);}
   .tips{font-size:.86rem;color:var(--sub);}
   .tips h2{font-size:.95rem;font-weight:500;color:var(--ink);margin:0 0 6px;letter-spacing:.06em;}
   .tips ul{margin:0;padding-left:20px;}
@@ -66,71 +83,179 @@
 
   <header>
     <h1>課堂速查
-      <span>上課遇到不會的字詞，打字或貼上，一鍵查翻譯、查圖片</span>
+      <span>上課遇到不會的字詞：輸入就直接顯示翻譯（中⇄西），也可開網頁、找圖片</span>
     </h1>
   </header>
 
   <div class="card">
-    <div class="inrow">
-      <input id="q" type="text" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="輸入或貼上字詞" autofocus>
-      <button id="clr" type="button" class="btn-quiet" hidden>清除</button>
+    <div class="pinrow">
+      <button type="button" class="pinbtn" id="pinBtn">釘在最上面（浮動小視窗）</button>
+      <span class="pinnote" id="pinNote"></span>
     </div>
-    <div class="actions">
-      <button type="button" id="bGoogle">Google 翻譯<small>中文 → 西語</small></button>
-      <button type="button" id="bReverso">Reverso 例句<small>中文 → 西語</small></button>
-      <button type="button" id="bImg">查圖片<small>Google 圖片</small></button>
-    </div>
-    <label class="opt"><input type="checkbox" id="optTab"> 改用新分頁開（小視窗被擋住時勾這個）</label>
-    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="card" id="inlineCard">
+    <div id="inlineHost"></div>
   </div>
 
   <div class="card tips">
     <h2>上課使用</h2>
     <ul>
-      <li>按 Enter 等於按「Google 翻譯」。</li>
-      <li>結果會開在<b>另一個小視窗</b>，再按其他按鈕或再查別的字，會沿用同一個小視窗。</li>
-      <li>Zoom 分享畫面時，請選<b>只分享 PPT 視窗</b>，不要分享整個螢幕，學生就看不到這裡和小視窗。</li>
-      <li>如果按了沒反應，請看網址列旁有沒有「已封鎖快顯視窗」，選擇允許；或勾上面的「改用新分頁開」。</li>
+      <li>按上面的「釘在最上面」，會跳出一個小視窗，<b>浮在 PPT、Zoom 和其他視窗上面</b>，可以拖到旁邊、拉大縮小。要用電腦版 Chrome 或 Edge。</li>
+      <li>輸入字詞按 Enter（或「翻譯」），結果直接顯示在小視窗裡。有中文就翻成西語，沒有中文就翻成中文；翻錯方向時，用旁邊的選單手動選。</li>
+      <li>需要時再按「Google 翻譯」「Reverso 例句」開網頁；「找圖片」一定會開網頁。網頁會開在螢幕右側。</li>
+      <li>Zoom 分享畫面時，請選<b>只分享 PPT 視窗</b>。上課前先開測試會議，確認學生看不到小視窗。</li>
+      <li>小視窗關掉後，要再按一次「釘在最上面」才會回來。這個頁面本身要保持開著（可以放在背景）。</li>
     </ul>
   </div>
 
 </div>
 <script>
 (function(){
-  var $q=document.getElementById('q'), $clr=document.getElementById('clr'), $msg=document.getElementById('msg'), $tab=document.getElementById('optTab');
-  var SITES={
-    google:{name:'qk-google', url:function(t){return 'https://translate.google.com/?sl=zh-TW&tl=es&op=translate&text='+encodeURIComponent(t);}},
-    reverso:{name:'qk-reverso', url:function(t){return 'https://context.reverso.net/translation/chinese-spanish/'+encodeURIComponent(t);}},
-    img:{name:'qk-img', url:function(t){return 'https://www.google.com/search?tbm=isch&q='+encodeURIComponent(t);}}
-  };
-  try{ $tab.checked = localStorage.getItem('ql-tab')==='1'; }catch(e){}
-  $tab.addEventListener('change',function(){ try{ localStorage.setItem('ql-tab',$tab.checked?'1':'0'); }catch(e){} });
-
-  function term(){ return $q.value.replace(/\s+/g,' ').trim(); }
-  function say(s){ $msg.textContent=s||''; }
-
-  function open(key){
-    var t=term();
-    if(!t){ say('請先輸入字詞'); $q.focus(); return; }
-    var site=SITES[key], url=site.url(t), w=null;
-    if(!$tab.checked){
-      // 小視窗：靠螢幕右側，不擋住左邊的 PPT；同一按鈕重複使用同一個視窗
-      var sw=(screen.availWidth||1200), sh=(screen.availHeight||800);
-      var W=Math.min(560, Math.round(sw*0.4)), H=Math.min(820, sh-60);
-      var L=(screen.availLeft||0)+sw-W-10, T=(screen.availTop||0)+20;
-      w=window.open(url, site.name, 'popup=yes,width='+W+',height='+H+',left='+L+',top='+T+',resizable=yes,scrollbars=yes');
-      if(w){ try{ w.focus(); }catch(e){} say(''); return; }
-      say('小視窗被瀏覽器擋住了，已改用新分頁。可允許快顯視窗，之後就會開小視窗。');
-    } else { say(''); }
-    window.open(url,'_blank','noopener');
+  // ───────── 翻譯 ─────────
+  var CJK=/[㐀-鿿豈-﫿]/;
+  function pickDir(text,mode){
+    if(mode==='zh2es') return {from:'zh-TW',to:'es',pair:'zh-TW|es'};
+    if(mode==='es2zh') return {from:'auto',to:'zh-TW',pair:'es|zh-TW'};
+    return CJK.test(text) ? {from:'zh-TW',to:'es',pair:'zh-TW|es'} : {from:'auto',to:'zh-TW',pair:'es|zh-TW'};
+  }
+  function fetchJson(url,ms){
+    var ctl=new AbortController(), t=setTimeout(function(){ctl.abort();},ms||8000);
+    return fetch(url,{signal:ctl.signal}).then(function(r){
+      clearTimeout(t);
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      return r.json();
+    },function(e){clearTimeout(t);throw e;});
+  }
+  // Google 翻譯背後的免費通道（非官方，可能失效）
+  function parseGoogle(data){
+    if(!Array.isArray(data)||!Array.isArray(data[0])) throw new Error('shape');
+    var main=data[0].map(function(seg){return (seg&&seg[0])||'';}).join('').trim();
+    if(!main) throw new Error('empty');
+    var alts=[];
+    if(Array.isArray(data[1])){
+      data[1].forEach(function(g){
+        var words=Array.isArray(g)&&Array.isArray(g[1])?g[1]:[];
+        words.forEach(function(w){ if(typeof w==='string' && w!==main && alts.indexOf(w)<0) alts.push(w); });
+      });
+    }
+    return {main:main,alts:alts.slice(0,8),src:'Google 翻譯'};
+  }
+  function viaGoogle(text,d){
+    var url='https://translate.googleapis.com/translate_a/single?client=gtx&sl='+encodeURIComponent(d.from)+'&tl='+encodeURIComponent(d.to)+'&dt=t&dt=bd&q='+encodeURIComponent(text);
+    return fetchJson(url).then(parseGoogle);
+  }
+  // 備用：MyMemory
+  function parseMyMemory(data){
+    var t=data&&data.responseData&&data.responseData.translatedText;
+    if(!t||/MYMEMORY WARNING|INVALID/i.test(t)) throw new Error('mm');
+    return {main:String(t).trim(),alts:[],src:'MyMemory（備用）'};
+  }
+  function viaMyMemory(text,d){
+    var url='https://api.mymemory.translated.net/get?q='+encodeURIComponent(text)+'&langpair='+encodeURIComponent(d.pair);
+    return fetchJson(url).then(parseMyMemory);
+  }
+  function translate(text,mode){
+    var d=pickDir(text,mode);
+    return viaGoogle(text,d).catch(function(){ return viaMyMemory(text,d); });
   }
 
-  document.getElementById('bGoogle').addEventListener('click',function(){open('google');});
-  document.getElementById('bReverso').addEventListener('click',function(){open('reverso');});
-  document.getElementById('bImg').addEventListener('click',function(){open('img');});
-  $q.addEventListener('keydown',function(e){ if(e.key==='Enter' && !e.isComposing){ e.preventDefault(); open('google'); } });
-  $q.addEventListener('input',function(){ $clr.hidden=!$q.value; say(''); });
-  $clr.addEventListener('click',function(){ $q.value=''; $clr.hidden=true; say(''); $q.focus(); });
+  // ───────── 開網頁 ─────────
+  var SITES={
+    google:{name:'qk-google', url:function(t){return 'https://translate.google.com/?sl=auto&tl='+(CJK.test(t)?'es':'zh-TW')+'&op=translate&text='+encodeURIComponent(t);}},
+    reverso:{name:'qk-reverso', url:function(t){return 'https://context.reverso.net/translation/'+(CJK.test(t)?'chinese-spanish':'spanish-chinese')+'/'+encodeURIComponent(t);}},
+    img:{name:'qk-img', url:function(t){return 'https://www.google.com/search?tbm=isch&q='+encodeURIComponent(t);}}
+  };
+  function openSite(win,key,text){
+    var site=SITES[key], url=site.url(text), w=null;
+    var sw=(win.screen&&win.screen.availWidth)||1200, sh=(win.screen&&win.screen.availHeight)||800;
+    var W=Math.min(560,Math.round(sw*0.4)), H=Math.min(820,sh-60);
+    var L=((win.screen&&win.screen.availLeft)||0)+sw-W-10, T=((win.screen&&win.screen.availTop)||0)+20;
+    try{ w=win.open(url,site.name,'popup=yes,width='+W+',height='+H+',left='+L+',top='+T+',resizable=yes,scrollbars=yes'); }catch(e){}
+    if(!w){ try{ w=win.open(url,'_blank'); }catch(e){} }
+    return !!w;
+  }
+
+  // ───────── 面板（建在指定的 document 裡）─────────
+  function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  function buildPanel(doc,win,host){
+    host.innerHTML=
+      '<div class="qk">'+
+        '<div class="inrow"><input type="text" class="q" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="輸入或貼上字詞，按 Enter 翻譯">'+
+        '<button type="button" class="go">翻譯</button></div>'+
+        '<div class="optrow"><span>方向</span><select class="mode"><option value="auto">自動判斷</option><option value="zh2es">中文 → 西語</option><option value="es2zh">西語 → 中文</option></select>'+
+        '<button type="button" class="quiet clr" hidden>清除</button></div>'+
+        '<div class="res"><div class="hint">結果會顯示在這裡。</div></div>'+
+        '<div class="webrow"><button type="button" data-k="google">開 Google 翻譯</button><button type="button" data-k="reverso">開 Reverso 例句</button><button type="button" data-k="img">找圖片</button></div>'+
+      '</div>';
+    var q=host.querySelector('.q'), go=host.querySelector('.go'), mode=host.querySelector('.mode'),
+        res=host.querySelector('.res'), clr=host.querySelector('.clr');
+    var seq=0;
+    function term(){ return q.value.replace(/\s+/g,' ').trim(); }
+    function show(html){ res.innerHTML=html; }
+    function run(){
+      var t=term();
+      if(!t){ show('<div class="hint">請先輸入字詞。</div>'); q.focus(); return; }
+      var my=++seq;
+      show('<div class="hint">翻譯中…</div>');
+      translate(t,mode.value).then(function(r){
+        if(my!==seq) return;
+        var h='<div class="main">'+esc(r.main)+'</div>';
+        if(r.alts.length) h+='<div class="alt">其他：'+r.alts.map(esc).join('、')+'</div>';
+        h+='<div class="from">來源：'+esc(r.src)+'</div>';
+        show(h);
+      },function(){
+        if(my!==seq) return;
+        show('<div class="err">翻譯服務暫時查不到。請按下面「開 Google 翻譯」開網頁查。</div>');
+      });
+    }
+    go.addEventListener('click',run);
+    q.addEventListener('keydown',function(e){ if(e.key==='Enter' && !e.isComposing){ e.preventDefault(); run(); } });
+    q.addEventListener('input',function(){ clr.hidden=!q.value; });
+    mode.addEventListener('change',function(){ if(term()) run(); });
+    clr.addEventListener('click',function(){ q.value=''; clr.hidden=true; show('<div class="hint">結果會顯示在這裡。</div>'); q.focus(); });
+    host.querySelectorAll('.webrow button').forEach(function(b){
+      b.addEventListener('click',function(){
+        var t=term();
+        if(!t){ show('<div class="hint">請先輸入字詞。</div>'); q.focus(); return; }
+        if(!openSite(win,b.getAttribute('data-k'),t)) show('<div class="err">網頁被瀏覽器擋住了。請允許這個網站的快顯視窗後再按一次。</div>');
+      });
+    });
+    return {focus:function(){ q.focus(); }};
+  }
+
+  // ───────── 網頁本體 ─────────
+  var inline=buildPanel(document,window,document.getElementById('inlineHost'));
+  var pinBtn=document.getElementById('pinBtn'), pinNote=document.getElementById('pinNote'), inlineCard=document.getElementById('inlineCard');
+  var pipWin=null;
+
+  if(!('documentPictureInPicture' in window)){
+    pinBtn.disabled=true;
+    pinNote.textContent='這個瀏覽器不支援浮動視窗，請用電腦版 Chrome 或 Edge。下面的查字面板仍可使用。';
+  }
+
+  pinBtn.addEventListener('click',function(){
+    if(!('documentPictureInPicture' in window)) return;
+    if(pipWin){ try{ pipWin.focus(); }catch(e){} return; }
+    window.documentPictureInPicture.requestWindow({width:400,height:420}).then(function(w){
+      pipWin=w;
+      // 把樣式複製到浮動視窗
+      var css=document.getElementById('panelcss').textContent;
+      var st=w.document.createElement('style'); st.textContent=css; w.document.head.appendChild(st);
+      w.document.title='課堂速查';
+      w.document.body.className='pip';
+      var host=w.document.createElement('div'); w.document.body.appendChild(host);
+      var panel=buildPanel(w.document,w,host);
+      panel.focus();
+      inlineCard.hidden=true;
+      pinNote.textContent='已釘在最上面。關掉小視窗後，這裡會恢復。';
+      w.addEventListener('pagehide',function(){
+        pipWin=null; inlineCard.hidden=false; pinNote.textContent='';
+      });
+    }).catch(function(){
+      pinNote.textContent='沒辦法開浮動視窗，請再按一次。';
+    });
+  });
 })();
 </script>
 </body>
