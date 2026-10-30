@@ -2099,7 +2099,6 @@ gtLoad().then(() => {
   }
   renderStep1();
   if (handed) { goStep(1); toast('已從口說練習帶入 ' + pointsList().length + ' 個語法點'); }
-  else if (state.sections.length) goStep(2);
 })();
   GrammarPicker.attach($('#ptInputs'), 'input[data-pt]');
 </script>
