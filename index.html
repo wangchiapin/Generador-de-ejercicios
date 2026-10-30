@@ -981,7 +981,7 @@ function buildPrompt() {
     L.push('- 另外請提供 grammar_box：3～5 條句型（pattern 句型、es 西班牙文意思、example 例句），以及 warning（一句常見錯誤的提醒，用 ✗ 和 ✓ 表示）。');
   }
   L.push('');
-  if (slides && m.slideText.trim()) { L.push(''); L.push('【簡報內容（文字）】'); L.push(m.slideText.trim()); }
+  if (slides && str(m.slideText)) { L.push(''); L.push('【簡報內容（文字）】'); L.push(str(m.slideText)); }
   L.push('');
   L.push('【輸出前自我檢查】逐題確認：答案真的正確嗎？中文自然嗎？有沒有第二個合理答案？有問題就先改掉再輸出。');
   L.push('');
@@ -2076,12 +2076,14 @@ gtLoad().then(() => {
   const saved = lsGet(LS.proj, null);
   if (saved && saved.sections) {
     const base = newState();
-    state = Object.assign(base, saved);
-    state.meta = Object.assign(base.meta, saved.meta || {}); fixMeta(state.meta); syncGrammar();
-    state.counts = Object.assign(base.counts, saved.counts || {});
-    state.opts = Object.assign(base.opts, saved.opts || {});
+    state = Object.assign({}, base, saved);
+    state.meta = Object.assign({}, base.meta, saved.meta || {}); fixMeta(state.meta); syncGrammar();
+    state.counts = Object.assign({}, base.counts, saved.counts || {});
+    state.opts = Object.assign({}, base.opts, saved.opts || {});
     state.grammarBox = Object.assign({ points: [], warning: '' }, saved.grammarBox || {});
-    state.sections = (saved.sections || []).map(sec => Object.assign(blankSection(sec.type), sec, { items: (sec.items || []).map(it => Object.assign(blankItem(sec.type), it)) }));
+    state.vocab = Array.isArray(saved.vocab) ? saved.vocab : [];
+    state.sections = (saved.sections || []).filter(sec => TYPES.includes(sec.type)).map(sec => Object.assign(blankSection(sec.type), sec, { items: (sec.items || []).map(it => Object.assign(blankItem(sec.type), it)) }));
+    state.sections.forEach(sec => sec.items.forEach(it => { if (it.esSrc === undefined) stampEs(sec.type, it); }));
   }
   /* 從「課堂口說練習設計」帶過來的語法點 */
   const hand = lsGet('gwm.handoff.v1', null);
