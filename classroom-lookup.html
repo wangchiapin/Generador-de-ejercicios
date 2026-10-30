@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/png" href="icon.png">
+<link rel="apple-touch-icon" href="icon.png">
+<title>課堂速查</title>
+<style>
+  :root{
+    --bg:#e6e3dc; --paper:#d9d5cc; --ink:#161616; --sub:#46423c; --line:#a9a398; --accent:#5f5a53;
+  }
+  *{box-sizing:border-box;}
+  [hidden]{display:none!important;}
+  html{font-size:17px;}
+  body{
+    margin:0;
+    font-family:"Noto Sans TC","PingFang TC","Hiragino Sans TC","Microsoft JhengHei",system-ui,sans-serif;
+    background:var(--bg);color:var(--ink);line-height:1.7;letter-spacing:.02em;
+    -webkit-font-smoothing:antialiased;
+  }
+  .sitebar{max-width:900px;margin:0 auto;padding:14px 24px 0;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .sitetabs{display:flex;gap:22px;flex-wrap:wrap}
+  .sitetabs a{color:var(--sub);text-decoration:none;font-size:.9rem;letter-spacing:.06em;padding:4px 0;border-bottom:3px solid transparent}
+  .sitetabs a.on{color:var(--ink);border-bottom-color:var(--ink);font-weight:500}
+  @media(max-width:640px){.sitebar{padding:12px 16px 0}.sitetabs{gap:16px}}
+
+  .wrap{max-width:640px;margin:0 auto;padding:28px 24px 60px;}
+  header{margin-bottom:20px;border-bottom:1px solid var(--line);padding-bottom:12px;}
+  h1{font-size:1.35rem;font-weight:500;letter-spacing:.08em;margin:0;}
+  h1 span{display:block;font-size:.8rem;font-weight:400;color:var(--sub);margin-top:2px;letter-spacing:.02em;}
+  .card{background:#fff;border:1px solid var(--line);padding:18px 20px;margin-bottom:18px;}
+
+  .inrow{display:flex;gap:8px;}
+  .inrow input{
+    flex:1;min-width:0;font:inherit;font-size:1.3rem;letter-spacing:.06em;color:var(--ink);
+    background:#fff;border:1px solid #8a857b;border-radius:0;padding:10px 12px;
+  }
+  .inrow input:focus{outline:none;border-color:var(--ink);}
+  button{
+    cursor:pointer;font-family:inherit;font-size:.9rem;letter-spacing:.05em;
+    color:var(--ink);background:transparent;border:1px solid var(--ink);border-radius:0;padding:8px 16px;
+  }
+  button:hover{background:#cfcbc1;}
+  button:disabled{opacity:.4;cursor:default;background:transparent;}
+  .btn-quiet{border-color:var(--line);color:var(--accent);padding:0 14px;}
+  .actions{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;}
+  .actions button{background:var(--ink);color:#fff;padding:11px 8px;font-size:.95rem;}
+  .actions button:hover:not(:disabled){background:#4a4a4a;}
+  .actions button small{display:block;font-size:.7rem;opacity:.75;letter-spacing:.02em;}
+  @media(max-width:480px){.actions{grid-template-columns:1fr;}}
+
+  .opt{margin-top:14px;font-size:.84rem;color:var(--sub);display:flex;align-items:center;gap:6px;cursor:pointer;}
+  .opt input{margin:0;}
+  .msg{margin-top:10px;font-size:.84rem;color:var(--accent);min-height:1.2em;}
+
+  .tips{font-size:.86rem;color:var(--sub);}
+  .tips h2{font-size:.95rem;font-weight:500;color:var(--ink);margin:0 0 6px;letter-spacing:.06em;}
+  .tips ul{margin:0;padding-left:20px;}
+  .tips li{margin-bottom:4px;}
+</style>
+</head>
+<body>
+<div class="sitebar"><nav class="sitetabs"><a href="index.html">練習單</a><a href="oral-practice.html">口說練習</a><a href="dialogue-prompt.html">對話教材</a><a href="classroom-lookup.html" class="on">課堂速查</a></nav></div>
+<div class="wrap">
+
+  <header>
+    <h1>課堂速查
+      <span>上課遇到不會的字詞，打字或貼上，一鍵查翻譯、查圖片</span>
+    </h1>
+  </header>
+
+  <div class="card">
+    <div class="inrow">
+      <input id="q" type="text" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="輸入或貼上字詞" autofocus>
+      <button id="clr" type="button" class="btn-quiet" hidden>清除</button>
+    </div>
+    <div class="actions">
+      <button type="button" id="bGoogle">Google 翻譯<small>中文 → 西語</small></button>
+      <button type="button" id="bReverso">Reverso 例句<small>中文 → 西語</small></button>
+      <button type="button" id="bImg">查圖片<small>Google 圖片</small></button>
+    </div>
+    <label class="opt"><input type="checkbox" id="optTab"> 改用新分頁開（小視窗被擋住時勾這個）</label>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="card tips">
+    <h2>上課使用</h2>
+    <ul>
+      <li>按 Enter 等於按「Google 翻譯」。</li>
+      <li>結果會開在<b>另一個小視窗</b>，再按其他按鈕或再查別的字，會沿用同一個小視窗。</li>
+      <li>Zoom 分享畫面時，請選<b>只分享 PPT 視窗</b>，不要分享整個螢幕，學生就看不到這裡和小視窗。</li>
+      <li>如果按了沒反應，請看網址列旁有沒有「已封鎖快顯視窗」，選擇允許；或勾上面的「改用新分頁開」。</li>
+    </ul>
+  </div>
+
+</div>
+<script>
+(function(){
+  var $q=document.getElementById('q'), $clr=document.getElementById('clr'), $msg=document.getElementById('msg'), $tab=document.getElementById('optTab');
+  var SITES={
+    google:{name:'qk-google', url:function(t){return 'https://translate.google.com/?sl=zh-TW&tl=es&op=translate&text='+encodeURIComponent(t);}},
+    reverso:{name:'qk-reverso', url:function(t){return 'https://context.reverso.net/translation/chinese-spanish/'+encodeURIComponent(t);}},
+    img:{name:'qk-img', url:function(t){return 'https://www.google.com/search?tbm=isch&q='+encodeURIComponent(t);}}
+  };
+  try{ $tab.checked = localStorage.getItem('ql-tab')==='1'; }catch(e){}
+  $tab.addEventListener('change',function(){ try{ localStorage.setItem('ql-tab',$tab.checked?'1':'0'); }catch(e){} });
+
+  function term(){ return $q.value.replace(/\s+/g,' ').trim(); }
+  function say(s){ $msg.textContent=s||''; }
+
+  function open(key){
+    var t=term();
+    if(!t){ say('請先輸入字詞'); $q.focus(); return; }
+    var site=SITES[key], url=site.url(t), w=null;
+    if(!$tab.checked){
+      // 小視窗：靠螢幕右側，不擋住左邊的 PPT；同一按鈕重複使用同一個視窗
+      var sw=(screen.availWidth||1200), sh=(screen.availHeight||800);
+      var W=Math.min(560, Math.round(sw*0.4)), H=Math.min(820, sh-60);
+      var L=(screen.availLeft||0)+sw-W-10, T=(screen.availTop||0)+20;
+      w=window.open(url, site.name, 'popup=yes,width='+W+',height='+H+',left='+L+',top='+T+',resizable=yes,scrollbars=yes');
+      if(w){ try{ w.focus(); }catch(e){} say(''); return; }
+      say('小視窗被瀏覽器擋住了，已改用新分頁。可允許快顯視窗，之後就會開小視窗。');
+    } else { say(''); }
+    window.open(url,'_blank','noopener');
+  }
+
+  document.getElementById('bGoogle').addEventListener('click',function(){open('google');});
+  document.getElementById('bReverso').addEventListener('click',function(){open('reverso');});
+  document.getElementById('bImg').addEventListener('click',function(){open('img');});
+  $q.addEventListener('keydown',function(e){ if(e.key==='Enter' && !e.isComposing){ e.preventDefault(); open('google'); } });
+  $q.addEventListener('input',function(){ $clr.hidden=!$q.value; say(''); });
+  $clr.addEventListener('click',function(){ $q.value=''; $clr.hidden=true; say(''); $q.focus(); });
+})();
+</script>
+</body>
+</html>
