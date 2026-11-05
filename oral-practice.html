@@ -882,7 +882,7 @@ $('#fImport').addEventListener('change', e => {
 /* ---------- 雲端同步（選用）：Google 登入 + Firestore ----------
    沒登入時完全不載入 Firebase，頁面照常只存在瀏覽器裡。
    雲端路徑：users/{uid}/oralHistory/{紀錄 id}（規則要允許本人讀寫，見 README） */
-const FB = 'https://www.gstatic.com/firebasejs/10.14.1/';
+const FB = 'https://www.gstatic.com/firebasejs/12.17.1/';
 const FB_CONFIG = { apiKey: 'AIzaSyDB6zYAHvi0oTkObv-qDnP6nn0UUnscby0', authDomain: 'moneybook-50481.firebaseapp.com', projectId: 'moneybook-50481',
   storageBucket: 'moneybook-50481.firebasestorage.app', messagingSenderId: '549256761796', appId: '1:549256761796:web:254332f109e7b8ad871491' };
 const SYNCED_KEY = 'gwm.oral.synced.v1', FLAG_KEY = 'gwm.oral.cloud.v1', COMMON_FLAG = 'gwm.cloud.v1'; // COMMON_FLAG：兩個頁面共用的「已登入過」記號

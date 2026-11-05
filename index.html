@@ -1934,7 +1934,7 @@ let PL = lsGet(PJ.list, []); if (!Array.isArray(PL)) PL = [];
 let pjSynced = new Set(lsGet(PJ.synced, []));
 let currentPid = null;
 const pjCloud = { user: null, started: false, state: 'off' };
-const PJ_FB = 'https://www.gstatic.com/firebasejs/10.14.1/';
+const PJ_FB = 'https://www.gstatic.com/firebasejs/12.17.1/';
 const PJ_CONFIG = { apiKey: 'AIzaSyDB6zYAHvi0oTkObv-qDnP6nn0UUnscby0', authDomain: 'moneybook-50481.firebaseapp.com', projectId: 'moneybook-50481',
   storageBucket: 'moneybook-50481.firebasestorage.app', messagingSenderId: '549256761796', appId: '1:549256761796:web:254332f109e7b8ad871491' };
 function pjFmt(ts) { const d = new Date(ts), p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`; }
