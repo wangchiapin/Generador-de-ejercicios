@@ -272,6 +272,13 @@ details.errdet,details.metadet{margin:10px 0}
         <button class="quiet" id="pjPull" hidden>從雲端更新</button>
       </div>
     </div>
+    <div class="pjbox" id="hwBox">
+      <b>發布給學生頁</b>
+      <p class="hint" style="margin:4px 0 8px">把目前這份練習單送到老師後台，在那裡選要發給哪些學生，學生在學生頁線上作答。標準答案不會給學生。要先登入 Google。</p>
+      <div class="hint" id="hwUidLine" hidden style="margin:0 0 6px">這個 Google 帳號的帳號代碼：<code id="hwUid"></code> <button class="tiny" id="hwUidCopy">複製</button><br>第一次使用：把它貼到老師後台的「發布帳號」，按「允許」。</div>
+      <div class="row" style="margin:0"><input id="hwTid" placeholder="老師代號（到老師後台複製）" style="max-width:420px"><button class="primary" id="hwPublish">發布目前這份</button></div>
+      <div class="hint" id="hwMsg" style="margin:6px 0 0"></div>
+    </div>
     <div class="row"><input id="pjName" placeholder="這份的名稱（不填就用語法點）" style="max-width:420px"><button class="primary" id="pjSave">存入清單</button></div>
     <input id="pjFilter" placeholder="搜尋清單" style="max-width:420px">
     <div id="pjList"></div>
@@ -1960,7 +1967,9 @@ function pjAdapterFirebase() {
     async logout() { const m = await load(); await m.auth.signOut(m.au); },
     async list() { const m = await load(); const s = await m.fs.getDocs(col(m)); return s.docs.map(d => d.data()); },
     async put(r) { const m = await load(); await m.fs.setDoc(m.fs.doc(col(m), r.id), r); },
-    async remove(id) { const m = await load(); await m.fs.deleteDoc(m.fs.doc(col(m), id)); }
+    async remove(id) { const m = await load(); await m.fs.deleteDoc(m.fs.doc(col(m), id)); },
+    // 發布給學生頁：寫到 portal/{老師代號}/hwPool/{id}（規則要先在老師後台「發布帳號」允許這個 Google 帳號）
+    async publishHw(tid, r) { const m = await load(); await m.fs.setDoc(m.fs.doc(m.fs.collection(m.db, 'portal', tid, 'hwPool'), r.id), r); }
   };
 }
 const pjAdapter = window.__pjAdapter || pjAdapterFirebase();
@@ -1976,9 +1985,17 @@ function renderPjCloud() {
   $('#pjLogin').hidden = pjCloud.state !== 'off';
   $('#pjPull').hidden = $('#pjLogout').hidden = pjCloud.state !== 'in';
   $('#siteUser').textContent = pjCloud.state === 'in' ? (pjCloud.user.email || '') : '';
+  renderHwBox();
   $('#pjCloudMsg').textContent = pjCloud.state === 'in' ? `已登入 ${pjCloud.user.email || ''}。存入清單的練習單會同步到雲端。`
     : pjCloud.state === 'connecting' ? '連線中…'
     : '目前只存在這台裝置。登入 Google 後會同步到雲端（只有你自己看得到），不登入也可以照常使用。';
+}
+function renderHwBox() {
+  const on = pjCloud.state === 'in' && pjCloud.user;
+  $('#hwUidLine').hidden = !on; if (on) $('#hwUid').textContent = pjCloud.user.uid || '';
+  $('#hwPublish').disabled = !on;
+  if (!on) $('#hwMsg').textContent = '請先按上方的「登入同步」登入 Google，才能發布。';
+  else if ($('#hwMsg').textContent.startsWith('請先按上方')) $('#hwMsg').textContent = '';
 }
 function renderPj() {
   const q = $('#pjFilter').value.trim().toLowerCase();
@@ -2034,6 +2051,28 @@ async function startPjCloud() {
     });
   } catch (err) { pjCloud.started = false; pjCloud.state = 'off'; renderPjCloud(); toast('無法載入雲端功能，請確認網路連線'); }
 }
+/* ---- 發布給學生頁 ---- */
+const HW_TID_KEY = 'gwm.portal.tid';
+try { $('#hwTid').value = localStorage.getItem(HW_TID_KEY) || ''; } catch (e) {}
+$('#hwUidCopy').addEventListener('click', async () => { try { await navigator.clipboard.writeText($('#hwUid').textContent); toast('已複製帳號代碼'); } catch (e) { toast('複製失敗，請手動選取'); } });
+$('#hwPublish').addEventListener('click', async () => {
+  const msg = t => { $('#hwMsg').textContent = t; };
+  const tid = $('#hwTid').value.trim();
+  if (pjCloud.state !== 'in') { msg('請先登入 Google。'); return; }
+  if (!/^[A-Za-z0-9]{20,40}$/.test(tid)) { msg('老師代號格式不對：請到老師後台的「發布帳號」複製。'); return; }
+  if (!state.sections.length) { msg('目前還沒有題目可以發布。'); return; }
+  try { localStorage.setItem(HW_TID_KEY, tid); } catch (e) {}
+  const now = Date.now();
+  const rec = { id: currentPid || ('h' + now.toString(36)), ts: now, upd: now,
+    name: $('#pjName').value.trim() || state.meta.title || state.meta.grammar || '未命名練習單', grammar: state.meta.grammar || '',
+    count: pjCount(state), data: JSON.stringify(state) };
+  msg('發布中…');
+  try { await pjAdapter.publishHw(tid, rec); msg('✓ 已發布「' + rec.name + '」。到老師後台的「作業」就看得到，再選要發給哪些學生。'); }
+  catch (e) {
+    const c = String((e && e.code) || '');
+    msg(c.includes('permission') ? '沒有權限：請確認老師代號貼對了，而且已把上面的帳號代碼貼到老師後台的「發布帳號」按「允許」。' : '發布失敗：' + ((e && e.message) || e));
+  }
+});
 $('#btnProjList').addEventListener('click', () => {
   const p = $('#projPanel'); p.hidden = !p.hidden;
   if (!p.hidden) { if (!$('#pjName').value) $('#pjName').value = ''; renderPj(); p.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
