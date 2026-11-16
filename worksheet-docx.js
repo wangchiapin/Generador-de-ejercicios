@@ -22,6 +22,7 @@
 
   function build(S) {
     const o = S.opts, m = S.meta;
+    const simpOn = sheetSimpOn(), FZ = simpOn ? 'Microsoft YaHei' : FONT_ZH, LANG_ZH = simpOn ? 'zh-CN' : 'zh-TW';
     const K = (+o.fontPct || 100) / 100, G = (+o.gapPct || 100) / 100;
     const letter = o.paper === 'Letter';
     const PW = letter ? 12240 : 11906, PH = letter ? 15840 : 16838;
@@ -32,7 +33,7 @@
 
     /* ---------- 基本積木 ---------- */
     function rpr(r) {
-      let x = `<w:rPr><w:rFonts w:ascii="${FONT_LAT}" w:hAnsi="${FONT_LAT}" w:eastAsia="${FONT_ZH}" w:cs="${FONT_LAT}"/>`;
+      let x = `<w:rPr><w:rFonts w:ascii="${FONT_LAT}" w:hAnsi="${FONT_LAT}" w:eastAsia="${FZ}" w:cs="${FONT_LAT}"/>`;
       if (r.b) x += '<w:b/>';
       if (r.strike) x += '<w:strike/>';
       if (r.color) x += `<w:color w:val="${r.color}"/>`;
@@ -45,7 +46,7 @@
     const tabRun = () => '<w:r><w:tab/></w:r>';
     function ruby(base, rt, r) {
       const bz = hp(r.sz || 10.5), rz = Math.max(8, Math.round(bz * 0.46));
-      return `<w:r><w:ruby><w:rubyPr><w:rubyAlign w:val="center"/><w:hps w:val="${rz}"/><w:hpsRaise w:val="${Math.round(bz * 0.9)}"/><w:hpsBaseText w:val="${bz}"/><w:lid w:val="zh-TW"/></w:rubyPr>` +
+      return `<w:r><w:ruby><w:rubyPr><w:rubyAlign w:val="center"/><w:hps w:val="${rz}"/><w:hpsRaise w:val="${Math.round(bz * 0.9)}"/><w:hpsBaseText w:val="${bz}"/><w:lid w:val="${LANG_ZH}"/></w:rubyPr>` +
         `<w:rt><w:r>${rpr({ sz: (r.sz || 10.5) * 0.46, color: MID })}<w:t xml:space="preserve">${xe(rt)}</w:t></w:r></w:rt>` +
         `<w:rubyBase><w:r>${rpr(r)}<w:t xml:space="preserve">${xe(base)}</w:t></w:r></w:rubyBase></w:ruby></w:r>`;
     }
@@ -79,11 +80,12 @@
     function zhRuns(text, mode, r) {
       text = String(text || '');
       const syl = mode === 'none' ? null : syllables(text);
+      const conv = simpOn ? simpAt(text) : null;
       let pos = 0, out = '';
       for (const ch of text) {
-        const x = syl && syl[pos];
+        const x = syl && syl[pos], shown = conv ? (conv[pos] || ch) : ch;
         const rt = x && x.isZh ? (mode === 'pinyin' ? x.py : x.zy) : '';
-        out += rt ? ruby(ch, rt, r) : run(ch, r);
+        out += rt ? ruby(shown, rt, r) : run(shown, r);
         pos += ch.length;
       }
       return out;
@@ -91,13 +93,14 @@
     function partsRuns(parts, mode, blankFn, r) {
       const filled = parts.map(p => p.t === 'txt' ? p.s : p.a).join('');
       const syl = mode === 'none' ? null : syllables(filled);
+      const conv = simpOn ? simpAt(filled) : null;
       let pos = 0, out = '';
       for (const p of parts) {
         if (p.t === 'blank') { out += blankFn(p); pos += p.a.length; continue; }
         for (const ch of p.s) {
-          const x = syl && syl[pos];
+          const x = syl && syl[pos], shown = conv ? (conv[pos] || ch) : ch;
           const rt = x && x.isZh ? (mode === 'pinyin' ? x.py : x.zy) : '';
-          out += rt ? ruby(ch, rt, r) : run(ch, r);
+          out += rt ? ruby(shown, rt, r) : run(shown, r);
           pos += ch.length;
         }
       }
@@ -114,7 +117,7 @@
     function derived(sentence) {
       let x = '';
       const add = t => { x += para(run(t, { sz: 8.8, color: GRAY }), { ind: 420, after: 0 }); };
-      if (o.simp) add(toSimp(sentence));
+      if (o.simp && !simpOn) add(toSimp(sentence));
       if (o.pinyin) add(pyLine(sentence));
       if (o.zhuyin) add(zyLine(sentence));
       return x;
@@ -240,11 +243,12 @@
 
     const NS = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"';
     const sect = `<w:sectPr><w:footerReference w:type="default" r:id="rId2"/><w:pgSz w:w="${PW}" w:h="${PH}"/><w:pgMar w:top="${MT}" w:right="${MR}" w:bottom="${MB}" w:left="${ML}" w:header="454" w:footer="454" w:gutter="0"/></w:sectPr>`;
-    const documentXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document ${NS}><w:body>${body}${sect}</w:body></w:document>`;
+    const simpXml = x => simpOn ? x.replace(/(<w:t(?: [^>]*)?>)([^<]*)(<\/w:t>)/g, (m, a, t, c) => a + simpTW(t) + c) : x;
+    const documentXml = simpXml(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document ${NS}><w:body>${body}${sect}</w:body></w:document>`);
     const fr = { sz: 7.5, color: '888888' };
     const fld = ins => `<w:r>${rpr(fr)}<w:fldChar w:fldCharType="begin"/></w:r><w:r>${rpr(fr)}<w:instrText xml:space="preserve"> ${ins} </w:instrText></w:r><w:r>${rpr(fr)}<w:fldChar w:fldCharType="separate"/></w:r><w:r>${rpr(fr)}<w:t>1</w:t></w:r><w:r>${rpr(fr)}<w:fldChar w:fldCharType="end"/></w:r>`;
-    const footerXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:ftr ${NS}>${para(run(m.footer || '', fr) + tabRun() + fld('PAGE') + run(' / ', fr) + fld('NUMPAGES'), { tabR: true, after: 0 })}</w:ftr>`;
-    const stylesXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="${FONT_LAT}" w:hAnsi="${FONT_LAT}" w:eastAsia="${FONT_ZH}" w:cs="${FONT_LAT}"/><w:sz w:val="21"/><w:szCs w:val="21"/><w:lang w:val="es-ES" w:eastAsia="zh-TW"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="0" w:line="276" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults><w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/></w:style></w:styles>`;
+    const footerXml = simpXml(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:ftr ${NS}>${para(run(m.footer || '', fr) + tabRun() + fld('PAGE') + run(' / ', fr) + fld('NUMPAGES'), { tabR: true, after: 0 })}</w:ftr>`);
+    const stylesXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="${FONT_LAT}" w:hAnsi="${FONT_LAT}" w:eastAsia="${FZ}" w:cs="${FONT_LAT}"/><w:sz w:val="21"/><w:szCs w:val="21"/><w:lang w:val="es-ES" w:eastAsia="${LANG_ZH}"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="0" w:line="276" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults><w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/></w:style></w:styles>`;
     const contentTypes = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/><Override PartName="/word/footer1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml"/></Types>';
     const rels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>';
     const docRels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer" Target="footer1.xml"/></Relationships>';

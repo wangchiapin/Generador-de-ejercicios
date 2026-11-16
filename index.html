@@ -191,6 +191,7 @@ summary{cursor:pointer;color:var(--accent);font-size:.86rem}
 .pv-gap{display:block;position:relative;border-bottom:0;margin:0 -12mm;background:repeating-linear-gradient(135deg,#f1eee8,#f1eee8 6px,#e8e4dc 6px,#e8e4dc 12px)}
 .pv-gap span{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);text-align:center;font-size:8.5pt;color:#8a857b;letter-spacing:.08em}
 @media print{.pv-gap{display:none!important}.s-sec.pb::before{display:none}}
+.sheet.simp{font-family:"Noto Sans SC","PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif}
 .sheet ruby{ruby-position:over}
 .sheet rt{font-size:.42em;color:#555;font-weight:400;letter-spacing:0}
 .sheet .s-zh ruby, .sheet .s-para ruby{ruby-align:center}
@@ -397,6 +398,21 @@ function toSimp(s) {
     return _conv(s);
   } catch (e) { return s; }
 }
+/* 練習單文字：繁體／簡體。簡體固定用台灣用字（只換字形，不換用語），所以字數不會變 */
+let _tw2s = null;
+function sheetSimpOn() { return state.opts.script === 'simp' && typeof OpenCC !== 'undefined'; }
+function simpTW(s) {
+  s = String(s ?? ''); if (!s) return s;
+  try { if (!_tw2s) _tw2s = OpenCC.Converter({ from: 'tw', to: 'cn' }); return _tw2s(s); } catch (e) { return s; }
+}
+// 整句一起轉（才看得懂上下文，例如 看著→看着），再回傳「第幾個位置 → 轉好的字」
+function simpAt(text) {
+  const src = Array.from(text), whole = Array.from(simpTW(text)), same = whole.length === src.length, map = {};
+  let pos = 0;
+  src.forEach((ch, i) => { map[pos] = same ? whole[i] : simpTW(ch); pos += ch.length; });
+  return map;
+}
+function simpHTMLText(html) { return html.replace(/>([^<>]+)</g, (m, t) => '>' + simpTW(t) + '<'); }
 let _c2t = null;
 function suspectSimplified(s) {
   try {
@@ -615,7 +631,7 @@ function newState() {
     grammarBox: { points: [], warning: '' },
     vocab: [],
     sections: [],
-    opts: { fontPct: 100, gapPct: 100, guides: true, keepSec: false, vocab: true, vocabPy: true, pinyin: true, zhuyin: false, simp: false, simpPhrases: false, cueEs: true, keyEs: true, student: 'none', paper: 'A4', print: 'both', teacherNote: true }
+    opts: { fontPct: 100, gapPct: 100, guides: true, keepSec: false, vocab: true, vocabPy: true, pinyin: true, zhuyin: false, simp: false, simpPhrases: false, script: 'trad', cueEs: true, keyEs: true, student: 'none', paper: 'A4', print: 'both', teacherNote: true }
   };
 }
 let state = newState();
@@ -1622,6 +1638,8 @@ function renderOut() {
     <div class="optgrp"><h3>紙張與列印</h3><div class="opts">
       <label>練習頁加注音／拼音
         <select data-m="opts.student"><option value="none" ${o.student === 'none' ? 'selected' : ''}>不加</option><option value="pinyin" ${o.student === 'pinyin' ? 'selected' : ''}>拼音</option><option value="zhuyin" ${o.student === 'zhuyin' ? 'selected' : ''}>注音</option></select></label>
+      <label>練習單文字
+        <select data-m="opts.script"><option value="trad" ${o.script !== 'simp' ? 'selected' : ''}>繁體</option><option value="simp" ${o.script === 'simp' ? 'selected' : ''}>簡體（台灣用字）</option></select></label>
       <label>紙張
         <select data-m="opts.paper"><option ${o.paper === 'A4' ? 'selected' : ''}>A4</option><option ${o.paper === 'Letter' ? 'selected' : ''}>Letter</option></select></label>
       <label>列印內容
@@ -1683,9 +1701,10 @@ function paginatePreview() {
 function rebuildSheet() {
   $('#sheet').innerHTML = buildSheetHTML();
   const o = state.opts;
+  $('#sheet').classList.toggle('simp', sheetSimpOn()); $('#sheet').lang = sheetSimpOn() ? 'zh-CN' : 'zh-TW';
   $('#sheet').style.setProperty('--k', String((+o.fontPct || 100) / 100));
   $('#sheet').style.setProperty('--g', String((+o.gapPct || 100) / 100));
-  const foot = (state.meta.footer || '').replace(/[\\"]/g, '');
+  const foot = (sheetSimpOn() ? simpTW(state.meta.footer || '') : (state.meta.footer || '')).replace(/[\\"]/g, '');
   $('#pageStyle').textContent = `@page{size:${o.paper === 'Letter' ? 'Letter' : 'A4'};margin:13mm 14mm 16mm 14mm;
     @bottom-left{content:"${foot}";font-size:7.5pt;color:#888;font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif}
     @bottom-right{content:counter(page) " / " counter(pages);font-size:7.5pt;color:#888;font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif}}`;
@@ -1736,13 +1755,14 @@ function partsOf(type, it) {
 function renderParts(parts, mode, blankFn) {
   const filled = parts.map(p => p.t === 'txt' ? p.s : p.a).join('');
   const syl = mode === 'none' ? null : syllables(filled);
+  const conv = sheetSimpOn() ? simpAt(filled) : null;
   let pos = 0, out = '';
   for (const p of parts) {
     if (p.t === 'blank') { out += blankFn(p); pos += p.a.length; continue; }
     for (const ch of p.s) {
-      const x = syl && syl[pos];
-      if (x && x.isZh && (mode === 'pinyin' ? x.py : x.zy)) out += `<ruby>${esc(ch)}<rt>${esc(mode === 'pinyin' ? x.py : x.zy)}</rt></ruby>`;
-      else out += esc(ch);
+      const x = syl && syl[pos], shown = conv ? (conv[pos] || ch) : ch;
+      if (x && x.isZh && (mode === 'pinyin' ? x.py : x.zy)) out += `<ruby>${esc(shown)}<rt>${esc(mode === 'pinyin' ? x.py : x.zy)}</rt></ruby>`;
+      else out += esc(shown);
       pos += ch.length;
     }
   }
@@ -1751,7 +1771,7 @@ function renderParts(parts, mode, blankFn) {
 const plain = (s, mode) => renderParts([{ t: 'txt', s }], mode, () => '');
 function derivedLines(s) {
   const o = state.opts; let h = '';
-  if (o.simp) h += `<div class="s-d">${esc(toSimp(s))}</div>`;
+  if (o.simp && !sheetSimpOn()) h += `<div class="s-d">${esc(toSimp(s))}</div>`;
   if (o.pinyin) h += `<div class="s-d">${esc(pyLine(s))}</div>`;
   if (o.zhuyin) h += `<div class="s-d">${esc(zyLine(s))}</div>`;
   return h;
@@ -1842,7 +1862,8 @@ function sectionKey(sec, no) {
   });
   return h;
 }
-function buildSheetHTML() {
+function buildSheetHTML() { const h = buildSheetHTMLRaw(); return sheetSimpOn() ? simpHTMLText(h) : h; }
+function buildSheetHTMLRaw() {
   const o = state.opts, m = state.meta;
   const secs = state.sections.filter(s => s.enabled && s.items.some(i => i.enabled));
   if (!secs.length) return '<p style="color:#888;padding:20px">還沒有題目可以輸出。請先到「1 出題」貼上題目，或載入範例。</p>';
