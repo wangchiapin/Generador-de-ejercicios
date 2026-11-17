@@ -229,7 +229,6 @@ details.menu>summary::-webkit-details-marker{display:none}
 button.projbtn{border:1px solid var(--line);background:none;color:var(--accent);padding:5px 14px;font-size:.88rem;letter-spacing:.05em;line-height:inherit;cursor:pointer}
 button.projbtn:hover{background:none;border-color:var(--ink)}
 .proj{align-items:center}
-#projMenu>summary{vertical-align:top}
 .menuitems{position:absolute;right:0;top:calc(100% + 4px);background:#fff;border:1px solid var(--line);min-width:170px;z-index:30;box-shadow:0 4px 14px rgba(0,0,0,.06)}
 .menuitems .mi{display:block;width:100%;text-align:left;border:0;border-bottom:1px solid var(--line2);padding:9px 14px;background:#fff;color:var(--ink);font-size:.9rem;cursor:pointer}
 @media(max-width:640px){.menuitems{right:auto;left:0;max-width:calc(100vw - 32px)}}   /* 手機：專案按鈕在左邊，選單要往右開，不然會被切到螢幕外 */
@@ -239,8 +238,9 @@ h2 .no{display:inline-block;min-width:1.6em;color:var(--sub);font-weight:400}
 details.errdet,details.metadet{margin:10px 0}
 .optgrp h3{font-size:.84rem;font-weight:400;color:var(--sub);margin:16px 0 2px;letter-spacing:.06em}
 .between{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
-.pjpanel{border:1px solid var(--line);background:var(--paper);padding:6px 18px 16px;margin:18px 0 6px}
-.pjpanel h2{margin-top:14px}
+.pjmodal{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:60;display:flex;align-items:flex-start;justify-content:center;padding:6vh 16px;overflow:auto}
+.pjmodal[hidden]{display:none}
+.pjbox2{background:var(--paper);border:1px solid var(--line);width:100%;max-width:640px;padding:6px 20px 18px;box-shadow:0 10px 30px rgba(0,0,0,.2)}
 .pjbox{border:1px solid var(--line);background:#fff;padding:10px 14px;margin:10px 0}
 .pjitem{border:1px solid var(--line);background:#fff;margin:8px 0;padding:8px 14px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center}
 .pjitem b{font-weight:500}
@@ -261,14 +261,8 @@ details.errdet,details.metadet{margin:10px 0}
     <div class="sub">給西語學生的華語語法練習單：出題、檢查、輸出</div>
   </div>
   <div class="proj">
-    <button class="projbtn" id="btnProjList">我的練習單</button>
-    <details class="menu" id="projMenu"><summary>專案 ▾</summary>
-      <div class="menuitems">
-        <button class="mi" id="btnNew">新專案</button>
-        <button class="mi" id="btnSaveProj">儲存成檔案</button>
-        <label class="mi filebtn" style="border:0;border-bottom:0;cursor:pointer">開啟檔案<input type="file" id="fileOpen" accept=".json,application/json" hidden></label>
-      </div>
-    </details>
+    <button class="projbtn" id="btnProjList">練習單</button>
+    <button class="projbtn" id="btnNew">＋ 新練習單</button>
   </div>
 </header>
 <nav class="steps noprint">
@@ -278,27 +272,6 @@ details.errdet,details.metadet{margin:10px 0}
 </nav>
 <main>
   <div id="stepBanner" class="stepbanner noprint"></div>
-  <section id="projPanel" class="pjpanel noprint" hidden>
-    <h2>我的練習單</h2>
-    <p class="hint">把目前這份存進清單，之後可以隨時打開。預設存在這台裝置的瀏覽器裡；登入 Google 後會同步到雲端，換手機或電腦也看得到。</p>
-    <div class="pjbox">
-      <div class="hint" id="pjCloudMsg" style="margin:0 0 8px"></div>
-      <div class="row" style="margin:0">
-        <button class="quiet" id="pjPull" hidden>從雲端更新</button>
-      </div>
-    </div>
-    <div class="pjbox" id="hwBox">
-      <b>發布給學生頁</b>
-      <p class="hint" style="margin:4px 0 8px">把目前這份練習單送到老師後台，在那裡選要發給哪些學生，學生在學生頁線上作答。標準答案不會給學生。要先登入 Google。</p>
-      <div class="hint" id="hwUidLine" hidden style="margin:0 0 6px">這個 Google 帳號的帳號代碼：<code id="hwUid"></code> <button class="tiny" id="hwUidCopy">複製</button><br>第一次使用：把它貼到老師後台的「發布帳號」，按「允許」。</div>
-      <div class="row" style="margin:0"><input id="hwTid" placeholder="老師代號（到老師後台複製）" style="max-width:420px"><button class="primary" id="hwPublish">發布目前這份</button></div>
-      <div class="hint" id="hwMsg" style="margin:6px 0 0"></div>
-    </div>
-    <div class="row"><input id="pjName" placeholder="這份的名稱（不填就用語法點）" style="max-width:420px"><button class="primary" id="pjSave">存入清單</button></div>
-    <input id="pjFilter" placeholder="搜尋清單" style="max-width:420px">
-    <div id="pjList"></div>
-    <div class="pjmeter" id="pjMeter"></div>
-  </section>
   <!-- ============ 1 出題 ============ -->
   <section id="step1" class="step on noprint">
     <div class="panel">
@@ -348,12 +321,27 @@ details.errdet,details.metadet{margin:10px 0}
 
   <!-- ============ 3 輸出 ============ -->
   <section id="step3" class="step">
+    <div class="pjbox noprint" id="hwSetBox" hidden>
+      <b>發布設定</b>
+      <p class="hint" style="margin:4px 0 8px">只要設定一次：把帳號代碼貼到老師後台的「發布帳號」按「允許」，再把老師後台的老師代號貼在這裡。之後按「傳給學生日誌」就直接傳。</p>
+      <div class="hint" id="hwUidLine" hidden style="margin:0 0 6px">這個 Google 帳號的帳號代碼：<code id="hwUid"></code> <button class="tiny" id="hwUidCopy">複製</button><br>第一次使用：把它貼到老師後台的「發布帳號」，按「允許」。</div>
+      <div class="row" style="margin:0"><input id="hwTid" placeholder="老師代號（到老師後台複製）" style="max-width:420px"></div>
+      <div class="hint" id="hwMsg" style="margin:6px 0 0"></div>
+    </div>
     <div class="noprint" id="outControls"></div>
     <div id="layoutBar" class="layoutbar noprint"></div>
     <div class="previewWrap"><div id="sheet" class="sheet"></div></div>
     <p class="previewNote noprint">預覽的換頁位置（灰色斜線帶）是電腦估算的，實際分頁以列印或存成 PDF 的結果為準。</p>
   </section>
 </main>
+<div id="projPanel" class="pjmodal noprint" hidden>
+  <div class="pjbox2" role="dialog" aria-label="練習單">
+    <div class="between"><h2 style="margin:14px 0 8px">練習單</h2><button class="quiet" id="pjClose">關閉</button></div>
+    <input id="pjFilter" placeholder="搜尋練習單" style="max-width:420px">
+    <div id="pjList"></div>
+    <div class="pjmeter" id="pjMeter"></div>
+  </div>
+</div>
 <div id="toast"></div>
 
 <script src="grammar-data.js"></script>
@@ -1682,8 +1670,8 @@ function renderOut() {
   const o = state.opts;
   const chk = (k, label) => `<label><input type="checkbox" data-m="opts.${k}" ${o[k] ? 'checked' : ''}> ${label}</label>`;
   $('#outControls').innerHTML = `
-    <div class="between"><h2 style="margin:24px 0 0">輸出設定</h2><span class="row" style="margin:0"><button class="primary" id="btnPrint">列印／存成 PDF</button><button class="primary" id="btnWord">匯出 Word (.docx)</button><button class="primary" id="btnHwQuick">發布給學生頁</button></span></div>
-    <div class="hint" id="hwQMsg" style="margin:6px 0 0;text-align:right"></div>
+    <div class="between"><h2 style="margin:24px 0 0">輸出設定</h2><span class="row" style="margin:0;justify-content:flex-end"><button class="primary" id="btnPrint">輸出 PDF</button><button class="primary" id="btnWord">輸出 Word</button><input id="pjName" placeholder="標題（不填就用語法點）" value="${esc(pjNameVal)}" style="width:210px"><button class="quiet" id="btnSaveList">存檔</button><button class="primary" id="btnHwQuick">傳給學生日誌</button></span></div>
+    <div style="text-align:right;margin:6px 0 0"><button class="link" id="btnHwSet">發布設定</button> <span class="hint" id="hwQMsg"></span></div>
     <div class="optgrp"><div class="opts">
       <label>列印內容
         <select data-m="opts.print"><option value="both" ${o.print === 'both' ? 'selected' : ''}>練習頁＋答案頁</option><option value="student" ${o.print === 'student' ? 'selected' : ''}>只印練習頁</option><option value="key" ${o.print === 'key' ? 'selected' : ''}>只印答案頁</option></select></label>
@@ -1800,11 +1788,13 @@ $('#step3').addEventListener('click', e => {
     setTimeout(off, 4000);
   }
   if (e.target.id === 'btnWord') exportWord();
+  if (e.target.id === 'btnSaveList') { pjSaveCurrent(); return; }
+  if (e.target.id === 'btnHwSet') { const b = $('#hwSetBox'); b.hidden = !b.hidden; return; }
   if (e.target.id === 'btnHwQuick') {
     const set = t => { const el = $('#hwQMsg'); if (el) el.textContent = t; };
     if (!$('#hwTid').value.trim()) {   // 還沒設定老師代號：打開「我的練習單」讓他貼一次
-      set('還沒設定老師代號：請在「我的練習單」裡貼一次（之後會自己記住），再按發布。');
-      if ($('#projPanel').hidden) $('#btnProjList').click();
+      set('還沒設定老師代號：請在上面的發布設定貼一次（之後會自己記住），再按「傳給學生日誌」。');
+      $('#hwSetBox').hidden = false;
       return;
     }
     hwDoPublish(set);
@@ -2014,19 +2004,7 @@ function toCSV(rows) {
 /* =====================================================================
    專案：儲存、開啟、新增
    ===================================================================== */
-$('#btnSaveProj').addEventListener('click', () => download(`${safeName()}.worksheet.json`, JSON.stringify({ app: 'gwm', v: 1, state }, null, 2), 'application/json;charset=utf-8'));
-$('#fileOpen').addEventListener('change', e => {
-  const f = e.target.files[0]; if (!f) return;
-  const r = new FileReader();
-  r.onload = () => {
-    try {
-      const j = JSON.parse(String(r.result)); if (!j.state) throw new Error('不是這個工具存的專案檔');
-      loadState(j.state); toast('已開啟專案');
-    } catch (err) { toast('開啟失敗：' + err.message); }
-  };
-  r.readAsText(f); e.target.value = '';
-});
-$('#btnNew').addEventListener('click', () => { if (state.sections.length && !confirm('目前的題目會清空，確定要開新專案嗎？（建議先儲存專案）')) return; state = newState(); save(); renderStep1(); $('#pasteBox').value = ''; $('#importMsg').innerHTML = ''; goStep(1); });
+$('#btnNew').addEventListener('click', () => { if (state.sections.length && !confirm('目前的題目會清空，確定要開新練習單嗎？（建議先存檔）')) return; state = newState(); currentPid = null; pjNameVal = ''; save(); renderStep1(); $('#pasteBox').value = ''; $('#importMsg').innerHTML = ''; goStep(1); });
 function loadState(s) {
   const d = newState();
   state = Object.assign({}, d, s);
@@ -2040,10 +2018,6 @@ function loadState(s) {
   save(); renderStep1(); goStep(state.sections.length ? 2 : 1);
 }
 
-document.addEventListener('click', e => {
-  const m = $('#projMenu'); if (!m || !m.open) return;
-  if (e.target.closest('.mi') || !e.target.closest('#projMenu')) setTimeout(() => { m.open = false; }, 0);
-});
 
 /* =====================================================================
    我的練習單（專案清單）：存在瀏覽器，登入 Google 後可同步到 Firebase
@@ -2052,6 +2026,7 @@ document.addEventListener('click', e => {
 const PJ = { list: 'gwm.projects.v1', synced: 'gwm.projects.synced.v1', flag: 'gwm.projects.cloud.v1', common: 'gwm.cloud.v1' }; // common：兩個頁面共用的「已登入過」記號
 function lsSetOk(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } }
 let PL = lsGet(PJ.list, []); if (!Array.isArray(PL)) PL = [];
+let pjNameVal = '';   // 第 3 步「標題」欄的內容（畫面重畫時要記住）
 let pjSynced = new Set(lsGet(PJ.synced, []));
 let currentPid = null;
 const pjCloud = { user: null, started: false, state: 'off' };
@@ -2097,17 +2072,13 @@ function pjErr(e) {
 }
 function renderPjCloud() {
   $('#pjLogin').hidden = pjCloud.state !== 'off';
-  $('#pjPull').hidden = $('#pjLogout').hidden = pjCloud.state !== 'in';
+  $('#pjLogout').hidden = pjCloud.state !== 'in';
   $('#siteUser').textContent = pjCloud.state === 'in' ? (pjCloud.user.email || '') : '';
   renderHwBox();
-  $('#pjCloudMsg').textContent = pjCloud.state === 'in' ? `已登入 ${pjCloud.user.email || ''}。存入清單的練習單會同步到雲端。`
-    : pjCloud.state === 'connecting' ? '連線中…'
-    : '目前只存在這台裝置。登入 Google 後會同步到雲端（只有你自己看得到），不登入也可以照常使用。';
 }
 function renderHwBox() {
   const on = pjCloud.state === 'in' && pjCloud.user;
   $('#hwUidLine').hidden = !on; if (on) $('#hwUid').textContent = pjCloud.user.uid || '';
-  $('#hwPublish').disabled = !on;
   if (!on) $('#hwMsg').textContent = '請先按上方的「登入同步」登入 Google，才能發布。';
   else if ($('#hwMsg').textContent.startsWith('請先按上方')) $('#hwMsg').textContent = '';
 }
@@ -2178,7 +2149,7 @@ async function hwDoPublish(extraMsg) {
   try { localStorage.setItem(HW_TID_KEY, tid); } catch (e) {}
   const now = Date.now();
   const rec = { id: currentPid || ('h' + now.toString(36)), ts: now, upd: now,
-    name: $('#pjName').value.trim() || state.meta.title || state.meta.grammar || '未命名練習單', grammar: state.meta.grammar || '',
+    name: pjNameVal.trim() || state.meta.title || state.meta.grammar || '未命名練習單', grammar: state.meta.grammar || '',
     count: pjCount(state), data: JSON.stringify(state) };
   msg('發布中…');
   try { await pjAdapter.publishHw(tid, rec); msg('✓ 已發布「' + rec.name + '」。到老師後台的「作業」就看得到，再選要發給哪些學生。'); }
@@ -2187,22 +2158,34 @@ async function hwDoPublish(extraMsg) {
     msg(c.includes('permission') ? '沒有權限：請確認老師代號貼對了，而且已把上面的帳號代碼貼到老師後台的「發布帳號」按「允許」。' : '發布失敗：' + ((e && e.message) || e));
   }
 }
-$('#hwPublish').addEventListener('click', () => hwDoPublish());
-$('#btnProjList').addEventListener('click', () => {
-  const p = $('#projPanel'); p.hidden = !p.hidden;
-  if (!p.hidden) { if (!$('#pjName').value) $('#pjName').value = ''; renderPj(); p.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
-});
+const pjOpen = () => { const p = $('#projPanel'); p.hidden = false; renderPj(); if (pjCloud.state === 'in') pjPull(); setTimeout(() => $('#pjFilter').focus(), 0); };
+const pjShut = () => { $('#projPanel').hidden = true; };
+$('#btnProjList').addEventListener('click', () => { if ($('#projPanel').hidden) pjOpen(); else pjShut(); });
+$('#pjClose').addEventListener('click', pjShut);
+$('#projPanel').addEventListener('click', e => { if (e.target.id === 'projPanel') pjShut(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#projPanel').hidden) pjShut(); });
 $('#pjFilter').addEventListener('input', renderPj);
-$('#pjSave').addEventListener('click', () => {
+document.addEventListener('input', e => { if (e.target.id === 'pjName') pjNameVal = e.target.value; });
+/* 存檔：目前開著的是清單裡的某一份，而且標題沒改（或沒填）→ 直接更新那一份；標題改了或還沒存過 → 存成新的一份 */
+function pjSaveCurrent() {
   if (!state.sections.length) { toast('目前還沒有題目可以存'); return; }
-  const now = Date.now();
-  const e = { id: 'p' + now.toString(36) + Math.random().toString(36).slice(2, 5), ts: now, upd: now,
-    name: $('#pjName').value.trim() || state.meta.grammar || '未命名練習單', grammar: state.meta.grammar || '',
-    count: pjCount(state), state: JSON.parse(JSON.stringify(state)) };
-  PL.unshift(e);
-  if (!lsSetOk(PJ.list, PL)) { PL.shift(); toast('瀏覽器空間不夠了，請先刪掉不用的，或登入同步後再刪'); return; }
-  currentPid = e.id; $('#pjName').value = ''; renderPj(); toast('已存入清單'); pjPut(e);
-});
+  const now = Date.now(), nm = pjNameVal.trim(), cur = PL.find(x => x.id === currentPid);
+  let item, isNew = false;
+  if (cur && (!nm || nm === cur.name)) {
+    const old = { state: cur.state, upd: cur.upd, grammar: cur.grammar, count: cur.count };
+    cur.state = JSON.parse(JSON.stringify(state)); cur.upd = now; cur.grammar = state.meta.grammar || ''; cur.count = pjCount(state);
+    if (!lsSetOk(PJ.list, PL)) { Object.assign(cur, old); toast('瀏覽器空間不夠了，請先刪掉不用的，或登入同步後再刪'); return; }
+    item = cur;
+  } else {
+    item = { id: 'p' + now.toString(36) + Math.random().toString(36).slice(2, 5), ts: now, upd: now,
+      name: nm || state.meta.grammar || state.meta.title || '未命名練習單', grammar: state.meta.grammar || '',
+      count: pjCount(state), state: JSON.parse(JSON.stringify(state)) };
+    PL.unshift(item); isNew = true;
+    if (!lsSetOk(PJ.list, PL)) { PL.shift(); toast('瀏覽器空間不夠了，請先刪掉不用的，或登入同步後再刪'); return; }
+  }
+  currentPid = item.id; pjNameVal = item.name; const inp = $('#pjName'); if (inp) inp.value = item.name;
+  renderPj(); toast(isNew ? '已存檔「' + item.name + '」' : '已更新「' + item.name + '」'); pjPut(item);
+}
 $('#pjList').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b || !b.dataset.a) return;
   const id = b.closest('.pjitem').dataset.id, item = PL.find(x => x.id === id); if (!item) return;
@@ -2211,7 +2194,7 @@ $('#pjList').addEventListener('click', e => {
     const cur = PL.find(x => x.id === currentPid);
     const saved = cur && JSON.stringify(cur.state) === JSON.stringify(state);
     if (state.sections.length && !saved && !confirm('目前這份還沒存進清單，打開別份會把它換掉。\n（頁面只會自動記住最後一份）\n\n確定要打開「' + item.name + '」嗎？')) return;
-    loadState(JSON.parse(JSON.stringify(item.state))); currentPid = item.id; $('#projPanel').hidden = true; toast('已打開「' + item.name + '」');
+    loadState(JSON.parse(JSON.stringify(item.state))); currentPid = item.id; pjNameVal = item.name; const ni = $('#pjName'); if (ni) ni.value = item.name; $('#projPanel').hidden = true; toast('已打開「' + item.name + '」');
   } else if (a === 'over') {
     if (!state.sections.length) { toast('目前還沒有題目'); return; }
     if (!confirm('用目前這份覆蓋「' + item.name + '」？原本的內容會被取代。')) return;
@@ -2229,7 +2212,6 @@ $('#pjLogin').addEventListener('click', async () => {
   try { lsSetOk(PJ.flag, 1); lsSetOk(PJ.common, 1); await startPjCloud(); pjCloud.state = pjCloud.user ? 'in' : 'connecting'; renderPjCloud(); await pjAdapter.login(); }
   catch (err) { pjCloud.state = pjCloud.user ? 'in' : 'off'; renderPjCloud(); toast(pjErr(err)); }
 });
-$('#pjPull').addEventListener('click', () => pjPull());
 $('#pjLogout').addEventListener('click', async () => {
   try { await pjAdapter.logout(); } catch (err) {}
   try { localStorage.removeItem(PJ.flag); localStorage.removeItem(PJ.common); } catch (e) {}
