@@ -125,7 +125,7 @@
 
     /* ---------- 練習頁 ---------- */
     function secHead(sec, no, pts, es, pbb) {
-      return para(run(`${S_NUM[no]}、${S_DEF[sec.type].name}`, { sz: 12.5, b: true }) + run('   ' + es, { sz: 8.8, color: GRAY }) + tabRun() + run(`${pts} pts`, { sz: 8.8, color: GRAY }),
+      return para(run(`${S_NUM[no]}、${S_X.secName(sec.type)}`, { sz: 12.5, b: true }) + run('   ' + es, { sz: 8.8, color: GRAY }) + tabRun() + run(`${pts} pts`, { sz: 8.8, color: GRAY }),
         { bb: true, tabR: true, keepNext: true, pbb, before: sp(5), after: sp(2.5) });
     }
     function sectionStudent(sec, no) {
@@ -143,7 +143,7 @@
         x += table(w, items.map((it, r) => cell(w[0], para(run(String(r + 1), { sz: 9.5, color: GRAY }), { after: sp(1.5) })) +
           cell(w[1], para(zhRuns(it.zh, mode, { sz: 14 }), { after: sp(1.5), line: rubyLine })) +
           cell(w[2], para(run('________', { sz: 11, color: GRAY }), { after: sp(1.5) })) +
-          cell(w[3], para(run(S_ALPHA[r] + '  ', { sz: 11, b: true, color: MID }) + run(items[perm[r]].es, { sz: 11 }), { after: sp(1.5) }))));
+          cell(w[3], para(run(S_ALPHA[r] + '  ', { sz: 11, b: true, color: MID }) + run(S_X.mn(items[perm[r]]), { sz: 11 }), { after: sp(1.5) }))));
         return x;
       }
       items.forEach((it, i) => {
@@ -151,22 +151,22 @@
         const keep = { keepLines: true };
         switch (sec.type) {
           case 'fill':
-            x += para(n + partsRuns(S_partsOf('fill', it), mode, () => blankU(9, { sz: ZH }), { sz: ZH }), Object.assign({ line: rubyLine, after: sp(1) }, keep)) + (o.cueEs ? esP(it.es) : ''); break;
+            x += para(n + partsRuns(S_partsOf('fill', it), mode, () => blankU(9, { sz: ZH }), { sz: ZH }), Object.assign({ line: rubyLine, after: sp(1) }, keep)) + (o.cueEs ? esP(S_X.mn(it)) : ''); break;
           case 'cloze':
             x += para(partsRuns(S_partsOf('cloze', it), mode, p => run(S_CIRC[p.n - 1] || String(p.n), { sz: 11, color: MID }) + blankU(7, { sz: 11 }), { sz: 12.5 }), { box: true, line: mode === 'none' ? 420 : 500, after: sp(3) }); break;
           case 'order':
-            x += para(n + it.tokens.map(t => run('[ ', { sz: 12, color: GRAY }) + zhRuns(t, mode, { sz: 13 }) + run(' ]    ', { sz: 12, color: GRAY })).join(''), Object.assign({ line: rubyLine, after: sp(1) }, keep)) + (o.cueEs ? esP(it.es) : '') + lineP(1); break;
+            x += para(n + it.tokens.map(t => run('[ ', { sz: 12, color: GRAY }) + zhRuns(t, mode, { sz: 13 }) + run(' ]    ', { sz: 12, color: GRAY })).join(''), Object.assign({ line: rubyLine, after: sp(1) }, keep)) + (o.cueEs ? esP(S_X.mn(it)) : '') + lineP(1); break;
           case 'choice':
-            x += para(n + (o.cueEs && it.es ? run(it.es, { sz: 8.8, color: GRAY }) : '') + tabRun() + run('Respuesta: ______', { sz: 8.8, color: GRAY }), { tabR: true, keepNext: true, after: sp(1) }) +
+            x += para(n + (o.cueEs && S_X.mn(it) ? run(S_X.mn(it), { sz: 8.8, color: GRAY }) : '') + tabRun() + run(S_X.PL().resp + ': ______', { sz: 8.8, color: GRAY }), { tabR: true, keepNext: true, after: sp(1) }) +
               para(it.options.filter(Boolean).map((t, k) => run(LETTERS[k] + '  ', { sz: 11, b: true, color: MID }) + zhRuns(t, mode, { sz: 12 }) + run('      ', { sz: 12 })).join(''), { ind: 420, line: rubyLine, after: sp(2.6) }); break;
           case 'fix':
             x += para(n + zhRuns(it.wrong, mode, { sz: ZH }), Object.assign({ line: rubyLine, after: sp(1) }, keep)) + lineP(1); break;
           case 'translate':
-            x += para(n + run(it.es, { sz: 11 }), { keepNext: true, after: sp(.8) }) + (it.vocab ? para(run(it.vocab, { sz: 8.8, color: GRAY }), { ind: 420, after: sp(.8) }) : '') + lineP(1); break;
+            x += para(n + run(S_X.mn(it), { sz: 11 }), { keepNext: true, after: sp(.8) }) + (S_X.vocTr(it) ? para(run(S_X.vocTr(it), { sz: 8.8, color: GRAY }), { ind: 420, after: sp(.8) }) : '') + lineP(1); break;
           case 'zh2es':
-            x += para(n + zhRuns(it.zh, mode, { sz: ZH }), Object.assign({ line: rubyLine, after: sp(.8) }, keep)) + (it.vocab ? para(run(it.vocab, { sz: 8.8, color: GRAY }), { ind: 420, after: sp(.8) }) : '') + lineP(1); break;
+            x += para(n + zhRuns(it.zh, mode, { sz: ZH }), Object.assign({ line: rubyLine, after: sp(.8) }, keep)) + (S_X.vocTr(it) ? para(run(S_X.vocTr(it), { sz: 8.8, color: GRAY }), { ind: 420, after: sp(.8) }) : '') + lineP(1); break;
           case 'sentence':
-            x += para(n + zhRuns(it.cue, mode, { sz: ZH }), Object.assign({ line: rubyLine, after: sp(.8) }, keep)) + esP(it.es) + lineP(2); break;
+            x += para(n + zhRuns(it.cue, mode, { sz: ZH }), Object.assign({ line: rubyLine, after: sp(.8) }, keep)) + esP(S_X.mn(it)) + lineP(2); break;
         }
       });
       return x;
@@ -175,7 +175,7 @@
     /* ---------- 答案頁 ---------- */
     function sectionKey(sec, no) {
       const items = sec.items.filter(i => i.enabled);
-      let x = para(run(`${S_NUM[no]}、${S_DEF[sec.type].name}`, { sz: 11, b: true }), { bb: true, keepNext: true, before: sp(3.5), after: sp(1.5) });
+      let x = para(run(`${S_NUM[no]}、${S_X.secName(sec.type)}`, { sz: 11, b: true }), { bb: true, keepNext: true, before: sp(3.5), after: sp(1.5) });
       const tag = it => (S_isMulti() && it.points && it.points.length) ? run('  〔' + it.points.join('＋') + '〕', { sz: 7.8, color: GRAY }) : '';
       const note = it => (o.teacherNote && it.note) ? para(run(it.note, { sz: 8.8, color: MID }), { ind: 420, after: 0 }) : '';
       const es = t => (o.keyEs && t) ? para(run(t, { sz: 8.8, color: GRAY }), { ind: 420, after: 0 }) : '';
@@ -185,19 +185,19 @@
         const n = noP(i + 1);
         const A = t => run(t, { sz: ZHK, b: true, u: true });
         switch (sec.type) {
-          case 'fill': x += para(n + partsRuns(S_partsOf('fill', it), 'none', p => A(NBSP + p.a + NBSP), { sz: ZHK }) + tag(it), { keepNext: true, after: 0 }) + derived(S_answerSentence('fill', it)) + es(it.es) + note(it); break;
+          case 'fill': x += para(n + partsRuns(S_partsOf('fill', it), 'none', p => A(NBSP + p.a + NBSP), { sz: ZHK }) + tag(it), { keepNext: true, after: 0 }) + derived(S_answerSentence('fill', it)) + es(S_X.mn(it)) + note(it); break;
           case 'cloze': {
             x += para(it.answers.map((a, k) => run((S_CIRC[k] || k + 1) + ' ', { sz: 11, color: MID }) + run(a + '　', { sz: ZHK, b: true })).join('') + tag(it), { keepNext: true, after: sp(1) });
             x += para(partsRuns(S_partsOf('cloze', it), 'none', p => A(NBSP + p.a + NBSP), { sz: 12 }), { line: 360, after: sp(1) });
-            x += derived(S_answerSentence('cloze', it)).replace(/<w:ind w:left="420"\/>/g, '') + (o.keyEs && it.es ? para(run(it.es, { sz: 8.8, color: GRAY }), { after: 0 }) : '') + note(it); break;
+            x += derived(S_answerSentence('cloze', it)).replace(/<w:ind w:left="420"\/>/g, '') + (o.keyEs && S_X.mn(it) ? para(run(S_X.mn(it), { sz: 8.8, color: GRAY }), { after: 0 }) : '') + note(it); break;
           }
-          case 'order': x += para(n + run(it.answer, { sz: ZHK }) + tag(it), { keepNext: true, after: 0 }) + derived(it.answer) + es(it.es) + note(it); break;
-          case 'choice': x += para(n + run(LETTERS[it.answer] || '?', { sz: ZHK, b: true, u: true }) + run('  ' + (it.options[it.answer] || ''), { sz: ZHK }) + tag(it), { keepNext: true, after: 0 }) + derived(it.options[it.answer] || '') + es(it.es) + note(it); break;
+          case 'order': x += para(n + run(it.answer, { sz: ZHK }) + tag(it), { keepNext: true, after: 0 }) + derived(it.answer) + es(S_X.mn(it)) + note(it); break;
+          case 'choice': x += para(n + run(LETTERS[it.answer] || '?', { sz: ZHK, b: true, u: true }) + run('  ' + (it.options[it.answer] || ''), { sz: ZHK }) + tag(it), { keepNext: true, after: 0 }) + derived(it.options[it.answer] || '') + es(S_X.mn(it)) + note(it); break;
           case 'fix': x += para(n + run(it.wrong, { sz: ZHK, color: '999999', strike: true }) + run('  →  ', { sz: ZHK }) + A(NBSP + it.correct + NBSP) + tag(it), { keepNext: true, after: 0 }) + derived(it.correct) + (it.tip ? para(run(it.tip, { sz: 8.8, color: MID }), { ind: 420, after: 0 }) : '') + note(it); break;
-          case 'translate': x += para(n + run(it.answer, { sz: ZHK }) + tag(it), { keepNext: true, after: 0 }) + derived(it.answer) + es(it.es) + note(it); break;
-          case 'zh2es': x += para(n + run(it.zh, { sz: ZHK }) + tag(it), { keepNext: true, after: 0 }) + derived(it.zh) + para(run(it.answer, { sz: 9.5, color: MID }), { ind: 420, after: 0 }) + note(it); break;
-          case 'match': x += para(n + run(S_ALPHA[perm.indexOf(i)] || '?', { sz: ZHK, b: true, u: true }) + run('  ' + it.zh, { sz: ZHK }), { keepNext: true, after: 0 }) + derived(it.zh) + para(run(it.es, { sz: 9.5, color: MID }), { ind: 420, after: 0 }) + note(it); break;
-          case 'sentence': x += para(run('【' + it.cue + '】 ', { sz: 8.8, color: GRAY }) + run(it.answer, { sz: ZHK }) + tag(it), { keepNext: true, after: 0 }) + derived(it.answer) + es(it.es) +
+          case 'translate': x += para(n + run(it.answer, { sz: ZHK }) + tag(it), { keepNext: true, after: 0 }) + derived(it.answer) + es(S_X.mn(it)) + note(it); break;
+          case 'zh2es': x += para(n + run(it.zh, { sz: ZHK }) + tag(it), { keepNext: true, after: 0 }) + derived(it.zh) + para(run(S_X.ansTr(it), { sz: 9.5, color: MID }), { ind: 420, after: 0 }) + note(it); break;
+          case 'match': x += para(n + run(S_ALPHA[perm.indexOf(i)] || '?', { sz: ZHK, b: true, u: true }) + run('  ' + it.zh, { sz: ZHK }), { keepNext: true, after: 0 }) + derived(it.zh) + para(run(S_X.mn(it), { sz: 9.5, color: MID }), { ind: 420, after: 0 }) + note(it); break;
+          case 'sentence': x += para(run('【' + it.cue + '】 ', { sz: 8.8, color: GRAY }) + run(it.answer, { sz: ZHK }) + tag(it), { keepNext: true, after: 0 }) + derived(it.answer) + es(S_X.mn(it)) +
             para(run('示範答案。學生的句子不同也可以，只要用了指定的詞語、句子正確自然就給分。', { sz: 8.8, color: MID }), { ind: 420, after: 0 }) + note(it); break;
         }
         x += para('', sep);
@@ -208,33 +208,33 @@
     /* ---------- 整份文件 ---------- */
     const secs = S.sections.filter(s => s.enabled && s.items.some(i => i.enabled));
     const total = secs.reduce((a, s) => a + S_count(s), 0);
-    const title = m.title || m.grammar || '練習單';
-    const sub = m.subtitle || `Ejercicios de gramática china${S_levelEs() ? ' · ' + S_levelEs() : ''}`;
+    const title = (S_X.lang() === 'en' && m.titleEn) || m.title || m.grammar || '練習單';
+    const sub = m.subtitle || `${S_X.PL().sub}${S_X.levelTx() ? ' · ' + S_X.levelTx() : ''}`;
     let body = '';
     if (o.print !== 'key') {
       body += para(run(title, { sz: 22 }), { bb: 'thick', after: sp(1), line: 300 });
       body += para(run(sub, { sz: 9.5, color: GRAY }), { after: sp(3) });
       const wd = [Math.floor(CW / 3), Math.floor(CW / 3), CW - 2 * Math.floor(CW / 3)];
-      body += table(wd, [cell(wd[0], para(run('姓名 Nombre:', { sz: 9.5, color: MID }), { bb: true, after: 0 })) + cell(wd[1], para(run('日期 Fecha:', { sz: 9.5, color: MID }), { bb: true, after: 0 })) + cell(wd[2], para(run(`分數 Puntos:      / ${total}`, { sz: 9.5, color: MID }), { bb: true, after: 0 }))]);
+      body += table(wd, [cell(wd[0], para(run(S_X.PL().name, { sz: 9.5, color: MID }), { bb: true, after: 0 })) + cell(wd[1], para(run(S_X.PL().date, { sz: 9.5, color: MID }), { bb: true, after: 0 })) + cell(wd[2], para(run(`${S_X.PL().pts}      / ${total}`, { sz: 9.5, color: MID }), { bb: true, after: 0 }))]);
       const g = S.grammarBox;
       if (g.points.some(p => p.pattern)) {
         const w = [Math.round(CW * .34), Math.round(CW * .34), CW - 2 * Math.round(CW * .34)];
-        body += para(run('Recuerda · 先看一下', { sz: 10, b: true }), { keepNext: true, after: sp(1) });
-        body += table(w, g.points.filter(p => p.pattern).map(p => cell(w[0], para(run(p.pattern, { sz: 9.6, b: true }), { after: 0 })) + cell(w[1], para(run(p.es, { sz: 9.6 }), { after: 0 })) + cell(w[2], para(run(p.example, { sz: 11 }), { after: 0 }))), { border: true });
+        body += para(run(S_X.PL().recall, { sz: 10, b: true }), { keepNext: true, after: sp(1) });
+        body += table(w, g.points.filter(p => p.pattern).map(p => cell(w[0], para(run(p.pattern, { sz: 9.6, b: true }), { after: 0 })) + cell(w[1], para(run(S_X.gbTr(p), { sz: 9.6 }), { after: 0 })) + cell(w[2], para(run(p.example, { sz: 11 }), { after: 0 }))), { border: true });
         if (g.warning) body += para(run(g.warning, { sz: 9.2, color: MID }), { after: sp(3) });
       }
       if (o.vocab && S.vocab.some(v => v.zh)) {
         const vs = S.vocab.filter(v => v.zh);
         const w = o.vocabPy ? [Math.round(CW * .26), Math.round(CW * .3), CW - Math.round(CW * .26) - Math.round(CW * .3)] : [Math.round(CW * .4), CW - Math.round(CW * .4)];
-        body += para(run('Vocabulario · 生詞', { sz: 10, b: true }), { keepNext: true, after: sp(1) });
+        body += para(run(S_X.PL().voc, { sz: 10, b: true }), { keepNext: true, after: sp(1) });
         body += table(w, vs.map(v => cell(w[0], para(run(v.zh, { sz: 11 }), { after: 0 }), { bb: 'DDDDDD' }) +
           (o.vocabPy ? cell(w[1], para(run(S_vPy(v.zh), { sz: 9, color: GRAY }), { after: 0 }), { bb: 'DDDDDD' }) : '') +
-          cell(w[w.length - 1], para(run(v.es, { sz: 9.6 }), { after: 0 }), { bb: 'DDDDDD' })), { border: true });
+          cell(w[w.length - 1], para(run(S_X.vTr(v), { sz: 9.6 }), { after: 0 }), { bb: 'DDDDDD' })), { border: true });
       }
       secs.forEach((s, i) => { body += sectionStudent(s, i); });
     }
     if (o.print !== 'student') {
-      body += para(run('答案 · Respuestas', { sz: 19 }), { bb: 'thick', pbb: o.print === 'both', after: sp(1), line: 300 });
+      body += para(run(S_X.PL().ans, { sz: 19 }), { bb: 'thick', pbb: o.print === 'both', after: sp(1), line: 300 });
       body += para(run(title + ((o.pinyin || o.zhuyin) ? '　·　拼音、注音為電腦自動產生，使用前請老師再確認' : ''), { sz: 9.5, color: GRAY }), { after: sp(2) });
       secs.forEach((s, i) => { body += sectionKey(s, i); });
       if (S_isMulti()) { const st = S_pointStats(); body += para(run(`語法點分布（不含段落填空）：${st.names.map(n => `${n} ${st.per[n]} 題`).join('、')}；混合題 ${st.mixed} 題 / 共 ${st.total} 題。`, { sz: 9, color: MID }), { before: sp(3) }); }
@@ -257,10 +257,11 @@
 
   // index.html 裡的東西（用函式包起來，等到真的要匯出時才取用）
   const LETTERS = ['A', 'B', 'C', 'D'];
-  let S_NUM, S_DEF, S_CIRC, S_ALPHA, S_count, S_secEs, S_matchPerm, S_partsOf, S_answerSentence, S_isMulti, S_pointStats, S_levelEs, S_vPy;
+  let S_NUM, S_DEF, S_CIRC, S_ALPHA, S_count, S_secEs, S_matchPerm, S_partsOf, S_answerSentence, S_isMulti, S_pointStats, S_levelEs, S_vPy, S_X;
   function bind() {
     S_NUM = NUM; S_DEF = DEF; S_CIRC = CIRC; S_ALPHA = ALPHA; S_count = countPoints; S_secEs = sectionEs; S_matchPerm = matchPerm;
     S_partsOf = partsOf; S_answerSentence = answerSentence; S_isMulti = isMulti; S_pointStats = pointStats; S_levelEs = levelEs; S_vPy = vPy;
+    S_X = { PL: PLX, mn, ansTr, vocTr, gbTr, vTr, secName, levelTx, lang: PLANG };
   }
 
   window.exportWord = async function () {

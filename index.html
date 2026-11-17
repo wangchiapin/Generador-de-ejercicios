@@ -307,6 +307,7 @@ details.errdet,details.metadet{margin:10px 0}
     <div class="fld"><label>段落填空的主題</label><input id="fTheme" placeholder="例如：生活情境（點餐、問路、介紹家人）"></div>
     <div class="fld"><label>各題型要幾題（填 0 就不出這一種；段落填空的數字是空格數）</label></div>
     <div class="counts" id="counts"></div>
+    <div class="fld"><label class="chk"><input type="checkbox" id="fWantEn"> 也要英文翻譯（每題多一個英文欄位；之後列印可選英文版，發給英文學生看英文）</label></div>
     <div class="fld" style="max-width:260px"><label>生詞表要幾個（0 = 不要；印在練習單最上面，附拼音和西文）</label><input type="number" id="fVocabN" min="0" max="40"></div>
     <details class="errdet"><summary>西語學生常錯的地方（選填）</summary><div class="errbox" id="errBox"></div></details>
     <div class="row">
@@ -612,26 +613,28 @@ function zyLine(trad) {
    ===================================================================== */
 const TYPES = ['fill', 'cloze', 'order', 'choice', 'fix', 'translate', 'zh2es', 'match', 'sentence'];
 const DEF = {
-  fill:      { name: '選詞填空', es: 'Completa con la palabra correcta' },
-  cloze:     { name: '段落填空', es: 'Completa el texto con la palabra correcta' },
-  order:     { name: '排序',     es: 'Ordena las palabras para formar una oración (guíate por el significado)' },
-  choice:    { name: '選擇',     es: 'Elige la oración correcta' },
-  fix:       { name: '改錯',     es: 'Encierra el error en un círculo y escribe la oración correcta' },
-  translate: { name: '西翻中',   es: 'Traduce al chino' },
-  zh2es:     { name: '中翻西',   es: 'Traduce al español' },
-  match:     { name: '配對',     es: 'Une cada palabra con su significado' },
-  sentence:  { name: '造句',     es: 'Escribe una oración con la palabra o estructura indicada' }
+  fill:      { name: '選詞填空', es: 'Completa con la palabra correcta', en: 'Fill in the blank with the correct word' },
+  cloze:     { name: '段落填空', es: 'Completa el texto con la palabra correcta', en: 'Complete the text with the correct words' },
+  order:     { name: '排序',     es: 'Ordena las palabras para formar una oración (guíate por el significado)', en: 'Put the words in order to make a sentence (use the meaning as a guide)' },
+  choice:    { name: '選擇',     es: 'Elige la oración correcta', en: 'Choose the correct sentence' },
+  fix:       { name: '改錯',     es: 'Encierra el error en un círculo y escribe la oración correcta', en: 'Circle the mistake and write the correct sentence' },
+  translate: { name: '西翻中',   es: 'Traduce al chino', en: 'Translate into Chinese' },
+  zh2es:     { name: '中翻西',   es: 'Traduce al español', en: 'Translate into English' },
+  match:     { name: '配對',     es: 'Une cada palabra con su significado', en: 'Match each word with its meaning' },
+  sentence:  { name: '造句',     es: 'Escribe una oración con la palabra o estructura indicada', en: 'Write a sentence with the given word or structure' }
 };
+const LEVEL_EN = { '入門': 'Introductory level', '初級': 'Beginner level', '初中級': 'Pre-intermediate level', '中級': 'Intermediate level', '中高級': 'Upper-intermediate level' };
+const levelTx = () => (PLANG() === 'en' ? (LEVEL_EN[state.meta.level] || '') : levelEs());
 const LEVEL_ES = { '入門': 'Nivel introductorio', '初級': 'Nivel inicial', '初中級': 'Nivel pre-intermedio', '中級': 'Nivel intermedio', '中高級': 'Nivel intermedio-alto' };
 
 function newState() {
   return {
-    meta: { source: 'points', slideText: '', grammar: '', points: ['', '', ''], mix: 50, level: '初級', theme: '生活情境', title: '', subtitle: '', footer: '每天一分鐘 · Un minuto al día' },
+    meta: { source: 'points', slideText: '', grammar: '', points: ['', '', ''], mix: 50, level: '初級', theme: '生活情境', title: '', titleEn: '', wantEn: false, subtitle: '', footer: '每天一分鐘 · Un minuto al día' },
     counts: { fill: 6, cloze: 5, order: 5, choice: 5, fix: 5, translate: 5, zh2es: 0, match: 0, sentence: 0, vocab: 0 },
     grammarBox: { points: [], warning: '' },
     vocab: [],
     sections: [],
-    opts: { fontPct: 100, gapPct: 100, guides: true, keepSec: false, vocab: true, vocabPy: true, pinyin: true, zhuyin: false, simp: false, simpPhrases: false, script: 'trad', cueEs: true, keyEs: true, student: 'none', paper: 'A4', print: 'both', teacherNote: true }
+    opts: { fontPct: 100, gapPct: 100, guides: true, keepSec: false, vocab: true, vocabPy: true, pinyin: true, zhuyin: false, simp: false, simpPhrases: false, script: 'trad', cueEs: true, keyEs: true, student: 'none', printLang: 'es', paper: 'A4', print: 'both', teacherNote: true }
   };
 }
 let state = newState();
@@ -641,15 +644,15 @@ function save() { clearTimeout(saveTimer); saveTimer = setTimeout(() => lsSet(LS
 function blankItem(type) {
   const b = { id: uid(), enabled: true, note: '', points: [] };
   switch (type) {
-    case 'fill': return Object.assign(b, { zh: '', answer: '', es: '' });
-    case 'cloze': return Object.assign(b, { text: '', answers: [], es: '' });
-    case 'order': return Object.assign(b, { tokens: [], answer: '', es: '' });
-    case 'choice': return Object.assign(b, { es: '', options: ['', '', ''], answer: 0 });
+    case 'fill': return Object.assign(b, { zh: '', answer: '', es: '', en: '' });
+    case 'cloze': return Object.assign(b, { text: '', answers: [], es: '', en: '' });
+    case 'order': return Object.assign(b, { tokens: [], answer: '', es: '', en: '' });
+    case 'choice': return Object.assign(b, { es: '', en: '', options: ['', '', ''], answer: 0 });
     case 'fix': return Object.assign(b, { wrong: '', correct: '', tip: '' });
-    case 'translate': return Object.assign(b, { es: '', vocab: '', answer: '' });
-    case 'zh2es': return Object.assign(b, { zh: '', vocab: '', answer: '' });
-    case 'match': return Object.assign(b, { zh: '', es: '' });
-    case 'sentence': return Object.assign(b, { cue: '', es: '', answer: '' });
+    case 'translate': return Object.assign(b, { es: '', en: '', vocab: '', vocabEn: '', answer: '' });
+    case 'zh2es': return Object.assign(b, { zh: '', vocab: '', vocabEn: '', answer: '', answerEn: '' });
+    case 'match': return Object.assign(b, { zh: '', es: '', en: '' });
+    case 'sentence': return Object.assign(b, { cue: '', es: '', en: '', answer: '' });
   }
 }
 function blankSection(type) { return { id: uid(), type, enabled: true, bank: [], items: [] }; }
@@ -737,27 +740,27 @@ function normItem(type, it) {
   b.note = str(it.note);
   b.points = tagList(it.points || it.tags || it.point);
   switch (type) {
-    case 'fill': b.zh = str(it.zh || it.sentence || it.text); b.answer = str(it.answer); b.es = str(it.es); break;
+    case 'fill': b.zh = str(it.zh || it.sentence || it.text); b.answer = str(it.answer); b.es = str(it.es); b.en = str(it.en); break;
     case 'cloze': {
-      b.text = str(it.text); b.es = str(it.es);
+      b.text = str(it.text); b.es = str(it.es); b.en = str(it.en);
       let a = it.answers;
       if (a && !Array.isArray(a) && typeof a === 'object') a = Object.keys(a).sort((x, y) => x - y).map(k => a[k]);
       b.answers = (Array.isArray(a) ? a : []).map(str); break;
     }
     case 'order': {
-      b.answer = str(it.answer); b.es = str(it.es);
+      b.answer = str(it.answer); b.es = str(it.es); b.en = str(it.en);
       b.tokens = Array.isArray(it.tokens) ? it.tokens.map(str).filter(Boolean) : splitList(it.tokens); break;
     }
     case 'choice': {
-      b.es = str(it.es); b.options = (Array.isArray(it.options) ? it.options : []).map(str);
+      b.es = str(it.es); b.en = str(it.en); b.options = (Array.isArray(it.options) ? it.options : []).map(str);
       while (b.options.length < 3) b.options.push('');
       b.answer = answerIndex(it.answer, b.options.length); break;
     }
     case 'fix': b.wrong = str(it.wrong); b.correct = str(it.correct); b.tip = str(it.tip || it.explanation); break;
-    case 'translate': b.es = str(it.es); b.vocab = str(it.vocab); b.answer = str(it.answer); break;
-    case 'zh2es': b.zh = str(it.zh || it.sentence); b.vocab = str(it.vocab); b.answer = str(it.answer || it.es); break;
-    case 'match': b.zh = str(it.zh || it.word); b.es = str(it.es || it.answer); break;
-    case 'sentence': b.cue = str(it.cue || it.word || it.pattern); b.es = str(it.es); b.answer = str(it.answer || it.sample); break;
+    case 'translate': b.es = str(it.es); b.en = str(it.en); b.vocab = str(it.vocab); b.vocabEn = str(it.vocab_en || it.vocabEn); b.answer = str(it.answer); break;
+    case 'zh2es': b.zh = str(it.zh || it.sentence); b.vocab = str(it.vocab); b.vocabEn = str(it.vocab_en || it.vocabEn); b.answer = str(it.answer || it.es); b.answerEn = str(it.answer_en || it.answerEn); break;
+    case 'match': b.zh = str(it.zh || it.word); b.es = str(it.es || it.answer); b.en = str(it.en); break;
+    case 'sentence': b.cue = str(it.cue || it.word || it.pattern); b.es = str(it.es); b.en = str(it.en); b.answer = str(it.answer || it.sample); break;
   }
   stampEs(type, b);
   return b;
@@ -766,12 +769,12 @@ function normItem(type, it) {
 /* AI 回傳的 JSON → 區段。回傳 { sections, title, subtitle, grammarBox, notes[] } */
 function fromAI(j) {
   const notes = [];
-  const res = { sections: [], title: str(j.title), subtitle: str(j.subtitle), grammarBox: null, notes };
+  const res = { sections: [], title: str(j.title), titleEn: str(j.title_en || j.titleEn), subtitle: str(j.subtitle), grammarBox: null, notes };
   const gb = j.grammar_box || j.grammarBox;
   if (gb && Array.isArray(gb.points)) {
-    res.grammarBox = { points: gb.points.map(p => ({ pattern: str(p.pattern), es: str(p.es), example: str(p.example) })), warning: str(gb.warning) };
+    res.grammarBox = { points: gb.points.map(p => ({ pattern: str(p.pattern), es: str(p.es), en: str(p.en), example: str(p.example) })), warning: str(gb.warning) };
   }
-  if (Array.isArray(j.vocab)) res.vocab = j.vocab.map(v => ({ zh: str(v.zh || v.word), es: str(v.es) })).filter(v => v.zh).map(v => { v.esSrc = v.es ? v.zh : ''; return v; });
+  if (Array.isArray(j.vocab)) res.vocab = j.vocab.map(v => ({ zh: str(v.zh || v.word), es: str(v.es), en: str(v.en) })).filter(v => v.zh).map(v => { v.esSrc = v.es ? v.zh : ''; return v; });
   for (const type of TYPES) {
     const blk = j[type];
     if (!blk) continue;
@@ -967,6 +970,11 @@ function withPoints(sk, n) {
 function mixNeed(n) { return Math.ceil(n * (+state.meta.mix || 50) / 100); }
 function setErrorsFor(g, v) { const m = lsGet(LS.errors, {}); if (v.trim()) m[g] = v; else delete m[g]; lsSet(LS.errors, m); }
 
+/* 「也要英文」時，在骨架裡每個 es 後面加 en（zh2es 加 answer_en、translate 的 vocab 加 vocab_en） */
+function enSk(sk) {
+  if (!state.meta.wantEn) return sk;
+  return sk.replace(/"es": "…"/g, '"es": "…", "en": "…"').replace(/"vocab": "…"/g, '"vocab": "…", "vocab_en": "…"').replace(/("zh2es": \{"items": \[\{[^}]*)"answer": "…"/, '$1"answer": "…", "answer_en": "…"');
+}
 function buildPrompt() {
   const m = state.meta, c = state.counts;
   const errs = errsText() || '（沒有特別提供，請依你對西班牙語母語者學華語的了解，自己挑最常見的錯。）';
@@ -993,6 +1001,7 @@ function buildPrompt() {
   L.push('- 全部用繁體字和台灣的用詞（例如：捷運、公車、手機、計程車、影片、軟體、馬鈴薯）。');
   L.push('- 句子要自然、是台灣人真的會說的話；不要寫成教科書才有的怪句子。');
   L.push('- 每題的答案必須只有一個合理答案。如果有可能出現第二種合理答案，請用 es（西班牙文）把意思限定清楚。');
+  if (m.wantEn) L.push('- 英文翻譯（很重要）：所有有 es（西班牙文）的地方，都要多加一個 en 欄位，放自然的英文翻譯，意思必須和 es 一樣、一樣能把答案限定成唯一。另外：中翻西 zh2es 要加 answer_en（標準英文翻譯，answer 仍是西班牙文）；西翻中 translate 和 zh2es 的 vocab 要再加 vocab_en（關鍵詞，中文＋英文，用 · 隔開）；grammar_box 每條句型加 en；最外層 vocab 每個詞加 en；最外層加 title_en（「語法點 · English title」）。');
   L.push('- 同一份練習單裡，句子的主題和用字不要重複。');
   L.push('');
   L.push('【西班牙語學生常犯的錯（設計干擾項、改錯題時優先使用）】');
@@ -1020,10 +1029,10 @@ function buildPrompt() {
   L.push('');
   L.push('【輸出格式】只輸出下面這個結構的 JSON（欄位名稱不要改，note 可以留空字串）：');
   L.push('{');
-  L.push('  "title": "語法點 · Título en español",');
-  L.push('  "grammar_box": {"points": [{"pattern": "…", "es": "…", "example": "…"}], "warning": "…"},');
-  if (slides && vn > 0) L.push('  "vocab": [{"zh": "…", "es": "…"}],');
-  L.push(types.map(t => '  ' + withPoints(TYPE_SKELETON[t])).join(',\n'));
+  L.push(m.wantEn ? '  "title": "語法點 · Título en español", "title_en": "語法點 · English title",' : '  "title": "語法點 · Título en español",');
+  L.push(m.wantEn ? '  "grammar_box": {"points": [{"pattern": "…", "es": "…", "en": "…", "example": "…"}], "warning": "…"},' : '  "grammar_box": {"points": [{"pattern": "…", "es": "…", "example": "…"}], "warning": "…"},');
+  if (slides && vn > 0) L.push(m.wantEn ? '  "vocab": [{"zh": "…", "es": "…", "en": "…"}],' : '  "vocab": [{"zh": "…", "es": "…"}],');
+  L.push(types.map(t => '  ' + enSk(withPoints(TYPE_SKELETON[t]))).join(',\n'));
   L.push('}');
   return L.join('\n');
 }
@@ -1051,7 +1060,7 @@ function buildSwapPrompt(sec, it) {
     order: '{"tokens": ["…", "…", "…"], "answer": "…。", "es": "…"}', choice: '{"es": "…", "options": ["…", "…", "…"], "answer": "B"}',
     fix: '{"wrong": "…", "correct": "…", "tip": "…"}', translate: '{"es": "…", "vocab": "…", "answer": "…"}',
     zh2es: '{"zh": "…", "vocab": "…", "answer": "…"}', match: '{"zh": "…", "es": "…"}', sentence: '{"cue": "…", "es": "…", "answer": "…。"}' };
-  L.push(isMulti() ? sk[sec.type].replace('{', `{"points": ["…"], `) : sk[sec.type]);
+  L.push(enSk(isMulti() ? sk[sec.type].replace('{', `{"points": ["…"], `) : sk[sec.type]));
   return L.join('\n');
 }
 function itemSummary(type, it) {
@@ -1168,6 +1177,10 @@ function validate() {
         }
       }
       if (isStale(sec.type, it)) add(it.id, '中文改過了，西文可能要重新翻（可按上方「更新翻譯」）。');
+      if (state.meta.wantEn) {
+        const needEn = { fill: it.es && !it.en, cloze: it.es && !it.en, order: it.es && !it.en, choice: it.es && !it.en, translate: (it.es && !it.en) || (it.vocab && !it.vocabEn), zh2es: !it.answerEn || (it.vocab && !it.vocabEn), match: it.es && !it.en, sentence: it.es && !it.en }[sec.type];
+        if (needEn) add(it.id, '有勾「也要英文」，但這題還缺英文。');
+      }
       // 簡體字、大陸用語
       const texts = fieldTexts(sec.type, it).join('');
       const simp = suspectSimplified(texts);
@@ -1251,6 +1264,7 @@ function renderStep1() {
   $('#slideFld').hidden = state.meta.source !== 'slides';
   $('#fSlideText').value = state.meta.slideText || '';
   $('#fVocabN').value = state.counts.vocab || 0;
+  $('#fWantEn').checked = !!state.meta.wantEn;
   $('#ptLabel').textContent = state.meta.source === 'slides' ? '語法點（選填：不填就由 AI 從簡報裡挑；想只考某幾個就填。填 2～3 個會出「綜合練習」）' : '語法點（填 1 個是單一語法點；填 2～3 個就會出「綜合練習」，題目會混合使用）';
   renderErrBox();
   $('#counts').innerHTML = TYPES.map(t => `<div class="fld"><label>${DEF[t].name}</label><input type="number" min="0" max="20" data-count="${t}" value="${state.counts[t]}"></div>`).join('');
@@ -1271,6 +1285,7 @@ $('#fSlideText').addEventListener('input', e => { state.meta.slideText = e.targe
 $('#fVocabN').addEventListener('input', e => { state.counts.vocab = Math.max(0, Math.min(40, parseInt(e.target.value, 10) || 0)); save(); updatePromptView(); });
 $('#fMix').addEventListener('change', e => { state.meta.mix = +e.target.value; save(); updatePromptView(); });
 $('#fLevel').addEventListener('change', e => { state.meta.level = e.target.value; save(); updatePromptView(); });
+$('#fWantEn').addEventListener('change', e => { state.meta.wantEn = e.target.checked; save(); updatePromptView(); if (typeof renderCheck === 'function' && $('#step2').classList.contains('on')) renderCheck(); });
 $('#fTheme').addEventListener('input', e => { state.meta.theme = e.target.value.trim(); save(); updatePromptView(); });
 $('#errBox').addEventListener('input', e => { if (e.target.dataset.ep === undefined) return; setErrorsFor(e.target.dataset.ep, e.target.value); updatePromptView(); });
 $('#counts').addEventListener('input', e => {
@@ -1305,6 +1320,7 @@ function applyImport(r, replace) {
   for (const s of r.sections) { const ex = secOf(s.type); if (ex && !replace) { ex.items.push(...s.items); if (s.bank.length) ex.bank = s.bank; } else state.sections.push(s); }
   sortSections();
   if (r.title) state.meta.title = r.title;
+  if (r.titleEn) state.meta.titleEn = r.titleEn;
   if (r.subtitle) state.meta.subtitle = r.subtitle;
   if (r.grammarBox) state.grammarBox = r.grammarBox;
   if (r.vocab && r.vocab.length) state.vocab = r.vocab;
@@ -1330,6 +1346,7 @@ $('#btnImport').addEventListener('click', () => {
    ===================================================================== */
 const inp = (f, v, ph = '') => `<input data-f="${f}" value="${esc(v)}" placeholder="${esc(ph)}">`;
 const ta = (f, v, rows = 2, ph = '') => `<textarea data-f="${f}" rows="${rows}" placeholder="${esc(ph)}">${esc(v)}</textarea>`;
+const WE = () => !!state.meta.wantEn;
 const fld = (label, html, cls = '') => `<div class="fld ${cls}"><label>${label}</label>${html}</div>`;
 
 function clozeAnswersHTML(it) {
@@ -1340,17 +1357,17 @@ function clozeAnswersHTML(it) {
 }
 function cardBody(type, it) {
   switch (type) {
-    case 'fill': return fld('題目（空格用 __ 兩個底線）', inp('zh', it.zh)) + `<div class="grid2">${fld('答案', inp('answer', it.answer))}${fld('西文提示（讓答案唯一）', inp('es', it.es))}</div>`;
-    case 'cloze': return fld('短文（空格用 {1} {2} … 標出）', ta('text', it.text, 5)) + `<div class="clozeAns">${clozeAnswersHTML(it)}</div>` + fld('整段西文翻譯', ta('es', it.es, 3));
+    case 'fill': return fld('題目（空格用 __ 兩個底線）', inp('zh', it.zh)) + `<div class="grid2">${fld('答案', inp('answer', it.answer))}${fld('西文提示（讓答案唯一）', inp('es', it.es))}</div>` + (WE() ? fld('英文提示 English hint', inp('en', it.en)) : '');
+    case 'cloze': return fld('短文（空格用 {1} {2} … 標出）', ta('text', it.text, 5)) + `<div class="clozeAns">${clozeAnswersHTML(it)}</div>` + fld('整段西文翻譯', ta('es', it.es, 3)) + (WE() ? fld('整段英文翻譯 English', ta('en', it.en, 3)) : '');
     case 'order': return fld('詞塊（用 / 分開，順序是打散後的）', inp('tokens', it.tokens.join(' / '))) + fld('正確句子', inp('answer', it.answer)) +
-      `<div class="row" style="margin:4px 0"><button class="tiny" data-act="segment">由正確句子自動切詞並打散</button><button class="tiny" data-act="shuffle">重新打散</button></div>` + fld('西文提示', inp('es', it.es));
-    case 'choice': return fld('西文意思', inp('es', it.es)) + it.options.map((o, i) =>
+      `<div class="row" style="margin:4px 0"><button class="tiny" data-act="segment">由正確句子自動切詞並打散</button><button class="tiny" data-act="shuffle">重新打散</button></div>` + fld('西文提示', inp('es', it.es)) + (WE() ? fld('英文提示 English hint', inp('en', it.en)) : '');
+    case 'choice': return fld('西文意思', inp('es', it.es)) + (WE() ? fld('英文意思 English', inp('en', it.en)) : '') + it.options.map((o, i) =>
       `<div class="optrow"><label><input type="radio" name="ans-${it.id}" data-f="answer" value="${i}" ${it.answer === i ? 'checked' : ''}> ${LETTER[i]}　正確</label>${inp('opt' + i, o)}</div>`).join('');
     case 'fix': return fld('錯誤句子', inp('wrong', it.wrong)) + fld('正確句子', inp('correct', it.correct)) + fld('說明（白話）', inp('tip', it.tip));
-    case 'translate': return fld('西班牙文', inp('es', it.es)) + `<div class="grid2">${fld('提示詞', inp('vocab', it.vocab))}${fld('標準答案', inp('answer', it.answer))}</div>`;
-    case 'zh2es': return fld('中文句子', inp('zh', it.zh)) + `<div class="grid2">${fld('提示詞', inp('vocab', it.vocab))}${fld('標準答案（西班牙文）', inp('answer', it.answer))}</div>`;
-    case 'match': return `<div class="grid2">${fld('中文詞語', inp('zh', it.zh))}${fld('西班牙文意思', inp('es', it.es))}</div>`;
-    case 'sentence': return `<div class="grid2">${fld('要用的詞語或句型', inp('cue', it.cue))}${fld('西文情境（說明要造什麼句子）', inp('es', it.es))}</div>` + fld('示範答案', inp('answer', it.answer));
+    case 'translate': return fld('西班牙文', inp('es', it.es)) + (WE() ? fld('英文 English', inp('en', it.en)) : '') + `<div class="grid2">${fld('提示詞', inp('vocab', it.vocab))}${fld('標準答案', inp('answer', it.answer))}</div>` + (WE() ? fld('提示詞（英文）', inp('vocabEn', it.vocabEn)) : '');
+    case 'zh2es': return fld('中文句子', inp('zh', it.zh)) + `<div class="grid2">${fld('提示詞', inp('vocab', it.vocab))}${fld('標準答案（西班牙文）', inp('answer', it.answer))}</div>` + (WE() ? `<div class="grid2">${fld('提示詞（英文）', inp('vocabEn', it.vocabEn))}${fld('標準答案（英文）', inp('answerEn', it.answerEn))}</div>` : '');
+    case 'match': return `<div class="grid2">${fld('中文詞語', inp('zh', it.zh))}${fld('西班牙文意思', inp('es', it.es))}</div>` + (WE() ? fld('英文意思 English', inp('en', it.en)) : '');
+    case 'sentence': return `<div class="grid2">${fld('要用的詞語或句型', inp('cue', it.cue))}${fld('西文情境（說明要造什麼句子）', inp('es', it.es))}</div>` + (WE() ? fld('英文情境 English', inp('en', it.en)) : '') + fld('示範答案', inp('answer', it.answer));
   }
 }
 function answerSentence(type, it) {
@@ -1407,13 +1424,13 @@ function secHTML(sec) {
 function gbHTML() {
   const g = state.grammarBox;
   return `<details ${g.points.length ? '' : 'open'}><summary>語法說明框（印在練習單最上面）</summary>
-    ${g.points.map((p, i) => `<div class="gbrow"><input data-m="grammarBox.points.${i}.pattern" value="${esc(p.pattern)}" placeholder="句型"><input data-m="grammarBox.points.${i}.es" value="${esc(p.es)}" placeholder="西文意思"><input data-m="grammarBox.points.${i}.example" value="${esc(p.example)}" placeholder="例句"><button class="tiny" data-act="delGb" data-i="${i}">刪</button></div>`).join('')}
+    ${g.points.map((p, i) => `<div class="gbrow"><input data-m="grammarBox.points.${i}.pattern" value="${esc(p.pattern)}" placeholder="句型"><input data-m="grammarBox.points.${i}.es" value="${esc(p.es)}" placeholder="西文意思">${WE() ? `<input data-m="grammarBox.points.${i}.en" value="${esc(p.en || '')}" placeholder="English">` : ''}<input data-m="grammarBox.points.${i}.example" value="${esc(p.example)}" placeholder="例句"><button class="tiny" data-act="delGb" data-i="${i}">刪</button></div>`).join('')}
     <div class="row"><button class="tiny" data-act="addGb">＋ 新增一條句型</button></div>
     ${fld('常見錯誤提醒（一句話）', `<input data-m="grammarBox.warning" value="${esc(g.warning)}">`)}
   </details>`;
 }
 function vocabRowHTML(v, i) {
-  return `<div class="gbrow" data-vi="${i}"><input data-v="zh" value="${esc(v.zh)}" placeholder="詞語（繁體）"><input data-v="es" value="${esc(v.es)}" placeholder="西文意思"><span class="vpy" style="font-size:.84rem;color:var(--sub)">${esc(v.zh ? vPy(v.zh) : '')}${vStale(v) ? ' <b style="color:var(--warn)">西文待更新</b>' : ''}</span><button class="tiny" data-act="delVocab" data-i="${i}">刪</button></div>`;
+  return `<div class="gbrow" data-vi="${i}"><input data-v="zh" value="${esc(v.zh)}" placeholder="詞語（繁體）"><input data-v="es" value="${esc(v.es)}" placeholder="西文意思">${WE() ? `<input data-v="en" value="${esc(v.en || '')}" placeholder="English">` : ''}<span class="vpy" style="font-size:.84rem;color:var(--sub)">${esc(v.zh ? vPy(v.zh) : '')}${vStale(v) ? ' <b style="color:var(--warn)">西文待更新</b>' : ''}</span><button class="tiny" data-act="delVocab" data-i="${i}">刪</button></div>`;
 }
 function vPy(z) { return pyLine(z).replace(/^./, c => c.toLowerCase()); }
 function vStale(v) { return !!(v.es && v.esSrc && v.esSrc !== v.zh); }
@@ -1516,7 +1533,7 @@ step2.addEventListener('input', e => {
   else if (f === 'text') {
     it.text = t.value;
     $('.clozeAns', card).innerHTML = clozeAnswersHTML(it);
-  } else it[f] = (f === 'es' || f === 'note' || f === 'tip' || f === 'vocab') ? t.value : t.value.trim();
+  } else it[f] = (f === 'es' || f === 'en' || f === 'note' || f === 'tip' || f === 'vocab' || f === 'vocabEn') ? t.value : t.value.trim();
   if (f === esKey(sec.type)) stampEs(sec.type, it);
   save(); refreshCard(card);
 });
@@ -1538,7 +1555,7 @@ step2.addEventListener('click', async e => {
   if (act === 'goStep3') return goStep(3);
   if (act === 'example') { applyImport(fromAI(EXAMPLE), true); return renderCheck(); }
   if (act === 'addSection') { state.sections.push(blankSection(b.dataset.t)); sortSections(); save(); return renderCheck(); }
-  if (act === 'addVocab') { state.vocab.push({ zh: '', es: '', esSrc: '' }); save(); $('#vocabInner').innerHTML = vocabHTML(); $('#vocabBox').open = true; const ins = $$('#vocabInner [data-v="zh"]'); if (ins.length) ins[ins.length - 1].focus(); return; }
+  if (act === 'addVocab') { state.vocab.push({ zh: '', es: '', en: '', esSrc: '' }); save(); $('#vocabInner').innerHTML = vocabHTML(); $('#vocabBox').open = true; const ins = $$('#vocabInner [data-v="zh"]'); if (ins.length) ins[ins.length - 1].focus(); return; }
   if (act === 'delVocab') { state.vocab.splice(+b.dataset.i, 1); save(); $('#vocabInner').innerHTML = vocabHTML(); return refreshIssues(); }
   if (act === 'staleOpen') { $('#stalePanel').hidden = false; $('#staleMsg').innerHTML = ''; return; }
   if (act === 'staleClose') { $('#stalePanel').hidden = true; return; }
@@ -1561,7 +1578,7 @@ step2.addEventListener('click', async e => {
     } catch (err) { msg.innerHTML = '<div class="bad">' + esc(err.message) + '</div>'; }
     return;
   }
-  if (act === 'addGb') { state.grammarBox.points.push({ pattern: '', es: '', example: '' }); save(); return $('#gbBox').innerHTML = gbHTML(), $('#gbBox details').open = true; }
+  if (act === 'addGb') { state.grammarBox.points.push({ pattern: '', es: '', en: '', example: '' }); save(); return $('#gbBox').innerHTML = gbHTML(), $('#gbBox details').open = true; }
   if (act === 'delGb') { state.grammarBox.points.splice(+b.dataset.i, 1); save(); return $('#gbBox').innerHTML = gbHTML(), $('#gbBox details').open = true; }
   if (act === 'toggleSec') { const sec = findSec(b.closest('.sec').dataset.sid); sec.enabled = b.checked; save(); return refreshIssues(); }
   if (act === 'add') {
@@ -1638,6 +1655,8 @@ function renderOut() {
     <div class="optgrp"><h3>紙張與列印</h3><div class="opts">
       <label>練習頁加注音／拼音
         <select data-m="opts.student"><option value="none" ${o.student === 'none' ? 'selected' : ''}>不加</option><option value="pinyin" ${o.student === 'pinyin' ? 'selected' : ''}>拼音</option><option value="zhuyin" ${o.student === 'zhuyin' ? 'selected' : ''}>注音</option></select></label>
+      <label>列印語言（提示、標題、標籤）
+        <select data-m="opts.printLang"><option value="es" ${o.printLang !== 'en' ? 'selected' : ''}>西班牙文 Español</option><option value="en" ${o.printLang === 'en' ? 'selected' : ''}>英文 English</option></select></label>
       <label>練習單文字
         <select data-m="opts.script"><option value="trad" ${o.script !== 'simp' ? 'selected' : ''}>繁體</option><option value="simp" ${o.script === 'simp' ? 'selected' : ''}>簡體（台灣用字）</option></select></label>
       <label>紙張
@@ -1785,79 +1804,94 @@ function matchPerm(items) {
   return idx;
 }
 function levelEs() { return LEVEL_ES[state.meta.level] || ''; }
+/* ---- 列印語言：es / en（沒有英文的欄位退回西文，不會印空白） ---- */
+const PLANG = () => (state.opts.printLang === 'en' ? 'en' : 'es');
+const PLBL = {
+  es: { resp: 'Respuesta', once: 'cada palabra se usa una vez', rep: 'se pueden repetir', spare: 'sobran', recall: 'Recuerda · 先看一下', voc: 'Vocabulario · 生詞', ans: '答案 · Respuestas', name: '姓名 Nombre:', date: '日期 Fecha:', pts: '分數 Puntos:', sub: 'Ejercicios de gramática china' },
+  en: { resp: 'Answer', once: 'use each word once', rep: 'words can be repeated', spare: 'extra words:', recall: 'Remember · 先看一下', voc: 'Vocabulary · 生詞', ans: '答案 · Answers', name: '姓名 Name:', date: '日期 Date:', pts: '分數 Score:', sub: 'Chinese grammar exercises' }
+};
+const PLX = () => PLBL[PLANG()];
+const mn = it => (PLANG() === 'en' ? (it.en || it.es) : it.es) || '';
+const ansTr = it => (PLANG() === 'en' ? (it.answerEn || it.answer) : it.answer) || '';
+const vocTr = it => (PLANG() === 'en' ? (it.vocabEn || it.vocab) : it.vocab) || '';
+const gbTr = p => (PLANG() === 'en' ? (p.en || p.es) : p.es) || '';
+const vTr = v => (PLANG() === 'en' ? (v.en || v.es) : v.es) || '';
+const defTx = t => (PLANG() === 'en' ? DEF[t].en : DEF[t].es);
+const secName = t => (PLANG() === 'en' && t === 'zh2es') ? '中翻英' : (PLANG() === 'en' && t === 'translate') ? '英翻中' : DEF[t].name;
 function sectionStudent(sec, no) {
   const o = state.opts, mode = o.student, items = sec.items.filter(i => i.enabled);
   const pts = countPoints(sec);
-  let h = `<div class="s-sec${sec.pageBreak ? ' pb' : ''}${o.keepSec ? ' keep' : ''}" data-sid="${sec.id}"><div class="s-sh"><div class="t">${NUM[no]}、${DEF[sec.type].name}<small>${esc(sectionEs(sec))}</small></div><div class="p">${pts} pts</div></div>`;
+  let h = `<div class="s-sec${sec.pageBreak ? ' pb' : ''}${o.keepSec ? ' keep' : ''}" data-sid="${sec.id}"><div class="s-sh"><div class="t">${NUM[no]}、${secName(sec.type)}<small>${esc(sectionEs(sec))}</small></div><div class="p">${pts} pts</div></div>`;
   const uniqAns = a => new Set(a).size === a.length;
   if (sec.type === 'fill' && sec.bank.length) {
     const rep = !uniqAns(items.map(i => i.answer));
-    h += `<div class="s-bank">${sec.bank.map(esc).join('　')}<small>(${rep ? 'se pueden repetir' : 'cada palabra se usa una vez'})</small></div>`;
+    h += `<div class="s-bank">${sec.bank.map(esc).join('　')}<small>(${rep ? PLX().rep : PLX().once})</small></div>`;
   }
   if (sec.type === 'cloze' && sec.bank.length) h += `<div class="s-bank">${sec.bank.map(esc).join('　')}</div>`;
   if (sec.type === 'match') {
     const perm = matchPerm(items);
-    h += `<table class="s-match">` + items.map((it, r) => `<tr><td class="ml">${r + 1}</td><td class="mz">${plain(it.zh, mode)}</td><td class="mb">${esc('______')}</td><td class="mr"><b>${ALPHA[r] || r + 1}</b>${esc(items[perm[r]].es)}</td></tr>`).join('') + `</table>`;
+    h += `<table class="s-match">` + items.map((it, r) => `<tr><td class="ml">${r + 1}</td><td class="mz">${plain(it.zh, mode)}</td><td class="mb">${esc('______')}</td><td class="mr"><b>${ALPHA[r] || r + 1}</b>${esc(mn(items[perm[r]]))}</td></tr>`).join('') + `</table>`;
     return h + '</div>';
   }
   items.forEach((it, i) => {
     const n = `<span class="s-no">${i + 1}</span>`;
     switch (sec.type) {
       case 'fill':
-        h += `<div class="s-item">${n}<span class="s-zh">${renderParts(partsOf('fill', it), mode, () => '<span class="s-blank"></span>')}</span>${o.cueEs && it.es ? `<div class="s-es">${esc(it.es)}</div>` : ''}</div>`; break;
+        h += `<div class="s-item">${n}<span class="s-zh">${renderParts(partsOf('fill', it), mode, () => '<span class="s-blank"></span>')}</span>${o.cueEs && mn(it) ? `<div class="s-es">${esc(mn(it))}</div>` : ''}</div>`; break;
       case 'cloze':
         h += `<div class="s-item"><div class="s-para">${renderParts(partsOf('cloze', it), mode, p => `<span class="s-pblank">${CIRC[p.n - 1] || p.n}</span>`)}</div></div>`; break;
       case 'order':
-        h += `<div class="s-item">${n}${it.tokens.map(t => `<span class="s-tok">${plain(t, mode)}</span>`).join('')}${o.cueEs && it.es ? `<div class="s-es">${esc(it.es)}</div>` : ''}<div class="s-line"></div></div>`; break;
+        h += `<div class="s-item">${n}${it.tokens.map(t => `<span class="s-tok">${plain(t, mode)}</span>`).join('')}${o.cueEs && mn(it) ? `<div class="s-es">${esc(mn(it))}</div>` : ''}<div class="s-line"></div></div>`; break;
       case 'choice':
-        h += `<div class="s-item">${n}${o.cueEs && it.es ? `<span class="s-es" style="margin:0">${esc(it.es)}</span>` : ''}<span class="s-resp">Respuesta: ______</span>
+        h += `<div class="s-item">${n}${o.cueEs && mn(it) ? `<span class="s-es" style="margin:0">${esc(mn(it))}</span>` : ''}<span class="s-resp">${PLX().resp}: ______</span>
           <div class="s-opts">${it.options.filter(Boolean).map((t, k) => `<span class="s-opt"><b>${LETTER[k]}</b>${plain(t, mode)}</span>`).join('')}</div></div>`; break;
       case 'fix':
         h += `<div class="s-item">${n}<span class="s-zh">${plain(it.wrong, mode)}</span><div class="s-line"></div></div>`; break;
       case 'translate':
-        h += `<div class="s-item">${n}<span style="font-size:calc(11pt*var(--k,1))">${esc(it.es)}</span>${it.vocab ? `<div class="s-vocab">${esc(it.vocab)}</div>` : ''}<div class="s-line"></div></div>`; break;
+        h += `<div class="s-item">${n}<span style="font-size:calc(11pt*var(--k,1))">${esc(mn(it))}</span>${vocTr(it) ? `<div class="s-vocab">${esc(vocTr(it))}</div>` : ''}<div class="s-line"></div></div>`; break;
       case 'zh2es':
-        h += `<div class="s-item">${n}<span class="s-zh">${plain(it.zh, mode)}</span>${it.vocab ? `<div class="s-vocab">${esc(it.vocab)}</div>` : ''}<div class="s-line"></div></div>`; break;
+        h += `<div class="s-item">${n}<span class="s-zh">${plain(it.zh, mode)}</span>${vocTr(it) ? `<div class="s-vocab">${esc(vocTr(it))}</div>` : ''}<div class="s-line"></div></div>`; break;
       case 'sentence':
-        h += `<div class="s-item">${n}<span class="s-zh">${plain(it.cue, mode)}</span>${it.es ? `<div class="s-es">${esc(it.es)}</div>` : ''}<div class="s-line"></div><div class="s-line"></div></div>`; break;
+        h += `<div class="s-item">${n}<span class="s-zh">${plain(it.cue, mode)}</span>${mn(it) ? `<div class="s-es">${esc(mn(it))}</div>` : ''}<div class="s-line"></div><div class="s-line"></div></div>`; break;
     }
   });
   return h + '</div>';
 }
 function sectionEs(sec) {
-  if (sec.type !== 'cloze') return DEF[sec.type].es;
+  if (sec.type !== 'cloze') return defTx(sec.type);
   const ans = sec.items.filter(i => i.enabled).flatMap(i => i.answers);
   const spare = sec.bank.length - new Set(ans).size;
-  if (new Set(ans).size !== ans.length) return DEF.cloze.es + ' (se pueden repetir)';
-  return DEF.cloze.es + ` (cada palabra se usa una vez${spare > 0 ? '; sobran ' + spare : ''})`;
+  if (new Set(ans).size !== ans.length) return defTx('cloze') + ` (${PLX().rep})`;
+  return defTx('cloze') + ` (${PLX().once}${spare > 0 ? '; ' + PLX().spare + ' ' + spare : ''})`;
 }
 const tagHTML = it => (isMulti() && it.points && it.points.length) ? `<span class="s-tag">${it.points.map(esc).join('＋')}</span>` : '';
 function sectionKey(sec, no) {
   const o = state.opts, items = sec.items.filter(i => i.enabled);
-  let h = `<div class="s-kh">${NUM[no]}、${DEF[sec.type].name}</div>`;
+  let h = `<div class="s-kh">${NUM[no]}、${secName(sec.type)}</div>`;
   const note = it => (o.teacherNote && it.note) ? `<div class="s-note">${esc(it.note)}</div>` : '';
   const es = s => (o.keyEs && s) ? `<div class="s-d">${esc(s)}</div>` : '';
+  const T = it => mn(it);
   const perm = sec.type === 'match' ? matchPerm(items) : null;
   items.forEach((it, i) => {
     const n = `<span class="s-no">${i + 1}</span>`;
     switch (sec.type) {
       case 'fill': {
         const parts = partsOf('fill', it);
-        h += `<div class="s-key">${n}<span class="s-zh">${renderParts(parts, 'none', p => `<span class="s-ans">${esc(p.a)}</span>`)}</span>${tagHTML(it)}${derivedLines(answerSentence('fill', it))}${es(it.es)}${note(it)}</div>`; break;
+        h += `<div class="s-key">${n}<span class="s-zh">${renderParts(parts, 'none', p => `<span class="s-ans">${esc(p.a)}</span>`)}</span>${tagHTML(it)}${derivedLines(answerSentence('fill', it))}${es(mn(it))}${note(it)}</div>`; break;
       }
       case 'cloze': {
         const filled = answerSentence('cloze', it);
         h += `<div class="s-key"><div class="s-zh" style="font-weight:500">${it.answers.map((a, k) => `${CIRC[k] || k + 1} ${esc(a)}`).join('　')}${tagHTML(it)}</div>
           <div class="s-para" style="font-size:calc(12pt*var(--k,1));line-height:1.9;margin-top:1.5mm">${renderParts(partsOf('cloze', it), 'none', p => `<span class="s-ans">${esc(p.a)}</span>`)}</div>
-          <div style="margin-top:1.5mm">${derivedLines(filled).replace(/s-d"/g, 's-d" style="margin-left:0"')}</div>${o.keyEs && it.es ? `<div class="s-d" style="margin-left:0">${esc(it.es)}</div>` : ''}${note(it).replace('class="s-note"', 'class="s-note" style="margin-left:0"')}</div>`; break;
+          <div style="margin-top:1.5mm">${derivedLines(filled).replace(/s-d"/g, 's-d" style="margin-left:0"')}</div>${o.keyEs && mn(it) ? `<div class="s-d" style="margin-left:0">${esc(mn(it))}</div>` : ''}${note(it).replace('class="s-note"', 'class="s-note" style="margin-left:0"')}</div>`; break;
       }
-      case 'order': h += `<div class="s-key">${n}<span class="s-zh">${esc(it.answer)}</span>${tagHTML(it)}${derivedLines(it.answer)}${es(it.es)}${note(it)}</div>`; break;
-      case 'choice': h += `<div class="s-key">${n}<span class="s-zh"><span class="s-ans">${LETTER[it.answer] || '?'}</span>${esc(it.options[it.answer] || '')}</span>${tagHTML(it)}${derivedLines(it.options[it.answer] || '')}${es(it.es)}${note(it)}</div>`; break;
+      case 'order': h += `<div class="s-key">${n}<span class="s-zh">${esc(it.answer)}</span>${tagHTML(it)}${derivedLines(it.answer)}${es(mn(it))}${note(it)}</div>`; break;
+      case 'choice': h += `<div class="s-key">${n}<span class="s-zh"><span class="s-ans">${LETTER[it.answer] || '?'}</span>${esc(it.options[it.answer] || '')}</span>${tagHTML(it)}${derivedLines(it.options[it.answer] || '')}${es(mn(it))}${note(it)}</div>`; break;
       case 'fix': h += `<div class="s-key">${n}<span class="s-zh"><span class="s-wrong">${esc(it.wrong)}</span> → <span class="s-ans">${esc(it.correct)}</span></span>${tagHTML(it)}${derivedLines(it.correct)}${it.tip ? `<div class="s-note">${esc(it.tip)}</div>` : ''}${note(it)}</div>`; break;
-      case 'translate': h += `<div class="s-key">${n}<span class="s-zh">${esc(it.answer)}</span>${tagHTML(it)}${derivedLines(it.answer)}${es(it.es)}${note(it)}</div>`; break;
-      case 'zh2es': h += `<div class="s-key">${n}<span class="s-zh">${esc(it.zh)}</span>${tagHTML(it)}${derivedLines(it.zh)}<div class="s-d">${esc(it.answer)}</div>${note(it)}</div>`; break;
-      case 'match': h += `<div class="s-key">${n}<span class="s-ans">${ALPHA[perm.indexOf(i)] || '?'}</span><span class="s-zh">${esc(it.zh)}</span>${derivedLines(it.zh)}<div class="s-d">${esc(it.es)}</div>${note(it)}</div>`; break;
-      case 'sentence': h += `<div class="s-key">${n}<span class="s-d" style="margin:0 2mm 0 0">【${esc(it.cue)}】</span><span class="s-zh">${esc(it.answer)}</span>${tagHTML(it)}${derivedLines(it.answer)}${es(it.es)}<div class="s-note">示範答案。學生的句子不同也可以，只要用了指定的詞語、句子正確自然就給分。</div>${note(it)}</div>`; break;
+      case 'translate': h += `<div class="s-key">${n}<span class="s-zh">${esc(it.answer)}</span>${tagHTML(it)}${derivedLines(it.answer)}${es(mn(it))}${note(it)}</div>`; break;
+      case 'zh2es': h += `<div class="s-key">${n}<span class="s-zh">${esc(it.zh)}</span>${tagHTML(it)}${derivedLines(it.zh)}<div class="s-d">${esc(ansTr(it))}</div>${note(it)}</div>`; break;
+      case 'match': h += `<div class="s-key">${n}<span class="s-ans">${ALPHA[perm.indexOf(i)] || '?'}</span><span class="s-zh">${esc(it.zh)}</span>${derivedLines(it.zh)}<div class="s-d">${esc(mn(it))}</div>${note(it)}</div>`; break;
+      case 'sentence': h += `<div class="s-key">${n}<span class="s-d" style="margin:0 2mm 0 0">【${esc(it.cue)}】</span><span class="s-zh">${esc(it.answer)}</span>${tagHTML(it)}${derivedLines(it.answer)}${es(mn(it))}<div class="s-note">示範答案。學生的句子不同也可以，只要用了指定的詞語、句子正確自然就給分。</div>${note(it)}</div>`; break;
     }
   });
   return h;
@@ -1868,23 +1902,23 @@ function buildSheetHTMLRaw() {
   const secs = state.sections.filter(s => s.enabled && s.items.some(i => i.enabled));
   if (!secs.length) return '<p style="color:#888;padding:20px">還沒有題目可以輸出。請先到「1 出題」貼上題目，或載入範例。</p>';
   const total = secs.reduce((a, s) => a + countPoints(s), 0);
-  const title = m.title || m.grammar || '練習單';
-  const sub = m.subtitle || `Ejercicios de gramática china${levelEs() ? ' · ' + levelEs() : ''}`;
+  const title = (PLANG() === 'en' && m.titleEn) || m.title || m.grammar || '練習單';
+  const sub = m.subtitle || `${PLX().sub}${levelTx() ? ' · ' + levelTx() : ''}`;
   let h = '';
   if (o.print !== 'key') {
     h += `<div class="s-top"><h1>${esc(title)}</h1><div class="s-sub">${esc(sub)}</div></div>
-      <div class="s-who"><span>姓名 Nombre:</span><span>日期 Fecha:</span><span>分數 Puntos:　　 / ${total}</span></div>`;
+      <div class="s-who"><span>${PLX().name}</span><span>${PLX().date}</span><span>${PLX().pts}　　 / ${total}</span></div>`;
     const g = state.grammarBox;
     if (g.points.some(p => p.pattern)) {
-      h += `<div class="s-box"><h3>Recuerda · 先看一下</h3><table>${g.points.filter(p => p.pattern).map(p => `<tr><td class="p">${esc(p.pattern)}</td><td>${esc(p.es)}</td><td class="x">${esc(p.example)}</td></tr>`).join('')}</table>${g.warning ? `<div class="s-warn">${esc(g.warning)}</div>` : ''}</div>`;
+      h += `<div class="s-box"><h3>${PLX().recall}</h3><table>${g.points.filter(p => p.pattern).map(p => `<tr><td class="p">${esc(p.pattern)}</td><td>${esc(gbTr(p))}</td><td class="x">${esc(p.example)}</td></tr>`).join('')}</table>${g.warning ? `<div class="s-warn">${esc(g.warning)}</div>` : ''}</div>`;
     }
     if (o.vocab && state.vocab.some(v => v.zh)) {
-      h += `<div class="s-box"><h3>Vocabulario · 生詞</h3><table class="s-vt">${state.vocab.filter(v => v.zh).map(v => `<tr><td class="x">${esc(v.zh)}</td>${o.vocabPy ? `<td class="py">${esc(vPy(v.zh))}</td>` : ''}<td>${esc(v.es)}</td></tr>`).join('')}</table></div>`;
+      h += `<div class="s-box"><h3>${PLX().voc}</h3><table class="s-vt">${state.vocab.filter(v => v.zh).map(v => `<tr><td class="x">${esc(v.zh)}</td>${o.vocabPy ? `<td class="py">${esc(vPy(v.zh))}</td>` : ''}<td>${esc(vTr(v))}</td></tr>`).join('')}</table></div>`;
     }
     secs.forEach((s, i) => { h += sectionStudent(s, i); });
   }
   if (o.print !== 'student') {
-    h += `<div class="s-answer${o.print === 'both' ? ' pg' : ''}"><div class="s-top"><h1 style="font-size:calc(19pt*var(--k,1))">答案 · Respuestas</h1><div class="s-sub">${esc(title)}${(o.pinyin || o.zhuyin) ? '　·　拼音、注音為電腦自動產生，使用前請老師再確認' : ''}</div></div>`;
+    h += `<div class="s-answer${o.print === 'both' ? ' pg' : ''}"><div class="s-top"><h1 style="font-size:calc(19pt*var(--k,1))">${PLX().ans}</h1><div class="s-sub">${esc(title)}${(o.pinyin || o.zhuyin) ? '　·　拼音、注音為電腦自動產生，使用前請老師再確認' : ''}</div></div>`;
     secs.forEach((s, i) => { h += sectionKey(s, i); });
     if (isMulti()) { const st = pointStats(); h += `<div class="s-stat">語法點分布（不含段落填空）：${st.names.map(n => `${esc(n)} ${st.per[n]} 題`).join('、')}；混合題 ${st.mixed} 題 / 共 ${st.total} 題。</div>`; }
     if (o.teacherNote) h += `<div class="s-teacher">全部 ${total} 分，每題 1 分。西翻中、排序的答案不只一種時，語序正確、使用指定句型即可給分。</div>`;
