@@ -47,7 +47,7 @@ async function test(name, f) { try { await f(); passed++; console.log('  ✓ ' +
       await pg.selectOption('#inlineHost .mode', mode || 'auto');
       await pg.fill('#inlineHost .q', t); await pg.click('#inlineHost .go');
       await pg.waitForFunction(() => !/翻譯中/.test(document.querySelector('#inlineHost .res').innerText), null, { timeout: 8000 });
-      return pg.$eval('#inlineHost .res', e => e.innerText.replace(/\n+/g, ' | '));
+      return pg.$eval('#inlineHost .res', e => e.innerText.replace(/\n+/g, ' | ').replace(/ \| 複製/g, ''));   // 複製鍵的字不算進結果
     };
     return { pg, ask, opened };
   }
@@ -77,8 +77,8 @@ async function test(name, f) { try { await f(); passed++; console.log('  ✓ ' +
   await test('醫生：Google 回 doctor（和英文一樣），備用有 médico 就換；備用查不到就維持 doctor', async () => {
     const a = await open(); const t = await a.ask('醫生'); assert.ok(/西語 \| médico/.test(t), t); await a.pg.close();
     const saved = MM['醫生|zh-TW|es']; delete MM['醫生|zh-TW|es'];
-    const c = await open(); const t2 = await c.ask('醫生'); assert.ok(/西語 \| doctor \| 來源：Google 翻譯/.test(t2), t2); await c.pg.close();
-    MM['醫生|zh-TW|es'] = saved;
+    try { const c = await open(); const t2 = await c.ask('醫生'); assert.ok(/西語 \| doctor \| 來源：Google 翻譯/.test(t2), t2); await c.pg.close(); }
+    finally { MM['醫生|zh-TW|es'] = saved; }
   });
   await test('輸入西語或英語：只翻成中文，不顯示方向標題', async () => {
     const { pg, ask } = await open();
@@ -107,6 +107,18 @@ async function test(name, f) { try { await f(); passed++; console.log('  ✓ ' +
     await ask('hola', 'auto'); assert.ok(/tl=zh-TW/.test(await click('google')) && /spanish-chinese/.test(await click('reverso')));
     await ask('hello', 'auto'); assert.ok(/english-chinese/.test(await click('reverso')));
     await ask('hello', 'en2zh'); assert.ok(/english-chinese/.test(await click('reverso')));
+    await pg.close();
+  });
+  await test('複製鍵：每行翻譯各一個，按下去剪貼簿是那一行的翻譯，並顯示「已複製」', async () => {
+    const { pg, ask } = await open();
+    await pg.context().grantPermissions(['clipboard-read', 'clipboard-write']);
+    await ask('太鹹');
+    assert.strictEqual(await pg.$$eval('#inlineHost .cp', e => e.length), 2);
+    await pg.click('#inlineHost .cp[data-i="1"]'); await pg.waitForTimeout(150);
+    assert.strictEqual(await pg.evaluate(() => navigator.clipboard.readText()), 'too salty');
+    assert.strictEqual(await pg.$eval('#inlineHost .cp[data-i="1"]', e => e.textContent), '已複製');
+    await pg.click('#inlineHost .cp[data-i="0"]'); await pg.waitForTimeout(150);
+    assert.strictEqual(await pg.evaluate(() => navigator.clipboard.readText()), 'demasiado salado');
     await pg.close();
   });
   await b.close(); srv.close();
