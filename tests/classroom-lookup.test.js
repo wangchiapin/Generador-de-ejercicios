@@ -70,31 +70,31 @@ async function test(name, f) { try { await f(); passed++; console.log('  ✓ ' +
   await test('Google 把「我」翻成英文 I：改用備用來源得到 yo，並標示原因；英語那行照常', async () => {
     const { pg, ask } = await open();
     const t = await ask('我');
-    assert.ok(/西語 \| yo \| 來源：MyMemory（備用）：Google 這次回的是英文/.test(t), t);
-    assert.ok(/英語 \| I \| 其他：me、myself/.test(t), t);
+    assert.ok(/西語 \| yo \| 備用翻譯（Google 回英文）/.test(t), t);
+    assert.ok(/英語 \| I \| 其他：me、myself(?! \|)/.test(t), t);
     await pg.close();
   });
   await test('醫生：Google 回 doctor（和英文一樣），備用有 médico 就換；備用查不到就維持 doctor', async () => {
     const a = await open(); const t = await a.ask('醫生'); assert.ok(/西語 \| médico/.test(t), t); await a.pg.close();
     const saved = MM['醫生|zh-TW|es']; delete MM['醫生|zh-TW|es'];
-    try { const c = await open(); const t2 = await c.ask('醫生'); assert.ok(/西語 \| doctor \| 來源：Google 翻譯/.test(t2), t2); await c.pg.close(); }
+    try { const c = await open(); const t2 = await c.ask('醫生'); assert.ok(/西語 \| doctor \| 英語 \| doctor$/.test(t2), t2); await c.pg.close(); }
     finally { MM['醫生|zh-TW|es'] = saved; }
   });
   await test('輸入西語或英語：只翻成中文，不顯示方向標題', async () => {
     const { pg, ask } = await open();
-    const t = await ask('hola'); assert.ok(/^你好 \| 來源：Google 翻譯$/.test(t), t);
+    const t = await ask('hola'); assert.ok(/^你好$/.test(t), t);
     assert.ok(!/西語|英語/.test(await ask('hello')));
     await pg.close();
   });
   await test('固定方向：英語→中文、中文→英語，各只有一行', async () => {
     const { pg, ask } = await open();
-    assert.ok(/^你好 \| 來源/.test(await ask('hello', 'en2zh')));
-    const t = await ask('你好', 'zh2en'); assert.ok(/^hello \| 來源/.test(t), t);
+    assert.ok(/^你好$/.test(await ask('hello', 'en2zh')));
+    const t = await ask('你好', 'zh2en'); assert.ok(/^hello$/.test(t), t);
     await pg.close();
   });
   await test('Google 整個掛掉：改用備用來源；備用也沒有就顯示查不到', async () => {
     const { pg, ask } = await open({ googleDown: true });
-    assert.ok(/MyMemory/.test(await ask('醫生', 'zh2es')));
+    assert.ok(/備用翻譯，僅供參考/.test(await ask('醫生', 'zh2es')));
     assert.ok(/暫時查不到/.test(await ask('太鹹', 'zh2es')));
     await pg.close();
   });

@@ -48,7 +48,7 @@
   .qk .res .rw+.rw{margin-top:10px;padding-top:8px;border-top:1px dashed var(--line,#d8d2c4);}
   .qk .res .lg{font-size:.72rem;color:var(--sub);margin-bottom:2px;}
   .qk .res .alt{margin-top:6px;font-size:.88rem;color:var(--sub);}
-  .qk .res .from{margin-top:6px;font-size:.72rem;color:var(--accent);}
+  .qk .res .from{margin-top:6px;font-size:.72rem;color:var(--accent);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .qk .res .err{color:#7a2d22;font-size:.88rem;}
   .qk .webrow{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
   .qk .webrow button{font-size:.8rem;padding:6px 4px;}
@@ -180,7 +180,7 @@
   function parseMyMemory(data){
     var t=data&&data.responseData&&data.responseData.translatedText;
     if(!t||/MYMEMORY WARNING|INVALID/i.test(t)) throw new Error('mm');
-    return {main:String(t).trim(),alts:[],src:'MyMemory（備用）'};
+    return {main:String(t).trim(),alts:[],src:'備用翻譯，僅供參考'};
   }
   function viaMyMemory(text,d){
     var url='https://api.mymemory.translated.net/get?q='+encodeURIComponent(text)+'&langpair='+encodeURIComponent(d.pair);
@@ -196,7 +196,7 @@
       return en.then(function(e){
         if(!e || norm(r.main)!==norm(e) || r.src.indexOf('Google')!==0) return r;
         return viaMyMemory(text,d).then(function(m){
-          return norm(m.main) && norm(m.main)!==norm(e) ? {main:m.main,alts:[],src:'MyMemory（備用）：Google 這次回的是英文'} : r;
+          return norm(m.main) && norm(m.main)!==norm(e) ? {main:m.main,alts:[],src:'備用翻譯（Google 回英文）'} : r;
         },function(){ return r; });
       });
     });
@@ -275,7 +275,8 @@
           copies.push(x.r.main);
           h+='<div class="mrow"><div class="main">'+esc(x.r.main)+'</div><button type="button" class="cp quiet" data-i="'+(copies.length-1)+'" title="複製這個翻譯">複製</button></div>';
           if(x.r.alts.length) h+='<div class="alt">其他：'+x.r.alts.map(esc).join('、')+'</div>';
-          h+='<div class="from">來源：'+esc(x.r.src)+'</div></div>';
+          if(x.r.src.indexOf('Google')!==0) h+='<div class="from">'+esc(x.r.src)+'</div>';
+          h+='</div>';
         });
         show(h);
       });
