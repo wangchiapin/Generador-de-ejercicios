@@ -52,6 +52,30 @@
   .qk .res .err{color:#7a2d22;font-size:.88rem;}
   .qk .webrow{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
   .qk .webrow button{font-size:.8rem;padding:6px 4px;}
+  .qk .res .mrow{display:flex;gap:8px;align-items:flex-start;justify-content:space-between;}
+  .qk .res .mrow .main{flex:1;min-width:0;}
+  .qk .res .cp{flex:none;font-size:.74rem;padding:3px 9px;margin-top:3px;}
+  .qk .res .cp.done{background:var(--ink);color:#fff;}
+
+  /* 浮動小視窗：整體縮小，才不會擋到上課的畫面 */
+  body.pip{padding:8px;}
+  body.pip .qk{gap:6px;}
+  body.pip .qk .inrow{gap:4px;}
+  body.pip .qk input[type=text]{font-size:.92rem;padding:4px 8px;}
+  body.pip .qk button{font-size:.74rem;padding:3px 8px;}
+  body.pip .qk .go{padding:3px 10px;}
+  body.pip .qk .optrow{font-size:.68rem;gap:6px;}
+  body.pip .qk select{font-size:.72rem;padding:1px 3px;}
+  body.pip .qk .res{padding:6px 9px;min-height:52px;}
+  body.pip .qk .res .main{font-size:1.05rem;line-height:1.35;}
+  body.pip .qk .res .rw+.rw{margin-top:7px;padding-top:6px;}
+  body.pip .qk .res .alt{margin-top:3px;font-size:.74rem;}
+  body.pip .qk .res .from{margin-top:3px;font-size:.62rem;}
+  body.pip .qk .res .lg{font-size:.62rem;margin-bottom:1px;}
+  body.pip .qk .res .hint,body.pip .qk .res .err{font-size:.72rem;}
+  body.pip .qk .res .cp{font-size:.66rem;padding:2px 7px;margin-top:1px;}
+  body.pip .qk .webrow{gap:3px;}
+  body.pip .qk .webrow button{font-size:.58rem;padding:1px 0;letter-spacing:0;line-height:1.5;}
 
   /* 只在網頁本體用 */
   .sitebar{max-width:900px;margin:0 auto;padding:14px 24px 0;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
@@ -218,9 +242,23 @@
       '</div>';
     var q=host.querySelector('.q'), go=host.querySelector('.go'), mode=host.querySelector('.mode'),
         res=host.querySelector('.res'), clr=host.querySelector('.clr');
-    var seq=0, lastLang='';
+    var seq=0, lastLang='', copies=[];
+    // 複製翻譯：浮動視窗要用它自己的 clipboard；不行的話退回舊方法
+    function copyText(text){
+      var done=function(){ return true; };
+      try{ if(win.navigator.clipboard && win.navigator.clipboard.writeText) return win.navigator.clipboard.writeText(text).then(done); }catch(e){}
+      return new Promise(function(ok,no){
+        try{ var ta=doc.createElement('textarea'); ta.value=text; ta.style.position='fixed'; ta.style.opacity='0'; doc.body.appendChild(ta); ta.select(); var r=doc.execCommand('copy'); doc.body.removeChild(ta); r?ok(true):no(); }catch(e){ no(e); }
+      });
+    }
     function term(){ return q.value.replace(/\s+/g,' ').trim(); }
     function show(html){ res.innerHTML=html; }
+    res.addEventListener('click',function(e){
+      var b=e.target.closest&&e.target.closest('.cp'); if(!b) return;
+      var text=copies[+b.getAttribute('data-i')]; if(text==null) return;
+      copyText(text).then(function(){ b.textContent='已複製'; b.classList.add('done'); },function(){ b.textContent='複製失敗'; })
+        .then(function(){ setTimeout(function(){ if(b.isConnected){ b.textContent='複製'; b.classList.remove('done'); } },1200); });
+    });
     function run(){
       var t=term();
       if(!t){ show('<div class="hint">請先輸入字詞。</div>'); q.focus(); return; }
@@ -229,12 +267,13 @@
       translateAll(t,mode.value).then(function(rows){
         if(my!==seq) return;
         if(!rows.some(function(x){return x.r;})){ show('<div class="err">翻譯服務暫時查不到。請按下面「開 Google 翻譯」開網頁查。</div>'); return; }
-        var multi=rows.length>1, h='';
+        var multi=rows.length>1, h=''; copies=[];
         rows.forEach(function(x){
           lastLang=(x.r&&x.r.lang)||lastLang;
           h+='<div class="rw">'+(multi?'<div class="lg">'+esc(x.label)+'</div>':'');
           if(!x.r){ h+='<div class="err">這個方向暫時查不到。</div></div>'; return; }
-          h+='<div class="main">'+esc(x.r.main)+'</div>';
+          copies.push(x.r.main);
+          h+='<div class="mrow"><div class="main">'+esc(x.r.main)+'</div><button type="button" class="cp quiet" data-i="'+(copies.length-1)+'" title="複製這個翻譯">複製</button></div>';
           if(x.r.alts.length) h+='<div class="alt">其他：'+x.r.alts.map(esc).join('、')+'</div>';
           h+='<div class="from">來源：'+esc(x.r.src)+'</div></div>';
         });
@@ -269,7 +308,7 @@
   pinBtn.addEventListener('click',function(){
     if(!('documentPictureInPicture' in window)) return;
     if(pipWin){ try{ pipWin.focus(); }catch(e){} return; }
-    window.documentPictureInPicture.requestWindow({width:400,height:420}).then(function(w){
+    window.documentPictureInPicture.requestWindow({width:340,height:330}).then(function(w){
       pipWin=w;
       // 把樣式複製到浮動視窗
       var css=document.getElementById('panelcss').textContent;
