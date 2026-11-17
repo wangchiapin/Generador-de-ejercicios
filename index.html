@@ -84,6 +84,15 @@ summary{cursor:pointer;color:var(--accent);font-size:.86rem}
 .chk{display:inline-flex;gap:8px;align-items:baseline;cursor:pointer}
 .card{border:1px solid var(--line);padding:0 18px 12px;margin:16px 0;background:#fff}
 .card.off{opacity:.45}
+.card .cprev{flex:1;min-width:0;margin:0 12px;cursor:pointer;color:var(--sub);font-size:.88rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.card .cprev::before{content:'▸ '}
+.card.open .cprev::before{content:'▾ '}
+.card:not(.open) .cbody{display:none}
+.card:not(.open){margin:8px 0;padding-bottom:0}
+.card:not(.open) .ch{margin-bottom:0;border-bottom:0}
+.card.open .cprev{white-space:normal;color:var(--ink)}
+.advdet{margin:14px 0}
+.card .issues:empty{display:none}
 .card .ch{display:flex;justify-content:space-between;align-items:center;margin:0 -18px 10px;padding:6px 18px;background:var(--paper);border-bottom:1px solid var(--line);font-size:.92rem;color:var(--ink)}
 .card .chbtns{display:flex;gap:6px}
 .derived{margin-top:12px;padding-top:8px;border-top:1px dashed #8a857b;font-size:.9rem;color:var(--sub);line-height:1.6}
@@ -305,11 +314,13 @@ details.errdet,details.metadet{margin:10px 0}
     <div class="fld" id="mixFld" hidden><label>混合題比例（每題型中，同一句要同時用到 2 個以上語法點的題目至少佔多少）</label>
       <select id="fMix"><option value="30">至少 30%</option><option value="50">至少 50%（建議）</option><option value="70">至少 70%</option><option value="100">全部都要混合</option></select></div>
     <div class="fld"><label>段落填空的主題</label><input id="fTheme" placeholder="例如：生活情境（點餐、問路、介紹家人）"></div>
+    <details class="errdet advdet"><summary>進階：題數、生詞表、英文翻譯、常錯的地方</summary>
     <div class="fld"><label>各題型要幾題（填 0 就不出這一種；段落填空的數字是空格數）</label></div>
     <div class="counts" id="counts"></div>
     <div class="fld"><label class="chk"><input type="checkbox" id="fWantEn"> 也要英文翻譯（每題多一個英文欄位；之後列印可選英文版，發給英文學生看英文）</label></div>
     <div class="fld" style="max-width:260px"><label>生詞表要幾個（0 = 不要；印在練習單最上面，附拼音和西文）</label><input type="number" id="fVocabN" min="0" max="40"></div>
-    <details class="errdet"><summary>西語學生常錯的地方（選填）</summary><div class="errbox" id="errBox"></div></details>
+    <div class="fld"><label>西語學生常錯的地方（選填）</label><div class="errbox" id="errBox"></div></div>
+    </details>
     <div class="row">
       <button class="primary" id="btnCopyPrompt">複製出題指令</button>
       <span class="hint" style="margin:0 0 0 6px">範例：</span>
@@ -1400,15 +1411,36 @@ function tagsHTML(it, open) {
   return `<details class="ptags" ${open ? 'open' : ''}><summary>${badges}${isMixed(it) ? '<span class="badge mixb">混合題</span>' : ''}<span class="edit">改標記</span></summary>
     <div class="picks">${tagNames().map(n => `<label><input type="checkbox" data-pt="${esc(n)}" ${it.points.includes(n) ? 'checked' : ''}> ${esc(n)}</label>`).join('')}</div></details>`;
 }
+const openCards = new Set();
+function cardPreview(type, it) {
+  const m = x => str(x);
+  let t = '';
+  switch (type) {
+    case 'fill': t = m(it.zh).replace('__', '＿＿') + (m(it.answer) ? '　→ ' + m(it.answer) : ''); break;
+    case 'cloze': t = m(it.text).replace(/\{\d+\}/g, '＿'); break;
+    case 'order': t = m(it.answer); break;
+    case 'choice': t = m(it.es); break;
+    case 'fix': t = m(it.wrong) + (m(it.correct) ? '　→ ' + m(it.correct) : ''); break;
+    case 'translate': t = m(it.es) + (m(it.answer) ? '　→ ' + m(it.answer) : ''); break;
+    case 'zh2es': t = m(it.zh); break;
+    case 'match': t = m(it.zh) + (m(it.es) ? '　＝ ' + m(it.es) : ''); break;
+    case 'sentence': t = m(it.cue) + '　' + m(it.es); break;
+  }
+  t = t.replace(/\s+/g, ' ').trim();
+  return t ? (t.length > 60 ? t.slice(0, 60) + '…' : t) : '（空白）';
+}
 function cardHTML(sec, it, idx) {
-  return `<div class="card ${it.enabled ? '' : 'off'}" data-sid="${sec.id}" data-iid="${it.id}">
+  return `<div class="card ${it.enabled ? '' : 'off'} ${openCards.has(it.id) ? 'open' : ''}" data-sid="${sec.id}" data-iid="${it.id}">
     <div class="ch"><label class="chk"><input type="checkbox" data-act="toggleItem" ${it.enabled ? 'checked' : ''}> 第 ${idx + 1} 題</label>
+      <span class="cprev" data-act="toggleCard" title="點一下展開或收合">${esc(cardPreview(sec.type, it))}</span>
       <span class="chbtns"><button class="tiny" data-act="swap">換一題</button><button class="tiny" data-act="del">刪除</button></span></div>
+    <div class="issues"></div>
+    <div class="cbody">
     ${tagsHTML(it)}
     ${cardBody(sec.type, it)}
     ${it.note ? fld('備註（只會印在答案頁）', inp('note', it.note, '例如：也可以用「和」')) : '<div class="noterow"><button class="link" data-act="showNote">＋ 備註（印在答案頁）</button></div>'}
     <div class="derived">${derivedHTML(sec.type, it)}</div>
-    <div class="issues"></div>
+    </div>
     <div class="swapbox" hidden></div>
   </div>`;
 }
@@ -1454,6 +1486,7 @@ function renderCheck() {
   }
   const missing = TYPES.filter(t => !secOf(t));
   root.innerHTML = `<div class="summary" id="summary"></div>
+    <div class="row" style="margin:8px 0 0"><button class="tiny" data-act="openAll">全部展開</button><button class="tiny" data-act="closeAll">全部收合</button><span class="hint" style="margin:0 0 0 6px">點題目那一行，就能展開修改。</span></div>
     <div id="importNotes"></div>
     <details class="metadet"><summary>標題、程度與語法說明框</summary>
     <div class="grid2">${fld('標題', `<input data-m="meta.title" value="${esc(state.meta.title)}" placeholder="例如：比較句 · Las comparaciones">`)}${fld('程度', `<select data-m="meta.level">${Object.keys(LEVEL_ES).map(l => `<option ${l === state.meta.level ? 'selected' : ''}>${l}</option>`).join('')}</select>`)}</div>
@@ -1503,6 +1536,7 @@ function refreshCard(card) {
   const sec = findSec(card.dataset.sid); const it = sec && sec.items.find(i => i.id === card.dataset.iid);
   if (!it) return;
   $('.derived', card).innerHTML = derivedHTML(sec.type, it);
+  const pv = $('.cprev', card); if (pv) pv.textContent = cardPreview(sec.type, it);
   refreshIssues();
   const sh = $(`.sec[data-sid="${sec.id}"] .count`);
   if (sh) sh.textContent = sec.type === 'cloze' ? sec.items.reduce((a, i) => a + (i.enabled ? i.answers.length : 0), 0) + ' 空' : sec.items.filter(i => i.enabled).length + ' 題';
@@ -1582,13 +1616,18 @@ step2.addEventListener('click', async e => {
   if (act === 'addGb') { state.grammarBox.points.push({ pattern: '', es: '', en: '', example: '' }); save(); return $('#gbBox').innerHTML = gbHTML(), $('#gbBox details').open = true; }
   if (act === 'delGb') { state.grammarBox.points.splice(+b.dataset.i, 1); save(); return $('#gbBox').innerHTML = gbHTML(), $('#gbBox details').open = true; }
   if (act === 'toggleSec') { const sec = findSec(b.closest('.sec').dataset.sid); sec.enabled = b.checked; save(); return refreshIssues(); }
+  if (act === 'openAll' || act === 'closeAll') {
+    state.sections.forEach(sc => sc.items.forEach(i => act === 'openAll' ? openCards.add(i.id) : openCards.delete(i.id)));
+    $$('#step2 .card').forEach(c => c.classList.toggle('open', act === 'openAll')); return;
+  }
   if (act === 'add') {
-    const sec = findSec(b.closest('.sec').dataset.sid); sec.items.push(blankItem(sec.type)); save(); renderCheck();
+    const sec = findSec(b.closest('.sec').dataset.sid); const ni = blankItem(sec.type); openCards.add(ni.id); sec.items.push(ni); save(); renderCheck();
     const cards = $$(`.sec[data-sid="${sec.id}"] .card`); const last = cards[cards.length - 1]; if (last) { last.scrollIntoView({ block: 'center' }); const f = $('input:not([type=checkbox]):not([type=radio]),textarea', last); if (f) f.focus(); }
     return;
   }
   const { card, sec, it } = cardCtx(b);
   if (!it) return;
+  if (act === 'toggleCard') { const on = card.classList.toggle('open'); on ? openCards.add(it.id) : openCards.delete(it.id); return; }
   if (act === 'toggleItem') { it.enabled = b.checked; card.classList.toggle('off', !it.enabled); save(); return refreshCard(card); }
   if (act === 'del') { if (!confirm('刪除這一題？')) return; sec.items.splice(sec.items.indexOf(it), 1); save(); return renderCheck(); }
   if (act === 'showNote') { b.parentElement.outerHTML = fld('備註（只會印在答案頁）', inp('note', it.note, '例如：也可以用「和」')); const f = $('[data-f="note"]', card); if (f) f.focus(); return; }
@@ -1640,6 +1679,15 @@ function renderOut() {
   const chk = (k, label) => `<label><input type="checkbox" data-m="opts.${k}" ${o[k] ? 'checked' : ''}> ${label}</label>`;
   $('#outControls').innerHTML = `
     <div class="between"><h2 style="margin:24px 0 0">輸出設定</h2><span class="row" style="margin:0"><button class="primary" id="btnPrint">列印／存成 PDF</button><button class="primary" id="btnWord">匯出 Word (.docx)</button></span></div>
+    <div class="optgrp"><div class="opts">
+      <label>列印內容
+        <select data-m="opts.print"><option value="both" ${o.print === 'both' ? 'selected' : ''}>練習頁＋答案頁</option><option value="student" ${o.print === 'student' ? 'selected' : ''}>只印練習頁</option><option value="key" ${o.print === 'key' ? 'selected' : ''}>只印答案頁</option></select></label>
+      <label>列印語言（提示、標題、標籤）
+        <select data-m="opts.printLang"><option value="es" ${o.printLang !== 'en' ? 'selected' : ''}>西班牙文 Español</option><option value="en" ${o.printLang === 'en' ? 'selected' : ''}>英文 English</option></select></label>
+      <label>練習單文字
+        <select data-m="opts.script"><option value="trad" ${o.script !== 'simp' ? 'selected' : ''}>繁體</option><option value="simp" ${o.script === 'simp' ? 'selected' : ''}>簡體（台灣用字）</option></select></label>
+    </div></div>
+    <details class="errdet advdet"><summary>進階設定：內容、答案頁加註、紙張、頁尾、匯出句子庫</summary>
     <div class="optgrp"><h3>內容</h3><div class="opts">
       ${chk('cueEs', '練習頁顯示西文提示')}
       ${chk('keyEs', '答案頁顯示西文翻譯')}
@@ -1653,23 +1701,18 @@ function renderOut() {
       ${chk('simp', '顯示簡體字')}
       ${chk('simpPhrases', '簡體同時轉換台灣用語（例如 軟體→軟件）')}
     </div></div>
-    <div class="optgrp"><h3>紙張與列印</h3><div class="opts">
+    <div class="optgrp"><h3>紙張與頁尾</h3><div class="opts">
       <label>練習頁加注音／拼音
         <select data-m="opts.student"><option value="none" ${o.student === 'none' ? 'selected' : ''}>不加</option><option value="pinyin" ${o.student === 'pinyin' ? 'selected' : ''}>拼音</option><option value="zhuyin" ${o.student === 'zhuyin' ? 'selected' : ''}>注音</option></select></label>
-      <label>列印語言（提示、標題、標籤）
-        <select data-m="opts.printLang"><option value="es" ${o.printLang !== 'en' ? 'selected' : ''}>西班牙文 Español</option><option value="en" ${o.printLang === 'en' ? 'selected' : ''}>英文 English</option></select></label>
-      <label>練習單文字
-        <select data-m="opts.script"><option value="trad" ${o.script !== 'simp' ? 'selected' : ''}>繁體</option><option value="simp" ${o.script === 'simp' ? 'selected' : ''}>簡體（台灣用字）</option></select></label>
       <label>紙張
         <select data-m="opts.paper"><option ${o.paper === 'A4' ? 'selected' : ''}>A4</option><option ${o.paper === 'Letter' ? 'selected' : ''}>Letter</option></select></label>
-      <label>列印內容
-        <select data-m="opts.print"><option value="both" ${o.print === 'both' ? 'selected' : ''}>練習頁＋答案頁</option><option value="student" ${o.print === 'student' ? 'selected' : ''}>只印練習頁</option><option value="key" ${o.print === 'key' ? 'selected' : ''}>只印答案頁</option></select></label>
     </div>
     <div class="fld" style="max-width:420px"><label>每頁底部的文字</label><input data-m="meta.footer" value="${esc(state.meta.footer)}"></div></div>
     <div class="row">
       <button class="quiet" id="btnExpJson">匯出句子庫 JSON</button>
       <button class="quiet" id="btnExpCsv">匯出句子庫 CSV</button>
     </div>
+    </details>
     <details><summary>讀音修正表</summary>
       <p class="hint">拼音是電腦自動轉的：先用拼音函式庫（含台灣讀音例外表），再依 <b>GoodTeacher</b> 的多音字規則校正（和 corre、字體同一份資料）。<span id="gtState"></span>遇到不對的讀音可以在這裡改，<b>改過的優先於 GoodTeacher</b>，之後都會記住。每行一個：<code>詞=拼音</code>（每個字一個音節，用空格分開）。聲調可以寫符號，也可以寫數字：<code>垃圾=lè sè</code> 和 <code>垃圾=le4 se4</code> 一樣；輕聲寫 5，ü 寫 v（<code>女=nv3</code>）。</p>
       <textarea id="readingsBox" rows="4">${esc(Object.entries(readingsDict()).map(([k, v]) => k + '=' + v).join('\n'))}</textarea>
