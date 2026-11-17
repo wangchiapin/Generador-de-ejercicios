@@ -1435,7 +1435,7 @@ function vocabRowHTML(v, i) {
 function vPy(z) { return pyLine(z).replace(/^./, c => c.toLowerCase()); }
 function vStale(v) { return !!(v.es && v.esSrc && v.esSrc !== v.zh); }
 function vocabHTML() {
-  return `<details ${state.vocab.length ? 'open' : ''}><summary>生詞表（印在練習單上方，共 ${state.vocab.length} 個；拼音會自動跟著中文更新）</summary>
+  return `<details class="metadet" ${state.vocab.length ? 'open' : ''}><summary>生詞表（印在練習單上方，共 ${state.vocab.length} 個；拼音會自動跟著中文更新）</summary>
     ${state.vocab.map(vocabRowHTML).join('')}
     <div class="row"><button class="tiny" data-act="addVocab">＋ 新增一個生詞</button></div></details>`;
 }
@@ -1457,10 +1457,11 @@ function renderCheck() {
     <div id="importNotes"></div>
     <details class="metadet"><summary>標題、程度與語法說明框</summary>
     <div class="grid2">${fld('標題', `<input data-m="meta.title" value="${esc(state.meta.title)}" placeholder="例如：比較句 · Las comparaciones">`)}${fld('程度', `<select data-m="meta.level">${Object.keys(LEVEL_ES).map(l => `<option ${l === state.meta.level ? 'selected' : ''}>${l}</option>`).join('')}</select>`)}</div>
+    ${fld('英文標題（列印語言選「英文」時使用；留空會改用上面的標題）', `<input data-m="meta.titleEn" value="${esc(state.meta.titleEn)}" placeholder="例如：Comparisons · English title">`)}
     ${fld('副標題（留空會自動產生）', `<input data-m="meta.subtitle" value="${esc(state.meta.subtitle)}" placeholder="Ejercicios de gramática china · ${LEVEL_ES[state.meta.level] || ''}">`)}
     <div id="gbBox">${gbHTML()}</div>
     </details>
-    <details class="metadet" id="vocabBox" ${state.vocab.length ? 'open' : ''}><summary>生詞表</summary><div id="vocabInner">${vocabHTML()}</div></details>
+    <div id="vocabInner">${vocabHTML()}</div>
     <div id="staleNote"></div>
     <div class="swapbox" id="stalePanel" hidden>
       <div>中文改過、西文還沒更新的句子：複製下面的指令貼給 AI，再把它回覆的結果貼回來。</div>
@@ -1555,7 +1556,7 @@ step2.addEventListener('click', async e => {
   if (act === 'goStep3') return goStep(3);
   if (act === 'example') { applyImport(fromAI(EXAMPLE), true); return renderCheck(); }
   if (act === 'addSection') { state.sections.push(blankSection(b.dataset.t)); sortSections(); save(); return renderCheck(); }
-  if (act === 'addVocab') { state.vocab.push({ zh: '', es: '', en: '', esSrc: '' }); save(); $('#vocabInner').innerHTML = vocabHTML(); $('#vocabBox').open = true; const ins = $$('#vocabInner [data-v="zh"]'); if (ins.length) ins[ins.length - 1].focus(); return; }
+  if (act === 'addVocab') { state.vocab.push({ zh: '', es: '', en: '', esSrc: '' }); save(); $('#vocabInner').innerHTML = vocabHTML(); const ins = $$('#vocabInner [data-v="zh"]'); if (ins.length) ins[ins.length - 1].focus(); return; }
   if (act === 'delVocab') { state.vocab.splice(+b.dataset.i, 1); save(); $('#vocabInner').innerHTML = vocabHTML(); return refreshIssues(); }
   if (act === 'staleOpen') { $('#stalePanel').hidden = false; $('#staleMsg').innerHTML = ''; return; }
   if (act === 'staleClose') { $('#stalePanel').hidden = true; return; }
