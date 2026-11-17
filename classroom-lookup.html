@@ -45,6 +45,8 @@
   body.pip .qk .res{flex:1;max-height:none;}
   .qk .res .hint{color:var(--sub);font-size:.84rem;}
   .qk .res .main{font-size:1.4rem;line-height:1.4;letter-spacing:.03em;word-break:break-word;}
+  .qk .res .rw+.rw{margin-top:10px;padding-top:8px;border-top:1px dashed var(--line,#d8d2c4);}
+  .qk .res .lg{font-size:.72rem;color:var(--sub);margin-bottom:2px;}
   .qk .res .alt{margin-top:6px;font-size:.88rem;color:var(--sub);}
   .qk .res .from{margin-top:6px;font-size:.72rem;color:var(--accent);}
   .qk .res .err{color:#7a2d22;font-size:.88rem;}
@@ -102,7 +104,7 @@
     <h2>上課使用</h2>
     <ul>
       <li>按上面的「釘在最上面」，會跳出一個小視窗，<b>浮在 PPT、Zoom 和其他視窗上面</b>，可以拖到旁邊、拉大縮小。要用電腦版 Chrome 或 Edge。</li>
-      <li>輸入字詞按 Enter（或「翻譯」），結果直接顯示在小視窗裡。有中文就翻成西語，沒有中文就翻成中文；翻錯方向時，用旁邊的選單手動選。</li>
+      <li>輸入字詞按 Enter（或「翻譯」），結果直接顯示在小視窗裡。輸入中文，會同時顯示西語和英語；輸入西語或英語，就翻成中文。要固定某個方向，用旁邊的選單選（中文→西語／西語→中文／中文→英語／英語→中文）。</li>
       <li>需要時再按「Google 翻譯」「Reverso 例句」開網頁；「找圖片」一定會開網頁。網頁會開在螢幕右側。</li>
       <li>Zoom 分享畫面時，請選<b>只分享 PPT 視窗</b>。上課前先開測試會議，確認學生看不到小視窗。</li>
       <li>小視窗關掉後，要再按一次「釘在最上面」才會回來。這個頁面本身要保持開著（可以放在背景）。</li>
@@ -114,10 +116,15 @@
 (function(){
   // ───────── 翻譯 ─────────
   var CJK=/[㐀-鿿豈-﫿]/;
-  function pickDir(text,mode){
-    if(mode==='zh2es') return {from:'zh-TW',to:'es',pair:'zh-TW|es'};
-    if(mode==='es2zh') return {from:'auto',to:'zh-TW',pair:'es|zh-TW'};
-    return CJK.test(text) ? {from:'zh-TW',to:'es',pair:'zh-TW|es'} : {from:'auto',to:'zh-TW',pair:'es|zh-TW'};
+  var ZH2ES={from:'zh-TW',to:'es',pair:'zh-TW|es',label:'西語'}, ZH2EN={from:'zh-TW',to:'en',pair:'zh-TW|en',label:'英語'},
+      ES2ZH={from:'auto',to:'zh-TW',pair:'es|zh-TW',label:'中文'}, EN2ZH={from:'en',to:'zh-TW',pair:'en|zh-TW',label:'中文'};
+  // 一次要查哪幾個方向：自動判斷時，輸入中文就同時查西語和英語；不是中文就翻成中文（Google 自己認得是西語還是英語）
+  function pickDirs(text,mode){
+    if(mode==='zh2es') return [ZH2ES];
+    if(mode==='es2zh') return [ES2ZH];
+    if(mode==='zh2en') return [ZH2EN];
+    if(mode==='en2zh') return [EN2ZH];
+    return CJK.test(text) ? [ZH2ES,ZH2EN] : [ES2ZH];
   }
   function fetchJson(url,ms){
     var ctl=new AbortController(), t=setTimeout(function(){ctl.abort();},ms||8000);
@@ -139,7 +146,7 @@
         words.forEach(function(w){ if(typeof w==='string' && w!==main && alts.indexOf(w)<0) alts.push(w); });
       });
     }
-    return {main:main,alts:alts.slice(0,8),src:'Google 翻譯'};
+    return {main:main,alts:alts.slice(0,8),src:'Google 翻譯',lang:typeof data[2]==='string'?data[2]:''};
   }
   function viaGoogle(text,d){
     var url='https://translate.googleapis.com/translate_a/single?client=gtx&sl='+encodeURIComponent(d.from)+'&tl='+encodeURIComponent(d.to)+'&dt=t&dt=bd&q='+encodeURIComponent(text);
@@ -155,19 +162,40 @@
     var url='https://api.mymemory.translated.net/get?q='+encodeURIComponent(text)+'&langpair='+encodeURIComponent(d.pair);
     return fetchJson(url).then(parseMyMemory);
   }
-  function translate(text,mode){
-    var d=pickDir(text,mode);
-    return viaGoogle(text,d).catch(function(){ return viaMyMemory(text,d); });
+  var norm=function(x){return String(x||'').toLowerCase().replace(/[^a-z0-9\u00c0-\u024f ]/g,'').trim();};
+  // 翻成西語時，Google 有時直接回英文（例如 我 → I）。拿同一個字的英文結果比對，一樣的話再用備用來源查一次；備用查不到或一樣，就維持 Google 的
+  function translateOne(text,d,enMain){
+    var g=viaGoogle(text,d).catch(function(){ return viaMyMemory(text,d); });
+    if(d.to!=='es') return g;
+    return g.then(function(r){
+      var en=enMain===undefined?viaGoogle(text,ZH2EN).then(function(x){return x.main;},function(){return '';}):Promise.resolve(enMain);
+      return en.then(function(e){
+        if(!e || norm(r.main)!==norm(e) || r.src.indexOf('Google')!==0) return r;
+        return viaMyMemory(text,d).then(function(m){
+          return norm(m.main) && norm(m.main)!==norm(e) ? {main:m.main,alts:[],src:'MyMemory（備用）：Google 這次回的是英文'} : r;
+        },function(){ return r; });
+      });
+    });
+  }
+  // 回傳 [{label, r 或 null}]，每個方向各自成功或失敗
+  function translateAll(text,mode){
+    var ds=pickDirs(text,mode), en=ds.filter(function(d){return d===ZH2EN;})[0];
+    var enP=en?viaGoogle(text,ZH2EN).then(function(x){return x;},function(){return null;}):null;
+    return Promise.all(ds.map(function(d){
+      if(d===ZH2EN) return enP.then(function(r){ return r?{label:d.label,r:r}:viaMyMemory(text,d).then(function(m){return {label:d.label,r:m};},function(){return {label:d.label,r:null};}); });
+      var p=d.to==='es'&&enP?enP.then(function(x){return translateOne(text,d,x?x.main:'');}):translateOne(text,d);
+      return p.then(function(r){return {label:d.label,r:r};},function(){return {label:d.label,r:null};});
+    }));
   }
 
   // ───────── 開網頁 ─────────
   var SITES={
-    google:{name:'qk-google', url:function(t){return 'https://translate.google.com/?sl=auto&tl='+(CJK.test(t)?'es':'zh-TW')+'&op=translate&text='+encodeURIComponent(t);}},
-    reverso:{name:'qk-reverso', url:function(t){return 'https://context.reverso.net/translation/'+(CJK.test(t)?'chinese-spanish':'spanish-chinese')+'/'+encodeURIComponent(t);}},
+    google:{name:'qk-google', url:function(t,mode){var d=pickDirs(t,mode)[0];return 'https://translate.google.com/?sl=auto&tl='+d.to+'&op=translate&text='+encodeURIComponent(t);}},
+    reverso:{name:'qk-reverso', url:function(t,mode,lang){var d=pickDirs(t,mode)[0], p=d.to==='zh-TW'?(mode==='en2zh'||(mode==='auto'&&/^en/.test(lang||''))?'english-chinese':'spanish-chinese'):(d.to==='en'?'chinese-english':'chinese-spanish');return 'https://context.reverso.net/translation/'+p+'/'+encodeURIComponent(t);}},
     img:{name:'qk-img', url:function(t){return 'https://www.google.com/search?tbm=isch&q='+encodeURIComponent(t);}}
   };
-  function openSite(win,key,text){
-    var site=SITES[key], url=site.url(text), w=null;
+  function openSite(win,key,text,mode,lang){
+    var site=SITES[key], url=site.url(text,mode,lang), w=null;
     var sw=(win.screen&&win.screen.availWidth)||1200, sh=(win.screen&&win.screen.availHeight)||800;
     var W=Math.min(560,Math.round(sw*0.4)), H=Math.min(820,sh-60);
     var L=((win.screen&&win.screen.availLeft)||0)+sw-W-10, T=((win.screen&&win.screen.availTop)||0)+20;
@@ -183,14 +211,14 @@
       '<div class="qk">'+
         '<div class="inrow"><input type="text" class="q" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="輸入或貼上字詞，按 Enter 翻譯">'+
         '<button type="button" class="go">翻譯</button></div>'+
-        '<div class="optrow"><span>方向</span><select class="mode"><option value="auto">自動判斷</option><option value="zh2es">中文 → 西語</option><option value="es2zh">西語 → 中文</option></select>'+
+        '<div class="optrow"><span>方向</span><select class="mode"><option value="auto">自動判斷</option><option value="zh2es">中文 → 西語</option><option value="es2zh">西語 → 中文</option><option value="zh2en">中文 → 英語</option><option value="en2zh">英語 → 中文</option></select>'+
         '<button type="button" class="quiet clr" hidden>清除</button></div>'+
         '<div class="res"><div class="hint">結果會顯示在這裡。</div></div>'+
         '<div class="webrow"><button type="button" data-k="google">開 Google 翻譯</button><button type="button" data-k="reverso">開 Reverso 例句</button><button type="button" data-k="img">找圖片</button></div>'+
       '</div>';
     var q=host.querySelector('.q'), go=host.querySelector('.go'), mode=host.querySelector('.mode'),
         res=host.querySelector('.res'), clr=host.querySelector('.clr');
-    var seq=0;
+    var seq=0, lastLang='';
     function term(){ return q.value.replace(/\s+/g,' ').trim(); }
     function show(html){ res.innerHTML=html; }
     function run(){
@@ -198,15 +226,19 @@
       if(!t){ show('<div class="hint">請先輸入字詞。</div>'); q.focus(); return; }
       var my=++seq;
       show('<div class="hint">翻譯中…</div>');
-      translate(t,mode.value).then(function(r){
+      translateAll(t,mode.value).then(function(rows){
         if(my!==seq) return;
-        var h='<div class="main">'+esc(r.main)+'</div>';
-        if(r.alts.length) h+='<div class="alt">其他：'+r.alts.map(esc).join('、')+'</div>';
-        h+='<div class="from">來源：'+esc(r.src)+'</div>';
+        if(!rows.some(function(x){return x.r;})){ show('<div class="err">翻譯服務暫時查不到。請按下面「開 Google 翻譯」開網頁查。</div>'); return; }
+        var multi=rows.length>1, h='';
+        rows.forEach(function(x){
+          lastLang=(x.r&&x.r.lang)||lastLang;
+          h+='<div class="rw">'+(multi?'<div class="lg">'+esc(x.label)+'</div>':'');
+          if(!x.r){ h+='<div class="err">這個方向暫時查不到。</div></div>'; return; }
+          h+='<div class="main">'+esc(x.r.main)+'</div>';
+          if(x.r.alts.length) h+='<div class="alt">其他：'+x.r.alts.map(esc).join('、')+'</div>';
+          h+='<div class="from">來源：'+esc(x.r.src)+'</div></div>';
+        });
         show(h);
-      },function(){
-        if(my!==seq) return;
-        show('<div class="err">翻譯服務暫時查不到。請按下面「開 Google 翻譯」開網頁查。</div>');
       });
     }
     go.addEventListener('click',run);
@@ -218,7 +250,7 @@
       b.addEventListener('click',function(){
         var t=term();
         if(!t){ show('<div class="hint">請先輸入字詞。</div>'); q.focus(); return; }
-        if(!openSite(win,b.getAttribute('data-k'),t)) show('<div class="err">網頁被瀏覽器擋住了。請允許這個網站的快顯視窗後再按一次。</div>');
+        if(!openSite(win,b.getAttribute('data-k'),t,mode.value,lastLang)) show('<div class="err">網頁被瀏覽器擋住了。請允許這個網站的快顯視窗後再按一次。</div>');
       });
     });
     return {focus:function(){ q.focus(); }};
