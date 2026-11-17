@@ -226,6 +226,9 @@ summary{cursor:pointer;color:var(--accent);font-size:.86rem}
 details.menu{position:relative}
 details.menu>summary{list-style:none;display:inline-block;border:1px solid var(--line);color:var(--accent);padding:5px 14px;font-size:.88rem;letter-spacing:.05em;cursor:pointer}
 details.menu>summary::-webkit-details-marker{display:none}
+button.projbtn{border:1px solid var(--line);background:none;color:var(--accent);padding:5px 14px;font-size:.88rem;letter-spacing:.05em;line-height:inherit;cursor:pointer}
+button.projbtn:hover{background:none;border-color:var(--ink)}
+.proj{align-items:flex-start}
 .menuitems{position:absolute;right:0;top:calc(100% + 4px);background:#fff;border:1px solid var(--line);min-width:170px;z-index:30;box-shadow:0 4px 14px rgba(0,0,0,.06)}
 .menuitems .mi{display:block;width:100%;text-align:left;border:0;border-bottom:1px solid var(--line2);padding:9px 14px;background:#fff;color:var(--ink);font-size:.9rem;cursor:pointer}
 @media(max-width:640px){.menuitems{right:auto;left:0;max-width:calc(100vw - 32px)}}   /* 手機：專案按鈕在左邊，選單要往右開，不然會被切到螢幕外 */
@@ -257,9 +260,9 @@ details.errdet,details.metadet{margin:10px 0}
     <div class="sub">給西語學生的華語語法練習單：出題、檢查、輸出</div>
   </div>
   <div class="proj">
+    <button class="projbtn" id="btnProjList">我的練習單</button>
     <details class="menu" id="projMenu"><summary>專案 ▾</summary>
       <div class="menuitems">
-        <button class="mi" id="btnProjList">我的練習單</button>
         <button class="mi" id="btnNew">新專案</button>
         <button class="mi" id="btnSaveProj">儲存成檔案</button>
         <label class="mi filebtn" style="border:0;border-bottom:0;cursor:pointer">開啟檔案<input type="file" id="fileOpen" accept=".json,application/json" hidden></label>
@@ -1678,7 +1681,8 @@ function renderOut() {
   const o = state.opts;
   const chk = (k, label) => `<label><input type="checkbox" data-m="opts.${k}" ${o[k] ? 'checked' : ''}> ${label}</label>`;
   $('#outControls').innerHTML = `
-    <div class="between"><h2 style="margin:24px 0 0">輸出設定</h2><span class="row" style="margin:0"><button class="primary" id="btnPrint">列印／存成 PDF</button><button class="primary" id="btnWord">匯出 Word (.docx)</button></span></div>
+    <div class="between"><h2 style="margin:24px 0 0">輸出設定</h2><span class="row" style="margin:0"><button class="primary" id="btnPrint">列印／存成 PDF</button><button class="primary" id="btnWord">匯出 Word (.docx)</button><button class="primary" id="btnHwQuick">發布給學生頁</button></span></div>
+    <div class="hint" id="hwQMsg" style="margin:6px 0 0;text-align:right"></div>
     <div class="optgrp"><div class="opts">
       <label>列印內容
         <select data-m="opts.print"><option value="both" ${o.print === 'both' ? 'selected' : ''}>練習頁＋答案頁</option><option value="student" ${o.print === 'student' ? 'selected' : ''}>只印練習頁</option><option value="key" ${o.print === 'key' ? 'selected' : ''}>只印答案頁</option></select></label>
@@ -1795,6 +1799,15 @@ $('#step3').addEventListener('click', e => {
     setTimeout(off, 4000);
   }
   if (e.target.id === 'btnWord') exportWord();
+  if (e.target.id === 'btnHwQuick') {
+    const set = t => { const el = $('#hwQMsg'); if (el) el.textContent = t; };
+    if (!$('#hwTid').value.trim()) {   // 還沒設定老師代號：打開「我的練習單」讓他貼一次
+      set('還沒設定老師代號：請在「我的練習單」裡貼一次（之後會自己記住），再按發布。');
+      if ($('#projPanel').hidden) $('#btnProjList').click();
+      return;
+    }
+    hwDoPublish(set);
+  }
   if (e.target.id === 'btnExpJson') download(`${safeName()}-sentences.json`, JSON.stringify(allSentences(), null, 2), 'application/json;charset=utf-8');
   if (e.target.id === 'btnExpCsv') download(`${safeName()}-sentences.csv`, toCSV(allSentences()), 'text/csv;charset=utf-8');
 });
@@ -2155,8 +2168,8 @@ async function startPjCloud() {
 const HW_TID_KEY = 'gwm.portal.tid';
 try { $('#hwTid').value = localStorage.getItem(HW_TID_KEY) || ''; } catch (e) {}
 $('#hwUidCopy').addEventListener('click', async () => { try { await navigator.clipboard.writeText($('#hwUid').textContent); toast('已複製帳號代碼'); } catch (e) { toast('複製失敗，請手動選取'); } });
-$('#hwPublish').addEventListener('click', async () => {
-  const msg = t => { $('#hwMsg').textContent = t; };
+async function hwDoPublish(extraMsg) {
+  const msg = t => { $('#hwMsg').textContent = t; if (extraMsg) extraMsg(t); };
   const tid = $('#hwTid').value.trim();
   if (pjCloud.state !== 'in') { msg('請先登入 Google。'); return; }
   if (!/^[A-Za-z0-9]{20,40}$/.test(tid)) { msg('老師代號格式不對：請到老師後台的「發布帳號」複製。'); return; }
@@ -2172,7 +2185,8 @@ $('#hwPublish').addEventListener('click', async () => {
     const c = String((e && e.code) || '');
     msg(c.includes('permission') ? '沒有權限：請確認老師代號貼對了，而且已把上面的帳號代碼貼到老師後台的「發布帳號」按「允許」。' : '發布失敗：' + ((e && e.message) || e));
   }
-});
+}
+$('#hwPublish').addEventListener('click', () => hwDoPublish());
 $('#btnProjList').addEventListener('click', () => {
   const p = $('#projPanel'); p.hidden = !p.hidden;
   if (!p.hidden) { if (!$('#pjName').value) $('#pjName').value = ''; renderPj(); p.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
