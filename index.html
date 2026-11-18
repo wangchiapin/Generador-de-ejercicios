@@ -91,6 +91,8 @@ summary{cursor:pointer;color:var(--accent);font-size:.86rem}
 .card:not(.open){margin:8px 0;padding-bottom:0}
 .card:not(.open) .ch{margin-bottom:0;border-bottom:0}
 .card.open .cprev{white-space:normal;color:var(--ink)}
+.card .cprev.two,.card.open .cprev.two{white-space:pre-line;overflow:visible;text-overflow:clip;line-height:1.55}
+@media(max-width:640px){.card .ch{flex-wrap:wrap}.card .cprev.two{flex:1 1 100%;order:3;margin:2px 0 2px}}
 .advdet{margin:14px 0}
 .card .issues:empty{display:none}
 .card .ch{display:flex;justify-content:space-between;align-items:center;margin:0 -18px 10px;padding:6px 18px;background:var(--paper);border-bottom:1px solid var(--line);font-size:.92rem;color:var(--ink)}
@@ -120,7 +122,11 @@ summary{cursor:pointer;color:var(--accent);font-size:.86rem}
 .optrow label{white-space:nowrap;font-size:.84rem;color:var(--accent)}
 .clozeAns{display:flex;gap:10px;flex-wrap:wrap;margin:6px 0}
 .clozeAns .fld{margin:0;width:110px}
-.gbrow{display:grid;grid-template-columns:1.2fr 1.2fr 1.2fr auto;gap:8px;margin:5px 0;align-items:center}
+.gbrow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) auto;gap:8px;margin:5px 0;align-items:center}
+.gbrow.c4{grid-template-columns:repeat(4,minmax(0,1fr)) auto}
+.gbrow>*{min-width:0}
+.gbrow .vpy{overflow-wrap:anywhere}
+@media(max-width:640px){.gbrow,.gbrow.c4{grid-template-columns:repeat(2,minmax(0,1fr))}.gbrow>button{grid-column:1/-1;justify-self:end}}
 .opts{display:grid;grid-template-columns:1fr 1fr;gap:6px 24px;margin:12px 0}
 .opts label{display:flex;gap:8px;align-items:center;font-size:.9rem}
 .opts select{width:auto}
@@ -1412,6 +1418,7 @@ function tagsHTML(it, open) {
     <div class="picks">${tagNames().map(n => `<label><input type="checkbox" data-pt="${esc(n)}" ${it.points.includes(n) ? 'checked' : ''}> ${esc(n)}</label>`).join('')}</div></details>`;
 }
 const openCards = new Set();
+const twoLines = (a, b) => { const f = x => str(x).replace(/\s+/g, ' ').trim(); return (f(a) || '（空白）') + (f(b) ? '\n→ ' + f(b) : ''); };
 function cardPreview(type, it) {
   const m = x => str(x);
   let t = '';
@@ -1421,8 +1428,8 @@ function cardPreview(type, it) {
     case 'order': t = m(it.answer); break;
     case 'choice': t = m(it.es); break;
     case 'fix': t = m(it.wrong) + (m(it.correct) ? '　→ ' + m(it.correct) : ''); break;
-    case 'translate': t = m(it.es) + (m(it.answer) ? '　→ ' + m(it.answer) : ''); break;
-    case 'zh2es': t = m(it.zh); break;
+    case 'translate': return twoLines(it.es, it.answer);
+    case 'zh2es': return twoLines(it.zh, it.answer);
     case 'match': t = m(it.zh) + (m(it.es) ? '　＝ ' + m(it.es) : ''); break;
     case 'sentence': t = m(it.cue) + '　' + m(it.es); break;
   }
@@ -1432,7 +1439,7 @@ function cardPreview(type, it) {
 function cardHTML(sec, it, idx) {
   return `<div class="card ${it.enabled ? '' : 'off'} ${openCards.has(it.id) ? 'open' : ''}" data-sid="${sec.id}" data-iid="${it.id}">
     <div class="ch"><label class="chk"><input type="checkbox" data-act="toggleItem" ${it.enabled ? 'checked' : ''}> 第 ${idx + 1} 題</label>
-      <span class="cprev" data-act="toggleCard" title="點一下展開或收合">${esc(cardPreview(sec.type, it))}</span>
+      <span class="cprev${cardPreview(sec.type, it).includes('\n') ? ' two' : ''}" data-act="toggleCard" title="點一下展開或收合">${esc(cardPreview(sec.type, it))}</span>
       <span class="chbtns"><button class="tiny" data-act="swap">換一題</button><button class="tiny" data-act="del">刪除</button></span></div>
     <div class="issues"></div>
     <div class="cbody">
@@ -1456,13 +1463,13 @@ function secHTML(sec) {
 function gbHTML() {
   const g = state.grammarBox;
   return `<details ${g.points.length ? '' : 'open'}><summary>語法說明框（印在練習單最上面）</summary>
-    ${g.points.map((p, i) => `<div class="gbrow"><input data-m="grammarBox.points.${i}.pattern" value="${esc(p.pattern)}" placeholder="句型"><input data-m="grammarBox.points.${i}.es" value="${esc(p.es)}" placeholder="西文意思">${WE() ? `<input data-m="grammarBox.points.${i}.en" value="${esc(p.en || '')}" placeholder="English">` : ''}<input data-m="grammarBox.points.${i}.example" value="${esc(p.example)}" placeholder="例句"><button class="tiny" data-act="delGb" data-i="${i}">刪</button></div>`).join('')}
+    ${g.points.map((p, i) => `<div class="gbrow${WE() ? ' c4' : ''}"><input data-m="grammarBox.points.${i}.pattern" value="${esc(p.pattern)}" placeholder="句型"><input data-m="grammarBox.points.${i}.es" value="${esc(p.es)}" placeholder="西文意思">${WE() ? `<input data-m="grammarBox.points.${i}.en" value="${esc(p.en || '')}" placeholder="English">` : ''}<input data-m="grammarBox.points.${i}.example" value="${esc(p.example)}" placeholder="例句"><button class="tiny" data-act="delGb" data-i="${i}">刪</button></div>`).join('')}
     <div class="row"><button class="tiny" data-act="addGb">＋ 新增一條句型</button></div>
     ${fld('常見錯誤提醒（一句話）', `<input data-m="grammarBox.warning" value="${esc(g.warning)}">`)}
   </details>`;
 }
 function vocabRowHTML(v, i) {
-  return `<div class="gbrow" data-vi="${i}"><input data-v="zh" value="${esc(v.zh)}" placeholder="詞語（繁體）"><input data-v="es" value="${esc(v.es)}" placeholder="西文意思">${WE() ? `<input data-v="en" value="${esc(v.en || '')}" placeholder="English">` : ''}<span class="vpy" style="font-size:.84rem;color:var(--sub)">${esc(v.zh ? vPy(v.zh) : '')}${vStale(v) ? ' <b style="color:var(--warn)">西文待更新</b>' : ''}</span><button class="tiny" data-act="delVocab" data-i="${i}">刪</button></div>`;
+  return `<div class="gbrow${WE() ? ' c4' : ''}" data-vi="${i}"><input data-v="zh" value="${esc(v.zh)}" placeholder="詞語（繁體）"><input data-v="es" value="${esc(v.es)}" placeholder="西文意思">${WE() ? `<input data-v="en" value="${esc(v.en || '')}" placeholder="English">` : ''}<span class="vpy" style="font-size:.84rem;color:var(--sub)">${esc(v.zh ? vPy(v.zh) : '')}${vStale(v) ? ' <b style="color:var(--warn)">西文待更新</b>' : ''}</span><button class="tiny" data-act="delVocab" data-i="${i}">刪</button></div>`;
 }
 function vPy(z) { return pyLine(z).replace(/^./, c => c.toLowerCase()); }
 function vStale(v) { return !!(v.es && v.esSrc && v.esSrc !== v.zh); }
@@ -1473,9 +1480,22 @@ function vocabHTML() {
 }
 let staleSnap = [];
 function staleList() {
-  const out = [];
-  state.vocab.forEach(v => { if (vStale(v)) out.push({ zh: v.zh, apply: es => { v.es = es; v.esSrc = v.zh; } }); });
-  state.sections.forEach(sec => sec.items.forEach(it => { if (isStale(sec.type, it)) out.push({ zh: srcZh(sec.type, it), apply: es => { it[esKey(sec.type)] = es; stampEs(sec.type, it); } }); }));
+  const out = [], WEn = WE();
+  state.vocab.forEach(v => {
+    const nEs = vStale(v), nEn = WEn && !!str(v.zh) && (nEs || (!!str(v.es) && !str(v.en)));
+    if (nEs || nEn) out.push({ zh: str(v.zh), es: str(v.es), nEs, nEn, apply: (es, en) => { if (nEs && es) { v.es = es; v.esSrc = v.zh; } if (nEn && en) v.en = en; } });
+  });
+  state.sections.forEach(sec => sec.items.forEach(it => {
+    const t = sec.type, K = esKey(t), E = t === 'zh2es' ? 'answerEn' : 'en';
+    if (it[K] === undefined) return;   // 改錯題沒有西文
+    const nEs = isStale(t, it), nEn = WEn && (nEs || (!!str(it[K]) && !str(it[E])));
+    if (nEs || nEn) {
+      const ctx = srcZh(t, it) ?? (t === 'translate' ? it.answer : t === 'sentence' ? (it.answer || it.cue) : '');
+      out.push({ zh: str(ctx), es: str(it[K]), nEs, nEn, apply: (es, en) => { if (nEs && es) { it[K] = es; stampEs(t, it); } if (nEn && en) it[E] = en; } });
+    }
+    if (WEn && (t === 'translate' || t === 'zh2es') && str(it.vocab) && !str(it.vocabEn))
+      out.push({ zh: '', es: str(it.vocab), nEs: false, nEn: true, hint: true, apply: (es, en) => { if (en) it.vocabEn = en; } });
+  }));
   return out;
 }
 function renderCheck() {
@@ -1497,7 +1517,7 @@ function renderCheck() {
     <div id="vocabInner">${vocabHTML()}</div>
     <div id="staleNote"></div>
     <div class="swapbox" id="stalePanel" hidden>
-      <div>中文改過、西文還沒更新的句子：複製下面的指令貼給 AI，再把它回覆的結果貼回來。</div>
+      <div>中文改過、翻譯還沒更新，或缺英文的句子：複製下面的指令貼給 AI，再把它回覆的結果貼回來。</div>
       <div class="row" style="margin:6px 0"><button class="tiny" data-act="staleCopy">複製翻譯指令</button></div>
       <textarea rows="5" id="staleIn" placeholder="貼上 AI 回覆的 JSON 陣列"></textarea>
       <div class="row" style="margin:6px 0 0"><button class="primary tiny" data-act="staleApply">套用翻譯</button><button class="tiny" data-act="staleClose">關閉</button></div>
@@ -1523,7 +1543,11 @@ function refreshIssues() {
   if (el) el.innerHTML = (ps ? `<div class="n" style="margin-bottom:4px">${ps.names.map(n => `${esc(n)} ${ps.per[n]} 題`).join('・')}・<b>混合 ${ps.mixed} 題</b>（不含段落填空，共 ${ps.total} 題）</div>` : '') + `<div>共 <b>${total}</b> 分　<span class="n">${state.sections.filter(s => s.enabled).map(s => DEF[s.type].name + ' ' + countPoints(s)).join('・')}</span></div>
     <div>${cnt ? `<span style="color:var(--warn)">有 ${cnt} 個提醒，印之前請看一下</span>` : '<span class="n">檢查沒有發現問題</span>'}</div>`;
   const sn = $('#staleNote');
-  if (sn) { const n = staleList().length; sn.innerHTML = n ? `<div class="msg"><div class="bad">有 ${n} 句中文改過了，西文可能要更新。 <button class="tiny" data-act="staleOpen">更新翻譯</button></div></div>` : ''; }
+  if (sn) {
+    const sl = staleList(), a = sl.filter(x => x.nEs).length, b = sl.filter(x => x.nEn && !x.nEs).length;
+    const parts = [a ? `${a} 句中文改過了，西文要更新` : '', b ? `${b} 項缺英文` : ''].filter(Boolean).join('、');
+    sn.innerHTML = sl.length ? `<div class="msg"><div class="bad">有 ${sl.length} 項翻譯要處理（${parts}）。 <button class="tiny" data-act="staleOpen">更新翻譯</button></div></div>` : '';
+  }
   const gen = $('#importNotes');
   if (gen) gen.dataset.gen = JSON.stringify(v.general);
   let g = $('#genIssues'); if (!g && el) { g = document.createElement('div'); g.id = 'genIssues'; el.after(g); }
@@ -1536,7 +1560,7 @@ function refreshCard(card) {
   const sec = findSec(card.dataset.sid); const it = sec && sec.items.find(i => i.id === card.dataset.iid);
   if (!it) return;
   $('.derived', card).innerHTML = derivedHTML(sec.type, it);
-  const pv = $('.cprev', card); if (pv) pv.textContent = cardPreview(sec.type, it);
+  const pv = $('.cprev', card); if (pv) { pv.textContent = cardPreview(sec.type, it); pv.classList.toggle('two', pv.textContent.includes('\n')); }
   refreshIssues();
   const sh = $(`.sec[data-sid="${sec.id}"] .count`);
   if (sh) sh.textContent = sec.type === 'cloze' ? sec.items.reduce((a, i) => a + (i.enabled ? i.answers.length : 0), 0) + ' 空' : sec.items.filter(i => i.enabled).length + ' 題';
@@ -1596,8 +1620,24 @@ step2.addEventListener('click', async e => {
   if (act === 'staleClose') { $('#stalePanel').hidden = true; return; }
   if (act === 'staleCopy') {
     staleSnap = staleList();
-    const L = ['你是西班牙語和華語的翻譯。下面每一行是一句台灣華語，請翻成自然、準確的西班牙文。', '只回覆一個 JSON 陣列（每個元素是一句西班牙文的字串），順序和數量要跟下面完全一樣，前後不要加說明。', ''];
-    staleSnap.forEach((x, i) => L.push(`${i + 1}. ${x.zh}`));
+    const anyEn = staleSnap.some(x => x.nEn);
+    const L = [];
+    if (!anyEn) {
+      L.push('你是西班牙語和華語的翻譯。下面每一行是一句台灣華語，請翻成自然、準確的西班牙文。', '只回覆一個 JSON 陣列（每個元素是一句西班牙文的字串），順序和數量要跟下面完全一樣，前後不要加說明。', '');
+      staleSnap.forEach((x, i) => L.push(`${i + 1}. ${x.zh}`));
+    } else {
+      L.push('你是華語、西班牙語和英語的翻譯。下面每一項是要翻譯的內容，請依每項後面的「需要」，翻成自然、準確的西班牙文和英文。',
+        '有給「現有西文」的，英文意思必須和那句西文一致；「中文（參考）」只是幫助你理解語境。',
+        '只回覆一個 JSON 陣列，每個元素是 {"es": "…", "en": "…"}，順序和數量要跟下面完全一樣，前後不要加說明。不需要的欄位請寫空字串 ""。', '');
+      staleSnap.forEach((x, i) => {
+        let line;
+        if (x.hint) line = `西文提示詞：${x.es}　→　需要：英文（提示詞，保持簡短）`;
+        else if (x.nEs && x.nEn) line = `中文：${x.zh}　→　需要：西文＋英文`;
+        else if (x.nEs) line = `中文：${x.zh}　→　需要：西文（英文寫 ""）`;
+        else line = (x.zh ? `中文（參考）：${x.zh}　` : '') + `現有西文：${x.es}　→　需要：英文（西文寫 ""）`;
+        L.push(`${i + 1}. ${line}`);
+      });
+    }
     const ok = await copyText(L.join('\n')); return toast(ok ? '已複製，貼給 AI 就可以了' : '無法自動複製');
   }
   if (act === 'staleApply') {
@@ -1608,7 +1648,7 @@ step2.addEventListener('click', async e => {
       const arr = JSON.parse(txt.slice(a, z + 1).replace(/,\s*]/g, ']'));
       if (!staleSnap.length) staleSnap = staleList();
       if (!Array.isArray(arr) || arr.length !== staleSnap.length) throw new Error(`要有 ${staleSnap.length} 句翻譯，但這裡有 ${Array.isArray(arr) ? arr.length : 0} 句。請確認順序和數量。`);
-      arr.forEach((e, i) => staleSnap[i].apply(str(e)));
+      arr.forEach((e, i) => { const o = (e && typeof e === 'object') ? e : { es: e, en: '' }; staleSnap[i].apply(str(o.es), str(o.en)); });
       staleSnap = []; save(); $('#staleIn').value = ''; renderCheck(); toast('已更新翻譯');
     } catch (err) { msg.innerHTML = '<div class="bad">' + esc(err.message) + '</div>'; }
     return;
