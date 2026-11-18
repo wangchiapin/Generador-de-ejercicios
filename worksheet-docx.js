@@ -223,14 +223,6 @@
         body += table(w, g.points.filter(p => p.pattern).map(p => cell(w[0], para(run(p.pattern, { sz: 9.6, b: true }), { after: 0 })) + cell(w[1], para(run(S_X.gbTr(p), { sz: 9.6 }), { after: 0 })) + cell(w[2], para(run(p.example, { sz: 11 }), { after: 0 }))), { border: true });
         if (g.warning) body += para(run(g.warning, { sz: 9.2, color: MID }), { after: sp(3) });
       }
-      if (o.vocab && S.vocab.some(v => v.zh)) {
-        const vs = S.vocab.filter(v => v.zh);
-        const w = o.vocabPy ? [Math.round(CW * .26), Math.round(CW * .3), CW - Math.round(CW * .26) - Math.round(CW * .3)] : [Math.round(CW * .4), CW - Math.round(CW * .4)];
-        body += para(run(S_X.PL().voc, { sz: 10, b: true }), { keepNext: true, after: sp(1) });
-        body += table(w, vs.map(v => cell(w[0], para(run(v.zh, { sz: 11 }), { after: 0 }), { bb: 'DDDDDD' }) +
-          (o.vocabPy ? cell(w[1], para(run(S_vPy(v.zh), { sz: 9, color: GRAY }), { after: 0 }), { bb: 'DDDDDD' }) : '') +
-          cell(w[w.length - 1], para(run(S_X.vTr(v), { sz: 9.6 }), { after: 0 }), { bb: 'DDDDDD' })), { border: true });
-      }
       secs.forEach((s, i) => { body += sectionStudent(s, i); });
     }
     if (o.print !== 'student') {
@@ -239,6 +231,16 @@
       secs.forEach((s, i) => { body += sectionKey(s, i); });
       if (S_isMulti()) { const st = S_pointStats(); body += para(run(`語法點分布（不含段落填空）：${st.names.map(n => `${n} ${st.per[n]} 題`).join('、')}；混合題 ${st.mixed} 題 / 共 ${st.total} 題。`, { sz: 9, color: MID }), { before: sp(3) }); }
       if (o.teacherNote) body += para(run(`全部 ${total} 分，每題 1 分。西翻中、排序的答案不只一種時，語序正確、使用指定句型即可給分。`, { sz: 9, color: MID }), { box: true, before: sp(3) });
+    }
+
+    if (o.vocab && S.vocab.some(v => v.zh)) {
+      const vs = S.vocab.filter(v => v.zh);
+      const w = o.vocabPy ? [Math.round(CW * .26), Math.round(CW * .3), CW - Math.round(CW * .26) - Math.round(CW * .3)] : [Math.round(CW * .4), CW - Math.round(CW * .4)];
+      body += para(run(S_X.PL().voc, { sz: 19 }), { bb: 'thick', pbb: true, after: sp(1), line: 300 });
+      body += para(run(title, { sz: 9.5, color: GRAY }), { after: sp(2) });
+      body += table(w, vs.map(v => cell(w[0], para(run(v.zh, { sz: 11 }), { after: 0 }), { bb: 'DDDDDD' }) +
+        (o.vocabPy ? cell(w[1], para(run(S_vPy(v.zh), { sz: 9, color: GRAY }), { after: 0 }), { bb: 'DDDDDD' }) : '') +
+        cell(w[w.length - 1], para(run(S_X.vTr(v), { sz: 9.6 }), { after: 0 }), { bb: 'DDDDDD' })), { border: true });
     }
 
     const NS = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"';

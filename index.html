@@ -209,6 +209,7 @@ summary{cursor:pointer;color:var(--accent);font-size:.86rem}
 .s-answer{break-before:page;page-break-before:always}
 .s-answer.pg{margin-top:16mm;padding-top:10mm;border-top:3px double #bbb;position:relative}
 .s-answer.pg::before{content:'↓ 答案頁（列印時會自動另起一頁）';position:absolute;top:-4.2mm;left:50%;transform:translateX(-50%);background:#fff;padding:0 4mm;font-size:calc(8.5pt*var(--k,1));color:#999;letter-spacing:.08em;white-space:nowrap}
+.s-vpage.pg::before{content:'↓ 生詞頁（列印時會自動另起一頁）'}
 .s-sec.pb{break-before:page;page-break-before:always;position:relative}
 .s-sec.pb::before{content:'換頁';position:absolute;top:-3mm;left:0;right:0;border-top:1px dashed #b48a5a;color:#b48a5a;font-size:8pt;text-align:center;line-height:0}
 .pv-gap{display:block;position:relative;border-bottom:0;margin:0 -12mm;background:repeating-linear-gradient(135deg,#f1eee8,#f1eee8 6px,#e8e4dc 6px,#e8e4dc 12px)}
@@ -1728,12 +1729,12 @@ function renderOut() {
       <label>練習單文字
         <select data-m="opts.script"><option value="trad" ${o.script !== 'simp' ? 'selected' : ''}>繁體</option><option value="simp" ${o.script === 'simp' ? 'selected' : ''}>簡體（台灣用字）</option></select></label>
     </div></div>
-    <details class="errdet advdet"><summary>進階設定：內容、答案頁加註、紙張、頁尾、匯出句子庫</summary>
+    <details class="errdet advdet"><summary>進階設定：內容、答案頁加註、紙張、頁尾</summary>
     <div class="optgrp"><h3>內容</h3><div class="opts">
       ${chk('cueEs', '練習頁顯示西文提示')}
       ${chk('keyEs', '答案頁顯示西文翻譯')}
       ${chk('teacherNote', '答案頁附老師備註')}
-      ${chk('vocab', '練習頁印生詞表')}
+      ${chk('vocab', '印生詞表（放在最後，單獨一頁）')}
       ${chk('vocabPy', '生詞表附拼音')}
     </div></div>
     <div class="optgrp"><h3>答案頁加註</h3><div class="opts">
@@ -1749,10 +1750,6 @@ function renderOut() {
         <select data-m="opts.paper"><option ${o.paper === 'A4' ? 'selected' : ''}>A4</option><option ${o.paper === 'Letter' ? 'selected' : ''}>Letter</option></select></label>
     </div>
     <div class="fld" style="max-width:420px"><label>每頁底部的文字</label><input data-m="meta.footer" value="${esc(state.meta.footer)}"></div></div>
-    <div class="row">
-      <button class="quiet" id="btnExpJson">匯出句子庫 JSON</button>
-      <button class="quiet" id="btnExpCsv">匯出句子庫 CSV</button>
-    </div>
     </details>
     <details><summary>讀音修正表</summary>
       <p class="hint">拼音是電腦自動轉的：先用拼音函式庫（含台灣讀音例外表），再依 <b>GoodTeacher</b> 的多音字規則校正（和 corre、字體同一份資料）。<span id="gtState"></span>遇到不對的讀音可以在這裡改，<b>改過的優先於 GoodTeacher</b>，之後都會記住。每行一個：<code>詞=拼音</code>（每個字一個音節，用空格分開）。聲調可以寫符號，也可以寫數字：<code>垃圾=lè sè</code> 和 <code>垃圾=le4 se4</code> 一樣；輕聲寫 5，ü 寫 v（<code>女=nv3</code>）。</p>
@@ -1847,8 +1844,6 @@ $('#step3').addEventListener('click', e => {
     }
     hwDoPublish(set);
   }
-  if (e.target.id === 'btnExpJson') download(`${safeName()}-sentences.json`, JSON.stringify(allSentences(), null, 2), 'application/json;charset=utf-8');
-  if (e.target.id === 'btnExpCsv') download(`${safeName()}-sentences.csv`, toCSV(allSentences()), 'text/csv;charset=utf-8');
 });
 function safeName() { return (state.meta.grammar || state.meta.title || 'worksheet').replace(/[\\/:*?"<>|\s]+/g, '_').slice(0, 30); }
 
@@ -2008,9 +2003,6 @@ function buildSheetHTMLRaw() {
     if (g.points.some(p => p.pattern)) {
       h += `<div class="s-box"><h3>${PLX().recall}</h3><table>${g.points.filter(p => p.pattern).map(p => `<tr><td class="p">${esc(p.pattern)}</td><td>${esc(gbTr(p))}</td><td class="x">${esc(p.example)}</td></tr>`).join('')}</table>${g.warning ? `<div class="s-warn">${esc(g.warning)}</div>` : ''}</div>`;
     }
-    if (o.vocab && state.vocab.some(v => v.zh)) {
-      h += `<div class="s-box"><h3>${PLX().voc}</h3><table class="s-vt">${state.vocab.filter(v => v.zh).map(v => `<tr><td class="x">${esc(v.zh)}</td>${o.vocabPy ? `<td class="py">${esc(vPy(v.zh))}</td>` : ''}<td>${esc(vTr(v))}</td></tr>`).join('')}</table></div>`;
-    }
     secs.forEach((s, i) => { h += sectionStudent(s, i); });
   }
   if (o.print !== 'student') {
@@ -2020,33 +2012,10 @@ function buildSheetHTMLRaw() {
     if (o.teacherNote) h += `<div class="s-teacher">全部 ${total} 分，每題 1 分。西翻中、排序的答案不只一種時，語序正確、使用指定句型即可給分。</div>`;
     h += '</div>';
   }
-  return h;
-}
-
-/* ---- 句子庫匯出 ---- */
-function allSentences() {
-  const out = []; const m = state.meta;
-  let curPts = '';
-  const push = (type, trad, es) => {
-    if (!str(trad)) return;
-    out.push({ points: curPts, grammar: m.grammar || m.title, level: m.level, type, trad, simp: toSimp(trad), pinyin: pyLine(trad), zhuyin: zyLine(trad), es: es || '' });
-  };
-  for (const sec of state.sections) {
-    if (!sec.enabled) continue;
-    for (const it of sec.items) {
-      if (!it.enabled) continue;
-      curPts = (it.points || []).join('＋');
-      if (sec.type === 'cloze') { answerSentence('cloze', it).split(/(?<=[。！？])/).forEach(s => push('cloze', s.trim(), '')); }
-      else push(sec.type, answerSentence(sec.type, it), sec.type === 'zh2es' ? it.answer : (it.es || ''));
-    }
+  if (o.vocab && state.vocab.some(v => v.zh)) {
+    h += `<div class="s-answer s-vpage pg"><div class="s-top"><h1 style="font-size:calc(19pt*var(--k,1))">${PLX().voc}</h1><div class="s-sub">${esc(title)}</div></div><div class="s-box" style="margin-top:4mm"><table class="s-vt">${state.vocab.filter(v => v.zh).map(v => `<tr><td class="x">${esc(v.zh)}</td>${o.vocabPy ? `<td class="py">${esc(vPy(v.zh))}</td>` : ''}<td>${esc(vTr(v))}</td></tr>`).join('')}</table></div></div>`;
   }
-  out.forEach((r, i) => r.id = i + 1);
-  return out;
-}
-function toCSV(rows) {
-  const cols = ['id', 'grammar', 'level', 'type', 'trad', 'simp', 'pinyin', 'zhuyin', 'es', 'points'];
-  const q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
-  return '﻿' + [cols.join(',')].concat(rows.map(r => cols.map(c => q(r[c])).join(','))).join('\r\n');
+  return h;
 }
 
 /* =====================================================================
