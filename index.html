@@ -124,6 +124,14 @@ summary{cursor:pointer;color:var(--accent);font-size:.86rem}
 .opts{display:grid;grid-template-columns:1fr 1fr;gap:6px 24px;margin:12px 0}
 .opts label{display:flex;gap:8px;align-items:center;font-size:.9rem}
 .opts select{width:auto}
+.srclabel{font-size:1rem!important;color:var(--ink)!important;font-weight:500}
+.srcpick{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:6px 0 10px}
+.srcpick label{position:relative;display:flex;align-items:center;justify-content:center;text-align:center;gap:10px;padding:14px 16px;font-size:1.1rem;border:2px solid var(--ink);background:#fff;color:var(--ink);cursor:pointer}
+.srcpick label:hover{background:#ece8df}
+.srcpick label:has(input:checked){background:var(--ink);color:#fff;font-weight:500}
+.srcpick label:has(input:focus-visible){outline:2px solid var(--ink);outline-offset:2px}
+.srcpick input{position:absolute;opacity:0;pointer-events:none}
+@media(max-width:640px){.srcpick{gap:8px}.srcpick label{padding:12px 8px;font-size:.95rem;line-height:1.4}}
 .previewWrap{margin:22px 0 0;border:1px solid var(--line);background:var(--paper);padding:20px}
 .previewNote{color:var(--sub);font-size:.78rem;margin:6px 0 0}
 
@@ -277,8 +285,8 @@ details.errdet,details.metadet{margin:10px 0}
     <div class="panel">
     <h2><span class="no">①</span>設定，複製出題指令</h2>
     <p class="hint">填好語法點，複製指令，貼給任何 AI（Claude、ChatGPT、Gemini 都可以）。AI 回覆之後，把整段貼回下面。</p>
-    <div class="fld"><label>出題依據</label>
-      <div class="opts" style="margin:4px 0 0"><label><input type="radio" name="fSource" value="points"> 語法點（自己填）</label><label><input type="radio" name="fSource" value="slides"> 今天的簡報（附給 AI，由 AI 整理單字和文法）</label></div></div>
+    <div class="fld"><label class="srclabel">出題依據</label>
+      <div class="srcpick"><label><input type="radio" name="fSource" value="points"> 語法點（自己填）</label><label><input type="radio" name="fSource" value="slides"> 今天的簡報（附給 AI，由 AI 整理單字和文法）</label></div></div>
     <div class="fld" id="slideFld" hidden>
       <p class="hint" style="margin:0 0 6px">把簡報<b>轉成 PDF 再上傳</b>給 AI 最穩（pptx 有些 AI 讀不完整，圖片裡的字也可能漏掉）。AI 不能讀檔案時，把簡報的文字貼在下面，會一起放進指令。</p>
       <label>簡報文字（選填）</label><textarea id="fSlideText" rows="5" placeholder="可以留空，直接把簡報檔和指令一起交給 AI"></textarea></div>
