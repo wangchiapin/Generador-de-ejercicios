@@ -18,11 +18,11 @@ body{margin:0;background:var(--bg);color:var(--ink);
   font-family:"Noto Sans TC","PingFang TC","Hiragino Sans TC","Microsoft JhengHei",system-ui,sans-serif;
   letter-spacing:.02em;line-height:1.7;-webkit-font-smoothing:antialiased}
 header.bar{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;
-  max-width:900px;margin:0 auto;padding:36px 24px 14px;border-bottom:1px solid var(--line)}
+  max-width:none;margin:0 auto;padding:36px 24px 14px;border-bottom:1px solid var(--line)}
 header.bar h1{margin:0;font-size:1.35rem;font-weight:500;letter-spacing:.08em}
 header.bar .sub{color:var(--sub);font-size:.8rem;margin-top:2px}
 header.bar a{color:var(--accent);font-size:.86rem}
-main{max-width:900px;margin:0 auto;padding:8px 24px 80px}
+main{max-width:none;margin:0 auto;padding:8px 24px 80px}
 h2{font-size:1.05rem;font-weight:500;letter-spacing:.06em;margin:32px 0 6px}
 p.hint,div.hint{color:var(--sub);font-size:.86rem;margin:2px 0 14px}
 hr{border:0;border-top:1px solid var(--line);margin:34px 0 6px}
@@ -69,13 +69,13 @@ input[type=checkbox]{accent-color:#333;width:auto}
 details{margin:6px 0}
 summary{cursor:pointer;color:var(--accent);font-size:.86rem}
 
-.sitebar{max-width:900px;margin:0 auto;padding:14px 24px 0;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.sitebar{max-width:none;margin:0 auto;padding:14px 24px 0;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .sitetabs{display:flex;gap:22px;flex-wrap:wrap}
 .sitetabs a{color:var(--sub);text-decoration:none;font-size:.9rem;letter-spacing:.06em;padding:4px 0;border-bottom:3px solid transparent}
 .sitetabs a.on{color:var(--ink);border-bottom-color:var(--ink);font-weight:500}
 .siteauth{display:flex;align-items:center;gap:8px;font-size:.8rem;color:var(--sub)}
 @media(max-width:640px){.sitebar{padding:12px 16px 0}.sitetabs{gap:16px}header.bar{padding:22px 16px 10px}main{padding:8px 16px 80px}}
-.tabs{display:flex;gap:26px;max-width:900px;margin:0 auto;padding:0 24px;border-bottom:1px solid var(--line)}
+.tabs{display:flex;gap:26px;max-width:none;margin:0 auto;padding:0 24px;border-bottom:1px solid var(--line)}
 .tabs button{border:0;border-bottom:2px solid transparent;padding:10px 0;color:var(--sub);background:none;font-size:.95rem}
 .tabs button:hover{background:none}
 .tabs button.on{color:var(--ink);border-bottom-color:var(--ink);font-weight:500}
