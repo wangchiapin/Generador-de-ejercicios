@@ -303,7 +303,7 @@ details.errdet,details.metadet{margin:10px 0}
     <div class="fld"><label>各題型要幾題（填 0 就不出這一種；段落填空的數字是空格數）</label></div>
     <div class="counts" id="counts"></div>
     <div class="fld"><label class="chk"><input type="checkbox" id="fWantEn"> 也要英文翻譯（每題多一個英文欄位；之後列印可選英文版，發給英文學生看英文）</label></div>
-    <div class="fld" style="max-width:260px"><label>生詞表要幾個（0 = 不要；印在練習單最上面，附拼音和西文）</label><input type="number" id="fVocabN" min="0" max="40"></div>
+    <div class="fld"><label>生詞表要幾個（0 = 不要；印在練習單最上面，附拼音和西文）</label><input type="number" id="fVocabN" min="0" max="40" style="max-width:260px"></div>
     <div class="fld"><label>西語學生常錯的地方（選填）</label><div class="errbox" id="errBox"></div></div>
     </details>
     <div class="row">
@@ -640,7 +640,7 @@ const LEVEL_ES = { '入門': 'Nivel introductorio', '初級': 'Nivel inicial', '
 
 function newState() {
   return {
-    meta: { source: 'points', slideText: '', grammar: '', points: ['', '', ''], mix: 50, level: '初級', theme: '生活情境', title: '', titleEn: '', wantEn: false, subtitle: '', footer: '每天一分鐘 · Un minuto al día' },
+    meta: { source: 'points', slideText: '', grammar: '', points: ['', '', ''], mix: 50, level: '初級', theme: '生活情境', title: '', titleEn: '', wantEn: true, subtitle: '', footer: '每天一分鐘 · Un minuto al día' },
     counts: { fill: 6, cloze: 5, order: 5, choice: 5, fix: 5, translate: 5, zh2es: 0, match: 0, sentence: 0, vocab: 0 },
     grammarBox: { points: [], warning: '' },
     vocab: [],
