@@ -255,7 +255,7 @@ details.errdet,details.metadet{margin:10px 0}
 .between{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
 .pjmodal{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:60;display:flex;align-items:flex-start;justify-content:center;padding:6vh 16px;overflow:auto}
 .pjmodal[hidden]{display:none}
-.pjbox2{background:var(--paper);border:1px solid var(--line);width:100%;max-width:640px;padding:6px 20px 18px;box-shadow:0 10px 30px rgba(0,0,0,.2)}
+.pjbox2{background:var(--paper);border:1px solid var(--line);width:100%;max-width:920px;padding:6px 20px 18px;box-shadow:0 10px 30px rgba(0,0,0,.2)}
 .pjbox{border:1px solid var(--line);background:#fff;padding:10px 14px;margin:10px 0}
 .pjitem{border:1px solid var(--line);background:#fff;margin:8px 0;padding:8px 14px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center}
 .pjitem b{font-weight:500}
@@ -2150,7 +2150,7 @@ function renderPj() {
   const list = PL.filter(e => !q || (e.name + ' ' + e.grammar).toLowerCase().includes(q)).sort((a, b) => (b.upd || b.ts) - (a.upd || a.ts));
   $('#pjList').innerHTML = list.length ? list.map(e => `
     <div class="pjitem" data-id="${esc(e.id)}">
-      <div><b>${esc(e.name)}</b><small>${esc(pjFmt(e.upd || e.ts))}　${e.count || 0} 分</small>${pjCloud.user && !pjSynced.has(e.id) ? '<span class="pjtag">僅本機</span>' : ''}${e.id === currentPid ? '<span class="pjtag">目前開啟</span>' : ''}</div>
+      <div><b>${esc(e.name)}</b><small>${esc(pjFmt(e.upd || e.ts))}</small>${pjCloud.user && !pjSynced.has(e.id) ? '<span class="pjtag">僅本機</span>' : ''}${e.id === currentPid ? '<span class="pjtag">目前開啟</span>' : ''}</div>
       <div class="row" style="margin:0"><button class="tiny" data-a="open">開啟</button><button class="tiny" data-a="over">用目前這份覆蓋</button><button class="tiny" data-a="del">刪除</button></div>
     </div>`).join('') : `<p class="hint">${PL.length ? '沒有符合的練習單。' : '清單還是空的。'}</p>`;
   const pct = Math.round(JSON.stringify(PL).length * 2 / (5 * 1024 * 1024) * 100);
@@ -2233,21 +2233,40 @@ document.addEventListener('input', e => { if (e.target.id === 'pjName') pjNameVa
 function pjSaveCurrent() {
   if (!state.sections.length) { toast('目前還沒有題目可以存'); return; }
   const now = Date.now(), nm = pjNameVal.trim(), cur = PL.find(x => x.id === currentPid);
-  let item, isNew = false;
+  let item, isNew = false, localFull = false, revert = null;
   if (cur && (!nm || nm === cur.name)) {
     const old = { state: cur.state, upd: cur.upd, grammar: cur.grammar, count: cur.count };
     cur.state = JSON.parse(JSON.stringify(state)); cur.upd = now; cur.grammar = state.meta.grammar || ''; cur.count = pjCount(state);
-    if (!lsSetOk(PJ.list, PL)) { Object.assign(cur, old); toast('瀏覽器空間不夠了，請先刪掉不用的，或登入同步後再刪'); return; }
+    revert = () => Object.assign(cur, old);
+    if (!lsSetOk(PJ.list, PL)) {
+      if (!pjCloud.user) { revert(); toast('瀏覽器空間不夠了，請先刪掉不用的，或登入同步後再刪'); return; }
+      localFull = true;   // 已登入：本機存不下，改直接存雲端
+    }
     item = cur;
   } else {
     item = { id: 'p' + now.toString(36) + Math.random().toString(36).slice(2, 5), ts: now, upd: now,
       name: nm || state.meta.grammar || state.meta.title || '未命名練習單', grammar: state.meta.grammar || '',
       count: pjCount(state), state: JSON.parse(JSON.stringify(state)) };
     PL.unshift(item); isNew = true;
-    if (!lsSetOk(PJ.list, PL)) { PL.shift(); toast('瀏覽器空間不夠了，請先刪掉不用的，或登入同步後再刪'); return; }
+    revert = () => { PL = PL.filter(x => x !== item); };
+    if (!lsSetOk(PJ.list, PL)) {
+      if (!pjCloud.user) { revert(); toast('瀏覽器空間不夠了，請先刪掉不用的，或登入同步後再刪'); return; }
+      localFull = true;
+    }
   }
   currentPid = item.id; pjNameVal = item.name; const inp = $('#pjName'); if (inp) inp.value = item.name;
+  if (localFull) { pjCloudOnly(item, revert); return; }
   renderPj(); toast(isNew ? '已存檔「' + item.name + '」' : '已更新「' + item.name + '」'); pjPut(item);
+}
+/* 本機空間滿了但已登入：直接存到雲端；雲端也失敗才算沒存成功並還原 */
+async function pjCloudOnly(item, revert) {
+  try {
+    await pjAdapter.put(toRemote(item)); pjSynced.add(item.id); pjSaveSynced(); renderPj();
+    toast('本機空間不足，已直接存到雲端「' + item.name + '」。建議之後清理這台瀏覽器的網站資料');
+  } catch (err) {
+    revert(); if (!PL.some(x => x.id === currentPid)) currentPid = null; renderPj();
+    toast(pjErr(err) + '；本機空間也不夠，這次沒有存成功');
+  }
 }
 $('#pjList').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b || !b.dataset.a) return;
