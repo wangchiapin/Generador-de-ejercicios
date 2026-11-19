@@ -69,10 +69,20 @@
       var ex=p.ex.slice(0,3).map(function(e){return e.c}).join('／');
       lines.push('  〔'+t+'〕（第 '+p.b+' 冊第 '+p.l+' 課）說明：'+p.d.tc+(ex?' 教材例句：'+ex:''));
     });
-    return lines.length? '- 語法點參考資料（來自《當代中文課程》，用來掌握這個語法點在教材裡的用法範圍，不必照抄）：\n'+lines.join('\n') : '';
+    return lines.length? '- 語法點參考資料（來自《當代中文課程》，只用來掌握這個語法點的用法範圍。下面的教材例句只是參考，題目要自己新造句子，不要照抄；直接用教材例句的題目，整份最多佔 40%）：\n'+lines.join('\n') : '';
+  }
+  /* 回傳這些語法點在教材裡的全部例句（純文字陣列），給「疑似照抄」檢查用 */
+  function examples(titles){
+    var g=G(), out=[]; if(!g) return out;
+    (titles||[]).forEach(function(t){
+      t=String(t||'').trim(); if(!t) return;
+      for(var i=0;i<g.points.length;i++){ if(g.points[i].t.tc===t){ g.points[i].ex.forEach(function(e){ if(e&&e.c) out.push(String(e.c)); }); break; } }
+    });
+    return out;
   }
   window.GrammarPicker={
     ref:ref,
+    examples:examples,
     attach:function(box,selector){
       box.addEventListener('input',function(e){ if(e.target.matches(selector)) show(e.target); });
       box.addEventListener('focusin',function(e){ if(e.target.matches(selector) && e.target.value.trim()) show(e.target); });

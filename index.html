@@ -304,7 +304,7 @@ details.errdet,details.metadet{margin:10px 0}
         <select id="fLevel"><option>入門</option><option selected>初級</option><option>初中級</option><option>中級</option><option>中高級</option></select></div>
     </div>
     <div class="fld" id="mixFld" hidden><label>混合題比例（每題型中，同一句要同時用到 2 個以上語法點的題目至少佔多少）</label>
-      <select id="fMix"><option value="30">至少 30%</option><option value="50">至少 50%（建議）</option><option value="70">至少 70%</option><option value="100">全部都要混合</option></select></div>
+      <select id="fMix"><option value="30">目標 30%</option><option value="50">目標 50%（建議）</option><option value="70">目標 70%</option><option value="100">盡量全部混合</option></select></div>
     <div class="fld"><label>段落填空的主題</label><input id="fTheme" placeholder="例如：生活情境（點餐、問路、介紹家人）"></div>
     <details class="errdet advdet"><summary>進階：題數、生詞表、英文翻譯、常錯的地方</summary>
     <div class="fld"><label>各題型要幾題（填 0 就不出這一種；段落填空的數字是空格數）</label></div>
@@ -985,6 +985,7 @@ function withPoints(sk, n) {
   if (sk.startsWith('"cloze"')) return sk.replace('"cloze": {', `"cloze": {"points": ${tags}, `);
   return sk.replace('"items": [{', `"items": [{"points": ${tags}, `);
 }
+const REUSE_MAX = 40;   // 整份練習單中，直接用教材／簡報例句的題目比例上限（%）
 function mixNeed(n) { return Math.ceil(n * (+state.meta.mix || 50) / 100); }
 function setErrorsFor(g, v) { const m = lsGet(LS.errors, {}); if (v.trim()) m[g] = v; else delete m[g]; lsSet(LS.errors, m); }
 
@@ -1006,7 +1007,7 @@ function buildPrompt() {
   L.push('');
   L.push('【基本條件】');
   if (slides) {
-    L.push('- 內容依據：只用簡報裡出現的生詞、句型和例句出題；簡報沒教過的生詞不要放進句子（必要時放在提示詞裡）。');
+    L.push('- 內容依據：生詞和句型的範圍以簡報為準（簡報沒教過的生詞不要放進句子，必要時放在提示詞裡）；但句子要自己新造，簡報的例句只是參考（見【新句規則】）。');
     if (multi) pointsList().forEach((p, i) => L.push(`- 只針對這個語法點出題（簡報裡其他語法點略過）${i + 1}：${p}（標記名稱：「${tn[i]}」）`));
     else if (pointsList().length) L.push(`- 只針對這個語法點出題（簡報裡其他語法點略過）：${m.grammar}`);
     else L.push('- 語法點：請從簡報裡找出今天教的語法點（最多 3 個），整理進 grammar_box，出題以這些語法點為主。');
@@ -1022,6 +1023,14 @@ function buildPrompt() {
   if (m.wantEn) L.push('- 英文翻譯（很重要）：所有有 es（西班牙文）的地方，都要多加一個 en 欄位，放自然的英文翻譯，意思必須和 es 一樣、一樣能把答案限定成唯一。另外：中翻西 zh2es 要加 answer_en（標準英文翻譯，answer 仍是西班牙文）；西翻中 translate 和 zh2es 的 vocab 要再加 vocab_en（關鍵詞，中文＋英文，用 · 隔開）；grammar_box 每條句型加 en；最外層 vocab 每個詞加 en；最外層加 title_en（「語法點 · English title」）。');
   L.push('- 同一份練習單裡，句子的主題和用字不要重複。');
   L.push('');
+  L.push('【新句規則（很重要）】');
+  L.push('- 教材或簡報裡的例句，只是讓你了解這個語法點的用法範圍，不是題庫。');
+  L.push(`- 整份練習單裡，「直接使用、或只改一兩個字的教材／簡報例句」最多佔全部題目的 ${REUSE_MAX}%；其餘至少 ${100 - REUSE_MAX}% 的題目，句子要你自己新造。`);
+  L.push('- 新造的句子要換場景（例如：家裡、公司、餐廳、捷運、手機、學校）、換主詞、換生詞，不要每題都長得像例句。');
+  L.push('- 新句子只能用這個程度學過的字詞；生詞表或簡報裡的生詞可以重複使用，但句子要換。');
+  L.push('- 改錯題的錯句、選擇題的干擾項，也要用新句子；錯的地方要是西班牙語學生真的會犯的錯。');
+  L.push(`- 輸出前先數一次：直接用教材例句的題目有幾題？超過 ${REUSE_MAX}% 就換成新造的句子。`);
+  L.push('');
   L.push('【西班牙語學生常犯的錯（設計干擾項、改錯題時優先使用）】');
   L.push(errs);
   L.push('');
@@ -1030,20 +1039,22 @@ function buildPrompt() {
   if (multi) {
     L.push('');
     L.push('【綜合練習的規則（很重要）】');
-    L.push(`- 每一題（包含每一個 items 裡的題目、以及 cloze）都要加 "points" 欄位，是一個陣列，寫出這一題用到的語法點；名稱必須完全使用：${tn.map(t => '「' + t + '」').join('、')}。`);
-    L.push(`- 混合題：每一個題型（cloze 除外）裡，至少 ${state.meta.mix}% 的題目，必須「同一個句子裡同時用到 2 個以上的語法點」，且這種題的 points 要列出所有用到的語法點。例如「他跑得比我快。」同時用到「${tn[0]}」和「${tn[1]}」。`);
-    L.push('- 混合題要自然，不要為了湊語法點而硬塞；句子必須是台灣人真的會說的話。');
-    L.push(`- 每個語法點出現的題數要接近（至少都要出現在 30% 以上的題目裡），不要偏向某一個。`);
+    L.push(`- 每一題（包含每一個 items 裡的題目、以及 cloze）都要加 "points" 欄位，是一個陣列，寫出這一題真正用到的語法點；名稱必須完全使用：${tn.map(t => '「' + t + '」').join('、')}。`);
+    L.push('- 先在心裡做這件事（不用輸出）：這幾個語法點，哪些組合可以自然地放進同一個句子？只用「能自然共用」的組合出混合題；湊不出自然句子的組合，就不要硬合。');
+    L.push(`- 混合題目標：每個題型（cloze 除外）盡量讓 ${state.meta.mix}% 左右的題目是混合題（同一個句子同時用到 2 個以上語法點，points 列出全部）。這只是目標，不是硬規定：如果湊不出自然的句子，就改出單一語法點的題，混合題少一點沒關係。`);
+    L.push('- 判斷混合題「自然」的標準：① 台灣人真的會這樣說嗎？② 每個語法點在句子裡都有自己的作用，不是為了湊而硬塞嗎？③ 意思有沒有矛盾或奇怪？④ 答案還是只有一個嗎？有任何一項不確定，就不要出成混合題。');
+    L.push(`- 好的混合句例子（只示範標準，不一定是這次的語法點）：「他跑得比我快。」，同時用到「${tn[0]}」和「${tn[1]}」。不好的例子：為了湊語法點而讓文法不通、或意思變奇怪的句子，例如「他比我跑得一樣快。」（比和一樣不能同時用）。`);
+    L.push('- 每個語法點出現的題數要接近（至少都要出現在 30% 以上的題目裡），不要偏向某一個。');
     L.push('- 選擇題、改錯題的錯誤，可以是「把兩個語法點的規則搞混」造成的錯（例如該用 A 卻用了 B 的位置）。');
-    L.push('- 段落填空 cloze：一段短文要同時用到所有語法點，points 放全部的標記名稱。');
-    L.push(`- grammar_box：每個語法點各 2～3 條句型（pattern 句型、es 西班牙文意思、example 例句），並至少有 1 條是「混合使用」的句型；warning 一句常見錯誤提醒（用 ✗ 和 ✓ 表示）。`);
+    L.push('- 段落填空 cloze：一段短文盡量用到所有語法點，但要自然；湊不進去的就算了，points 只放實際用到的標記名稱。');
+    L.push(`- grammar_box：每個語法點各 2～3 條句型（pattern 句型、es 西班牙文意思、example 例句）；如果有自然的混合用法，再加 1 條「混合使用」的句型；warning 一句常見錯誤提醒（用 ✗ 和 ✓ 表示）。`);
   } else {
     L.push('- 另外請提供 grammar_box：3～5 條句型（pattern 句型、es 西班牙文意思、example 例句），以及 warning（一句常見錯誤的提醒，用 ✗ 和 ✓ 表示）。');
   }
   L.push('');
   if (slides && str(m.slideText)) { L.push(''); L.push('【簡報內容（文字）】'); L.push(str(m.slideText)); }
   L.push('');
-  L.push('【輸出前自我檢查】逐題確認：答案真的正確嗎？中文自然嗎？有沒有第二個合理答案？有問題就先改掉再輸出。');
+  L.push(`【輸出前自我檢查】逐題確認：答案真的正確嗎？中文自然嗎？有沒有第二個合理答案？直接用教材例句的題目有沒有超過 ${REUSE_MAX}%？${multi ? '混合題讀起來順不順、像不像台灣人真的會說的話？不自然的混合題，改成單一語法點的新題。' : ''}有問題就先改掉再輸出。`);
   L.push('');
   L.push('【輸出格式】只輸出下面這個結構的 JSON（欄位名稱不要改，note 可以留空字串）：');
   L.push('{');
@@ -1068,6 +1079,7 @@ function buildSwapPrompt(sec, it) {
   L.push(`- 程度：${m.level}（只用這個程度學生學過的字詞）`);
   L.push(`- 題型：${DEF[sec.type].name}`);
   L.push('- 繁體字、台灣用法；答案必須只有一個合理答案（必要時用 es 限定意思）。');
+  L.push('- 新題的句子要自己新造，不要用教材或簡報的例句；場景、主詞、生詞都要和同一份裡其他題不一樣。');
   if (errs) L.push('- 西語學生常犯的錯：\n' + errs);
   if (sec.bank.length) L.push(`- 這一大題的詞庫是：${sec.bank.join('、')}（答案要用詞庫裡的詞）`);
   L.push(`- 要換掉的這一題：${itemSummary(sec.type, it) || '（空白題）'}`);
@@ -1115,9 +1127,40 @@ function fieldTexts(type, it) {
   }
   return [];
 }
+/* 疑似照抄教材／簡報例句的檢查（用字的重疊度比對） */
+const _zhNorm = s => String(s || '').replace(/[\s。！？，、；：「」『』（）()!?,.…_—\-~～]/g, '');
+function _bigrams(s) { const a = Array.from(s), o = new Set(); for (let i = 0; i < a.length - 1; i++) o.add(a[i] + a[i + 1]); return o; }
+function _dice(a, b) {
+  if (!a || !b) return 0; if (a === b) return 1;
+  const A = _bigrams(a), B = _bigrams(b); if (!A.size || !B.size) return 0;
+  let n = 0; A.forEach(x => { if (B.has(x)) n++; }); return 2 * n / (A.size + B.size);
+}
+function refSentences() {
+  const raw = [];
+  try { GrammarPicker.examples(pointsList()).forEach(x => raw.push(x)); } catch (e) {}
+  String(state.meta.slideText || '').split(/[。！？!?\n]/).forEach(x => raw.push(x));
+  return Array.from(new Set(raw.map(_zhNorm).filter(x => x.length >= 5)));
+}
+function mainSentence(type, it) {
+  switch (type) {
+    case 'fill': return String(it.zh || '').replace('__', it.answer || '');
+    case 'order': return it.answer;
+    case 'choice': return it.options && it.options[it.answer];
+    case 'fix': return it.correct;
+    case 'translate': return it.answer;
+    case 'zh2es': return it.zh;
+    case 'sentence': return it.answer;
+  }
+  return '';
+}
+function looksCopied(sentence, refs) {
+  const s = _zhNorm(sentence); if (s.length < 5) return false;
+  return refs.some(r => s === r || (r.length >= 6 && s.includes(r)) || (s.length >= 6 && r.includes(s)) || _dice(s, r) >= 0.75);
+}
 function validate() {
   const out = {};   // itemId -> [msg]
   const gen = [];   // 全域提醒
+  const refs = refSentences(); let reuseTotal = 0, reuseCopied = 0;
   const add = (id, m) => { (out[id] = out[id] || []).push(m); };
   for (const sec of state.sections) {
     if (!sec.enabled) continue;
@@ -1195,6 +1238,8 @@ function validate() {
         }
       }
       if (isStale(sec.type, it)) add(it.id, '中文改過了，西文可能要重新翻（可按上方「更新翻譯」）。');
+      { const ms = mainSentence(sec.type, it);
+        if (ms) { reuseTotal++; if (looksCopied(ms, refs)) { reuseCopied++; add(it.id, `這題的句子和教材／簡報例句幾乎一樣（整份最多 ${REUSE_MAX}% 建議）；可按「換一題」換成新句子。`); } } }
       if (state.meta.wantEn) {
         const needEn = { fill: it.es && !it.en, cloze: it.es && !it.en, order: it.es && !it.en, choice: it.es && !it.en, translate: (it.es && !it.en) || (it.vocab && !it.vocabEn), zh2es: !it.answerEn || (it.vocab && !it.vocabEn), match: it.es && !it.en, sentence: it.es && !it.en }[sec.type];
         if (needEn) add(it.id, '有勾「也要英文」，但這題還缺英文。');
@@ -1225,7 +1270,7 @@ function validate() {
     const st = pointStats();
     st.names.forEach(n => { if (st.total && st.per[n] / st.total < 0.3) gen.push(`語法點「${n}」只出現在 ${st.per[n]} / ${st.total} 題，比例偏低（建議至少 30%）。`); });
     const need = mixNeed(st.total);
-    if (st.total && st.mixed < need) gen.push(`混合題只有 ${st.mixed} 題（共 ${st.total} 題，目標至少 ${need} 題）。可以請 AI 補幾題混合的，或把比例調低。`);
+    if (st.total && st.mixed < need) gen.push(`混合題只有 ${st.mixed} 題（共 ${st.total} 題，目標約 ${need} 題）。如果語法點本來就很難自然合在一起，少一點沒關係；想補的話可以按「換一題」。`);
     // 每個題型各自檢查
     for (const sec of state.sections) {
       if (!sec.enabled || sec.type === 'cloze') continue;
@@ -1233,6 +1278,7 @@ function validate() {
       if (!its.some(isMixed)) gen.push(`「${DEF[sec.type].name}」沒有任何混合題。`);
     }
   }
+  if (reuseTotal >= 4 && reuseCopied / reuseTotal > REUSE_MAX / 100) gen.push(`有 ${reuseCopied} / ${reuseTotal} 題的句子和教材／簡報例句幾乎一樣（${Math.round(reuseCopied / reuseTotal * 100)}%），超過 ${REUSE_MAX}%。建議把標示「疑似照抄」的題用「換一題」換成新句子。`);
   return { items: out, general: gen };
 }
 
