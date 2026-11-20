@@ -1562,6 +1562,8 @@ function renderCheck() {
     <div id="gbBox">${gbHTML()}</div>
     </details>
     <div id="vocabInner">${vocabHTML()}</div>
+    ${state.sections.map(secHTML).join('')}
+    ${missing.length ? `<div class="row" style="margin-top:28px"><span class="hint" style="margin:0">新增題型：</span>${missing.map(t => `<button class="quiet" data-act="addSection" data-t="${t}">${DEF[t].name}</button>`).join('')}</div>` : ''}
     <div id="staleNote"></div>
     <div class="swapbox" id="stalePanel" hidden>
       <div>中文改過、翻譯還沒更新，或缺英文的句子：複製下面的指令貼給 AI，再把它回覆的結果貼回來。</div>
@@ -1570,8 +1572,6 @@ function renderCheck() {
       <div class="row" style="margin:6px 0 0"><button class="primary tiny" data-act="staleApply">套用翻譯</button><button class="tiny" data-act="staleClose">關閉</button></div>
       <div class="msg" id="staleMsg"></div>
     </div>
-    ${state.sections.map(secHTML).join('')}
-    ${missing.length ? `<div class="row" style="margin-top:28px"><span class="hint" style="margin:0">新增題型：</span>${missing.map(t => `<button class="quiet" data-act="addSection" data-t="${t}">${DEF[t].name}</button>`).join('')}</div>` : ''}
     <div class="row" style="margin-top:30px"><button class="primary" data-act="goStep3">下一步：輸出 →</button></div>`;
   $('#importNotes').innerHTML = (state._importNotes || []).map(n => `<div class="msg"><div class="bad">${esc(n)}</div></div>`).join('');
   state._importNotes = [];
