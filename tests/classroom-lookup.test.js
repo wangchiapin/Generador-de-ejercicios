@@ -143,12 +143,13 @@ async function test(name, f) { try { await f(); passed++; console.log('  ✓ ' +
     const clickSite = async (k) => { await fr.click('.webrow [data-k="' + k + '"]'); await o.pg.waitForTimeout(100); return o.opened[o.opened.length - 1]; };
     return { ...o, fr, askPip, clickSite };
   }
-  await test('頁面：兩顆按鈕文字正確，副標那句話已拿掉', async () => {
+  await test('頁面：兩顆按鈕文字正確，副標那句話和上方四個選項已拿掉', async () => {
     const { pg } = await open();
     assert.strictEqual(await pg.$eval('#pinBtnEs', e => e.textContent), '浮動小視窗（西文為主）');
     assert.strictEqual(await pg.$eval('#pinBtnEn', e => e.textContent), '浮動小視窗（英文為主）');
     assert.strictEqual(await pg.$$eval('h1 span', e => e.length), 0);
     assert.ok(!/輸入就直接顯示翻譯/.test(await pg.$eval('header', e => e.innerText)));
+    assert.strictEqual(await pg.$$eval('nav, .sitebar, .sitetabs, a', e => e.length), 0);   // 上方「練習單／口說練習／對話教材／課堂速查」四個選項已拿掉
     await pg.close();
   });
   await test('西文為主小視窗：輸入中文，西語在上、英語在下；開網頁查西語', async () => {
