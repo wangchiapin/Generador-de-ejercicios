@@ -86,7 +86,6 @@
   .wrap{max-width:none;margin:0 auto;padding:28px 24px 60px;}
   header{margin-bottom:20px;border-bottom:1px solid var(--line);padding-bottom:12px;}
   h1{font-size:1.35rem;font-weight:500;letter-spacing:.08em;margin:0;}
-  h1 span{display:block;font-size:.8rem;font-weight:400;color:var(--sub);margin-top:2px;letter-spacing:.02em;}
   .card{background:#fff;border:1px solid var(--line);padding:18px 20px;margin-bottom:18px;}
   .card.plain{background:var(--bg);border:0;padding:0;}
   .pinrow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
@@ -108,14 +107,13 @@
 <div class="wrap">
 
   <header>
-    <h1>課堂速查
-      <span>上課遇到不會的字詞：輸入就直接顯示翻譯（中⇄西），也可開網頁、找圖片</span>
-    </h1>
+    <h1>課堂速查</h1>
   </header>
 
   <div class="card">
     <div class="pinrow">
-      <button type="button" class="pinbtn" id="pinBtn">釘在最上面（浮動小視窗）</button>
+      <button type="button" class="pinbtn" id="pinBtnEs" data-pref="es">浮動小視窗（西文為主）</button>
+      <button type="button" class="pinbtn" id="pinBtnEn" data-pref="en">浮動小視窗（英文為主）</button>
       <span class="pinnote" id="pinNote"></span>
     </div>
   </div>
@@ -127,11 +125,11 @@
   <div class="card tips">
     <h2>上課使用</h2>
     <ul>
-      <li>按上面的「釘在最上面」，會跳出一個小視窗，<b>浮在 PPT、Zoom 和其他視窗上面</b>，可以拖到旁邊、拉大縮小。要用電腦版 Chrome 或 Edge。</li>
+      <li>按上面的「浮動小視窗」，會跳出一個小視窗，<b>浮在 PPT、Zoom 和其他視窗上面</b>，可以拖到旁邊、拉大縮小。要用電腦版 Chrome 或 Edge。「西文為主」是西語排在上面、英語在下面；「英文為主」是英語排在上面、西語在下面。</li>
       <li>輸入字詞按 Enter（或「翻譯」），結果直接顯示在小視窗裡。輸入中文，會同時顯示西語和英語；輸入西語或英語，就翻成中文。要固定某個方向，用旁邊的選單選（中文→西語／西語→中文／中文→英語／英語→中文）。</li>
-      <li>需要時再按「Google 翻譯」「Reverso 例句」開網頁；「找圖片」一定會開網頁。網頁會開在螢幕右側。</li>
+      <li>需要時再按「Google 翻譯」「Reverso 例句」開網頁；「找圖片」一定會開網頁。網頁會開在螢幕右側。網頁查的語言跟著小視窗上面那一個走（西文為主查西語、英文為主查英語）。</li>
       <li>Zoom 分享畫面時，請選<b>只分享 PPT 視窗</b>。上課前先開測試會議，確認學生看不到小視窗。</li>
-      <li>小視窗關掉後，要再按一次「釘在最上面」才會回來。這個頁面本身要保持開著（可以放在背景）。</li>
+      <li>小視窗關掉後，要再按一次「浮動小視窗」才會回來（想換成另一種，先關掉再按另一顆）。這個頁面本身要保持開著（可以放在背景）。</li>
     </ul>
   </div>
 
@@ -143,12 +141,12 @@
   var ZH2ES={from:'zh-TW',to:'es',pair:'zh-TW|es',label:'西語'}, ZH2EN={from:'zh-TW',to:'en',pair:'zh-TW|en',label:'英語'},
       ES2ZH={from:'auto',to:'zh-TW',pair:'es|zh-TW',label:'中文'}, EN2ZH={from:'en',to:'zh-TW',pair:'en|zh-TW',label:'中文'};
   // 一次要查哪幾個方向：自動判斷時，輸入中文就同時查西語和英語；不是中文就翻成中文（Google 自己認得是西語還是英語）
-  function pickDirs(text,mode){
+  function pickDirs(text,mode,pref){
     if(mode==='zh2es') return [ZH2ES];
     if(mode==='es2zh') return [ES2ZH];
     if(mode==='zh2en') return [ZH2EN];
     if(mode==='en2zh') return [EN2ZH];
-    return CJK.test(text) ? [ZH2ES,ZH2EN] : [ES2ZH];
+    return CJK.test(text) ? (pref==='en'?[ZH2EN,ZH2ES]:[ZH2ES,ZH2EN]) : [ES2ZH];
   }
   function fetchJson(url,ms){
     var ctl=new AbortController(), t=setTimeout(function(){ctl.abort();},ms||8000);
@@ -202,8 +200,8 @@
     });
   }
   // 回傳 [{label, r 或 null}]，每個方向各自成功或失敗
-  function translateAll(text,mode){
-    var ds=pickDirs(text,mode), en=ds.filter(function(d){return d===ZH2EN;})[0];
+  function translateAll(text,mode,pref){
+    var ds=pickDirs(text,mode,pref), en=ds.filter(function(d){return d===ZH2EN;})[0];
     var enP=en?viaGoogle(text,ZH2EN).then(function(x){return x;},function(){return null;}):null;
     return Promise.all(ds.map(function(d){
       if(d===ZH2EN) return enP.then(function(r){ return r?{label:d.label,r:r}:viaMyMemory(text,d).then(function(m){return {label:d.label,r:m};},function(){return {label:d.label,r:null};}); });
@@ -214,12 +212,12 @@
 
   // ───────── 開網頁 ─────────
   var SITES={
-    google:{name:'qk-google', url:function(t,mode){var d=pickDirs(t,mode)[0];return 'https://translate.google.com/?sl=auto&tl='+d.to+'&op=translate&text='+encodeURIComponent(t);}},
-    reverso:{name:'qk-reverso', url:function(t,mode,lang){var d=pickDirs(t,mode)[0], p=d.to==='zh-TW'?(mode==='en2zh'||(mode==='auto'&&/^en/.test(lang||''))?'english-chinese':'spanish-chinese'):(d.to==='en'?'chinese-english':'chinese-spanish');return 'https://context.reverso.net/translation/'+p+'/'+encodeURIComponent(t);}},
+    google:{name:'qk-google', url:function(t,mode,lang,pref){var d=pickDirs(t,mode,pref)[0];return 'https://translate.google.com/?sl=auto&tl='+d.to+'&op=translate&text='+encodeURIComponent(t);}},
+    reverso:{name:'qk-reverso', url:function(t,mode,lang,pref){var d=pickDirs(t,mode,pref)[0], p=d.to==='zh-TW'?(mode==='en2zh'||(mode==='auto'&&/^en/.test(lang||''))?'english-chinese':'spanish-chinese'):(d.to==='en'?'chinese-english':'chinese-spanish');return 'https://context.reverso.net/translation/'+p+'/'+encodeURIComponent(t);}},
     img:{name:'qk-img', url:function(t){return 'https://www.google.com/search?tbm=isch&q='+encodeURIComponent(t);}}
   };
-  function openSite(win,key,text,mode,lang){
-    var site=SITES[key], url=site.url(text,mode,lang), w=null;
+  function openSite(win,key,text,mode,lang,pref){
+    var site=SITES[key], url=site.url(text,mode,lang,pref), w=null;
     var sw=(win.screen&&win.screen.availWidth)||1200, sh=(win.screen&&win.screen.availHeight)||800;
     var W=Math.min(560,Math.round(sw*0.4)), H=Math.min(820,sh-60);
     var L=((win.screen&&win.screen.availLeft)||0)+sw-W-10, T=((win.screen&&win.screen.availTop)||0)+20;
@@ -230,7 +228,7 @@
 
   // ───────── 面板（建在指定的 document 裡）─────────
   function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
-  function buildPanel(doc,win,host){
+  function buildPanel(doc,win,host,pref){
     host.innerHTML=
       '<div class="qk">'+
         '<div class="inrow"><input type="text" class="q" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="輸入或貼上字詞，按 Enter 翻譯">'+
@@ -264,7 +262,7 @@
       if(!t){ show('<div class="hint">請先輸入字詞。</div>'); q.focus(); return; }
       var my=++seq;
       show('<div class="hint">翻譯中…</div>');
-      translateAll(t,mode.value).then(function(rows){
+      translateAll(t,mode.value,pref).then(function(rows){
         if(my!==seq) return;
         if(!rows.some(function(x){return x.r;})){ show('<div class="err">翻譯服務暫時查不到。請按下面「開 Google 翻譯」開網頁查。</div>'); return; }
         var multi=rows.length>1, h=''; copies=[];
@@ -290,23 +288,23 @@
       b.addEventListener('click',function(){
         var t=term();
         if(!t){ show('<div class="hint">請先輸入字詞。</div>'); q.focus(); return; }
-        if(!openSite(win,b.getAttribute('data-k'),t,mode.value,lastLang)) show('<div class="err">網頁被瀏覽器擋住了。請允許這個網站的快顯視窗後再按一次。</div>');
+        if(!openSite(win,b.getAttribute('data-k'),t,mode.value,lastLang,pref)) show('<div class="err">網頁被瀏覽器擋住了。請允許這個網站的快顯視窗後再按一次。</div>');
       });
     });
     return {focus:function(){ q.focus(); }};
   }
 
   // ───────── 網頁本體 ─────────
-  var inline=buildPanel(document,window,document.getElementById('inlineHost'));
-  var pinBtn=document.getElementById('pinBtn'), pinNote=document.getElementById('pinNote'), inlineCard=document.getElementById('inlineCard');
+  var inline=buildPanel(document,window,document.getElementById('inlineHost'),'es');
+  var pinBtns=[document.getElementById('pinBtnEs'),document.getElementById('pinBtnEn')], pinNote=document.getElementById('pinNote'), inlineCard=document.getElementById('inlineCard');
   var pipWin=null;
 
   if(!('documentPictureInPicture' in window)){
-    pinBtn.disabled=true;
+    pinBtns.forEach(function(b){ b.disabled=true; });
     pinNote.textContent='這個瀏覽器不支援浮動視窗，請用電腦版 Chrome 或 Edge。下面的查字面板仍可使用。';
   }
 
-  pinBtn.addEventListener('click',function(){
+  function pin(pref){
     if(!('documentPictureInPicture' in window)) return;
     if(pipWin){ try{ pipWin.focus(); }catch(e){} return; }
     window.documentPictureInPicture.requestWindow({width:340,height:330}).then(function(w){
@@ -317,17 +315,18 @@
       w.document.title='課堂速查';
       w.document.body.className='pip';
       var host=w.document.createElement('div'); w.document.body.appendChild(host);
-      var panel=buildPanel(w.document,w,host);
+      var panel=buildPanel(w.document,w,host,pref);
       panel.focus();
       inlineCard.hidden=true;
-      pinNote.textContent='已釘在最上面。關掉小視窗後，這裡會恢復。';
+      pinNote.textContent='已釘在最上面（'+(pref==='en'?'英文為主':'西文為主')+'）。關掉小視窗後，這裡會恢復。';
       w.addEventListener('pagehide',function(){
         pipWin=null; inlineCard.hidden=false; pinNote.textContent='';
       });
     }).catch(function(){
       pinNote.textContent='沒辦法開浮動視窗，請再按一次。';
     });
-  });
+  }
+  pinBtns.forEach(function(b){ b.addEventListener('click',function(){ pin(b.getAttribute('data-pref')); }); });
 })();
 </script>
 </body>

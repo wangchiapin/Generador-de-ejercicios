@@ -28,6 +28,13 @@ async function test(name, f) { try { await f(); passed++; console.log('  ✓ ' +
     const pg = await b.newPage(); const opened = [];
     await pg.exposeFunction('__opened', u => opened.push(u));
     await pg.addInitScript(() => { window.open = u => { window.__opened(u); return {}; }; });
+    if (opts.fakePip) await pg.addInitScript(() => {   // 假的浮動視窗：用一個 iframe 代替（要在頁面載入前就有，按鈕才不會被停用）
+      Object.defineProperty(window, 'documentPictureInPicture', { configurable: true, value: { requestWindow: () => {
+        const f = document.createElement('iframe'); f.id = 'fakepip'; document.body.appendChild(f);
+        f.contentWindow.open = u => { window.__opened(u); return {}; };
+        return Promise.resolve(f.contentWindow);
+      } } });
+    });
     await pg.route('**/*', rt => {
       const u = new URL(rt.request().url());
       if (u.host === 'translate.googleapis.com') {
@@ -120,6 +127,60 @@ async function test(name, f) { try { await f(); passed++; console.log('  ✓ ' +
     await pg.click('#inlineHost .cp[data-i="0"]'); await pg.waitForTimeout(150);
     assert.strictEqual(await pg.evaluate(() => navigator.clipboard.readText()), 'demasiado salado');
     await pg.close();
+  });
+  // ── 兩顆浮動小視窗按鈕（西文為主／英文為主）：用假的 documentPictureInPicture（一個 iframe）代替真的浮動視窗
+  async function openPip(btnId) {
+    const o = await open({ fakePip: true });
+    await o.pg.click('#' + btnId);
+    await o.pg.waitForSelector('#fakepip');
+    const fr = o.pg.frames().find(x => x.parentFrame());
+    await fr.waitForSelector('.q');
+    const askPip = async (t, mode) => {
+      await fr.selectOption('.mode', mode || 'auto'); await fr.fill('.q', t); await fr.click('.go');
+      await fr.waitForFunction(() => !/翻譯中/.test(document.querySelector('.res').innerText), null, { timeout: 8000 });
+      return fr.$eval('.res', e => e.innerText.replace(/\n+/g, ' | ').replace(/ \| 複製/g, ''));
+    };
+    const clickSite = async (k) => { await fr.click('.webrow [data-k="' + k + '"]'); await o.pg.waitForTimeout(100); return o.opened[o.opened.length - 1]; };
+    return { ...o, fr, askPip, clickSite };
+  }
+  await test('頁面：兩顆按鈕文字正確，副標那句話已拿掉', async () => {
+    const { pg } = await open();
+    assert.strictEqual(await pg.$eval('#pinBtnEs', e => e.textContent), '浮動小視窗（西文為主）');
+    assert.strictEqual(await pg.$eval('#pinBtnEn', e => e.textContent), '浮動小視窗（英文為主）');
+    assert.strictEqual(await pg.$$eval('h1 span', e => e.length), 0);
+    assert.ok(!/輸入就直接顯示翻譯/.test(await pg.$eval('header', e => e.innerText)));
+    await pg.close();
+  });
+  await test('西文為主小視窗：輸入中文，西語在上、英語在下；開網頁查西語', async () => {
+    const { pg, askPip, clickSite } = await openPip('pinBtnEs');
+    const t = await askPip('太鹹');
+    assert.ok(/^西語 \| demasiado salado \| 英語 \| too salty$/.test(t), t);
+    assert.ok(/tl=es/.test(await clickSite('google')) && /chinese-spanish/.test(await clickSite('reverso')));
+    await pg.close();
+  });
+  await test('英文為主小視窗：輸入中文，英語在上、西語在下；開網頁查英語', async () => {
+    const { pg, askPip, clickSite } = await openPip('pinBtnEn');
+    const t = await askPip('太鹹');
+    assert.ok(/^英語 \| too salty \| 西語 \| demasiado salado$/.test(t), t);
+    const t2 = await askPip('清淡'); assert.ok(/^英語 \| light \| 其他：bland \| 西語 \| luz$/.test(t2), t2);
+    assert.ok(/tl=en/.test(await clickSite('google')) && /chinese-english/.test(await clickSite('reverso')));
+    await pg.close();
+  });
+  await test('英文為主小視窗：西文「我」備用來源照常運作；輸入英語／西語仍翻成中文；固定方向照選單', async () => {
+    const { pg, askPip } = await openPip('pinBtnEn');
+    const t = await askPip('我'); assert.ok(/^英語 \| I \| 其他：me、myself \| 西語 \| yo \| 備用翻譯（Google 回英文）$/.test(t), t);
+    assert.ok(/^你好$/.test(await askPip('hello')) && /^你好$/.test(await askPip('hola')));
+    assert.ok(/^demasiado salado$/.test(await askPip('太鹹', 'zh2es')));
+    assert.ok(/^too salty$/.test(await askPip('太鹹', 'zh2en')));
+    await pg.close();
+  });
+  await test('頁面上原本的查字面板維持西文為主；浮動視窗開著時，面板收起來', async () => {
+    const { pg, ask } = await openPip('pinBtnEn');
+    assert.ok(await pg.$eval('#inlineCard', e => e.hidden));
+    assert.ok(/已釘在最上面（英文為主）/.test(await pg.$eval('#pinNote', e => e.textContent)));
+    const o = await open(); const t = await o.ask('太鹹');
+    assert.ok(/^西語 \| demasiado salado \| 英語 \| too salty$/.test(t), t);
+    await o.pg.close(); await pg.close();
   });
   await b.close(); srv.close();
   console.log('\n' + (failed ? '有 ' + failed + ' 項沒通過（通過 ' + passed + ' 項）' : '全部通過（' + passed + ' 項）') + '\n');
